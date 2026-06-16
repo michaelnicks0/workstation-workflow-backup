@@ -1,0 +1,34 @@
+# Runtime state / logs
+.runtime/
+logs/
+*.log
+*.tmp
+*.pid
+
+# Backup payloads never belong in Git
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.7z
+*.vhd
+*.vhdx
+*.wim
+*.bak
+*.sqlite-backup
+*.db-backup
+
+# Local secrets / overrides
+.env
+*.secret
+*.key
+id_*
+
+# Tooling caches
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+node_modules/

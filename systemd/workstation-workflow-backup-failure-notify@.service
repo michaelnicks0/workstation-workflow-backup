@@ -1,0 +1,7 @@
+[Unit]
+Description=Telegram alert for failed WORKSTATION1 workflow backup (%i)
+
+[Service]
+Type=oneshot
+ExecStart=/home/mnicks/repos/workstation/workstation-workflow-backup/scripts/notify-telegram-failure.sh %i
+TimeoutStartSec=45s

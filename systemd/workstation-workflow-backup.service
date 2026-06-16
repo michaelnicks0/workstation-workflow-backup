@@ -1,0 +1,13 @@
+[Unit]
+Description=WORKSTATION1 workflow backup to TrueNAS
+Documentation=file:/home/mnicks/repos/workstation/workstation-workflow-backup/README.md
+OnFailure=workstation-workflow-backup-failure-notify@%n.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/mnicks/repos/workstation/workstation-workflow-backup
+ExecStart=/home/mnicks/repos/workstation/workstation-workflow-backup/scripts/workflow-backup.sh
+TimeoutStartSec=25min
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

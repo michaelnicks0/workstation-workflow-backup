@@ -4,14 +4,16 @@ High-frequency, ZFS-backed backup for the local workflow state that would hurt i
 
 ## Mission
 
-Keep Michael's WSL/Hermes/workflow state recoverable from the TrueNAS host at `root@10.99.98.221`, with a practical recovery point objective of **≤ 1 hour for the last 7 days**. Local sync runs every 15 minutes; ZFS hourly snapshots protect against accidental local deletes or corruptions that are mirrored into the current backup.
+Keep Michael's WSL/Hermes/workflow state recoverable from the TrueNAS host at `root@10.99.98.221`, with a practical recovery point objective of **≤ 1 hour for the last 7 days** plus longer daily/weekly/monthly rollback points. Local sync runs every 15 minutes; ZFS snapshots protect against accidental local deletes or corruptions that are mirrored into the current backup.
 
 ## Operating concept
 
 ```text
 WORKSTATION1 WSL + selected Windows artifacts
   ├─ every 15 min: rsync / robocopy to NAS current tree
-  ├─ every 60 min: TrueNAS periodic ZFS snapshot
+  ├─ hourly: TrueNAS periodic ZFS snapshot retained 1 week
+  ├─ daily: TrueNAS periodic ZFS snapshot retained 2 months
+  ├─ weekly/monthly: TrueNAS cron-created ZFS snapshots retained forever
   └─ on backup failure only: Telegram alert through existing Hermes bot env
 ```
 
@@ -19,8 +21,10 @@ WORKSTATION1 WSL + selected Windows artifacts
 - NAS mountpoint: `/mnt/volume1/workstation1-workflow-backup`
 - SMB share: `\\10.99.98.221\workstation1-workflow-backup`
 - Systemd timer: `workstation-workflow-backup.timer`
-- Snapshot naming schema: `workflow-%Y-%m-%d_%H-%M`
-- Snapshot retention: `1 WEEK`
+- Hourly snapshots: `workflow-hourly-%Y-%m-%d_%H-%M`, retained `1 WEEK`
+- Daily snapshots: `workflow-daily-%Y-%m-%d_%H-%M`, retained `2 MONTH`
+- Weekly snapshots: `workflow-weekly-YYYY-Www`, kept until manually destroyed
+- Monthly snapshots: `workflow-monthly-YYYY-MM`, kept until manually destroyed
 
 ## Requirements / traceability
 
@@ -33,6 +37,8 @@ WORKSTATION1 WSL + selected Windows artifacts
 | REQ-005: Recover accidental deletes within 7 days with ≤1h loss. | TrueNAS hourly periodic snapshot task, 1-week retention. | `zfs list -t snapshot -r volume1/workstation1-workflow-backup`. |
 | REQ-006: Run silently every 15 minutes. | User systemd timer `OnCalendar=*:0/15`; logs to local state. | `systemctl --user list-timers workstation-workflow-backup.timer`. |
 | REQ-007: Telegram only on failure. | `OnFailure=...failure-notify@%n.service`; notifier reads `~/.hermes/.env`. | No success message; failure unit logs / Telegram Bot API on nonzero backup. |
+| REQ-008: Keep daily snapshots for 2 months. | TrueNAS daily periodic snapshot task with `lifetime_value=2`, `lifetime_unit=MONTH`. | `scripts/verify-backup.sh` snapshot task dump. |
+| REQ-009: Keep weekly and monthly snapshots forever. | TrueNAS root cron jobs create `workflow-weekly-*` and `workflow-monthly-*` snapshots with no retention/deletion job. | `scripts/verify-backup.sh` cron job dump and snapshot list. |
 
 ## Backup scope
 
@@ -97,10 +103,17 @@ Successful timer runs are quiet. Logs and state live under:
 ssh root@10.99.98.221 'zfs list -t snapshot -r volume1/workstation1-workflow-backup'
 ```
 
+Snapshot prefixes:
+
+- `workflow-hourly-*` — hourly, retained for 1 week
+- `workflow-daily-*` — daily, retained for 2 months
+- `workflow-weekly-*` — weekly, retained forever
+- `workflow-monthly-*` — monthly, retained forever
+
 ### Restore a missing repo file
 
 ```bash
-SNAP=workflow-YYYY-MM-DD_HH-MM
+SNAP=workflow-hourly-YYYY-MM-DD_HH-MM
 REMOTE=/mnt/volume1/workstation1-workflow-backup/.zfs/snapshot/$SNAP/current/wsl/home/mnicks/repos/path/to/file
 rsync -a root@10.99.98.221:"$REMOTE" /home/mnicks/repos/path/to/file
 ```
@@ -110,7 +123,7 @@ rsync -a root@10.99.98.221:"$REMOTE" /home/mnicks/repos/path/to/file
 Stop active Hermes processes first if replacing the live DB.
 
 ```bash
-SNAP=workflow-YYYY-MM-DD_HH-MM
+SNAP=workflow-hourly-YYYY-MM-DD_HH-MM
 ssh root@10.99.98.221 \
   'ls -lh /mnt/volume1/workstation1-workflow-backup/.zfs/snapshot/'"$SNAP"'/current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db'
 
@@ -133,5 +146,5 @@ The SMB share has shadow-copy support enabled, so Windows Previous Versions may 
 
 - This is not a substitute for the existing full WSL distro export / Windows profile dump. It is the high-frequency workflow safety net.
 - The NAS dataset contains secrets and credentials. Treat NAS root and SMB access accordingly.
-- Local corruption that exists for more than 7 days ages out of this policy; escalate to older dumps or offsite backups if needed.
+- Local corruption that exists for more than 2 months ages out of daily rollback but weekly/monthly snapshots remain until manually destroyed.
 - Hourly snapshots mean the protected historical restore point can be up to one hour behind current local state. The current mirror usually trails by ≤15 minutes but is not delete-proof by itself.

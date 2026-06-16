@@ -19,12 +19,18 @@ Do **not** destroy NAS snapshots.
 ssh root@10.99.98.221 'zfs list -t snapshot -r volume1/workstation1-workflow-backup -o name,creation,used,refer | tail -80'
 ```
 
-Hourly snapshots are retained for 7 days. Pick the newest snapshot before the loss/corruption.
+Snapshot classes:
+
+- `workflow-hourly-*` — retained for 7 days; use for ≤1 hour RPO.
+- `workflow-daily-*` — retained for 2 months.
+- `workflow-weekly-*` / `workflow-monthly-*` — retained forever until manually destroyed.
+
+Pick the newest snapshot before the loss/corruption.
 
 ## 3. Locate the artifact
 
 ```bash
-SNAP=workflow-YYYY-MM-DD_HH-MM
+SNAP=workflow-hourly-YYYY-MM-DD_HH-MM
 BASE=/mnt/volume1/workstation1-workflow-backup/.zfs/snapshot/$SNAP/current
 ssh root@10.99.98.221 "find $BASE -maxdepth 5 -name 'target-name' 2>/dev/null | head"
 ```
@@ -45,7 +51,7 @@ rsync -a root@10.99.98.221:/mnt/volume1/workstation1-workflow-backup/.zfs/snapsh
 Use the `wsl-sqlite-snapshots` tree for Hermes/lifelog/browser-memory DBs. Those files are produced with SQLite's backup API and are the canonical restore copies.
 
 ```bash
-SNAP=workflow-YYYY-MM-DD_HH-MM
+SNAP=workflow-hourly-YYYY-MM-DD_HH-MM
 REMOTE=/mnt/volume1/workstation1-workflow-backup/.zfs/snapshot/$SNAP/current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db
 rsync -a root@10.99.98.221:"$REMOTE" /home/mnicks/.hermes/state.db.restore-candidate
 ```

@@ -49,4 +49,14 @@ for task in json.load(open(sys.argv[1], encoding='utf-8')):
         print(json.dumps(task, indent=2, sort_keys=True))
 PY
 rm -f \"\$tmp\"
+echo '-- forever snapshot cron jobs --'
+tmp=/tmp/workstation-workflow-backup-cron.json
+midclt call cronjob.query > \"\$tmp\"
+python3 - \"\$tmp\" <<'PY'
+import json, sys
+for job in json.load(open(sys.argv[1], encoding='utf-8')):
+    if str(job.get('description', '')).startswith('WORKSTATION1 workflow backup'):
+        print(json.dumps(job, indent=2, sort_keys=True))
+PY
+rm -f \"\$tmp\"
 "

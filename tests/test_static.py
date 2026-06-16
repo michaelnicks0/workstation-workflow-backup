@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import configparser
 import pathlib
 import re
 import unittest
@@ -29,6 +28,22 @@ class StaticBackupRepoTests(unittest.TestCase):
         self.assertIn("NAS_HOST=10.99.98.221", config)
         self.assertIn("NAS_DATASET=volume1/workstation1-workflow-backup", config)
         self.assertIn("SMB_SHARE_NAME=workstation1-workflow-backup", config)
+
+    def test_snapshot_policy_includes_daily_weekly_monthly(self) -> None:
+        provision = (ROOT / "scripts/nas-provision.sh").read_text()
+        self.assertIn("workflow-hourly-%Y-%m-%d_%H-%M", provision)
+        self.assertIn("workflow-daily-%Y-%m-%d_%H-%M", provision)
+        self.assertIn("lifetime_unit': 'MONTH'", provision)
+        self.assertIn("'allow_empty': True", provision)
+        self.assertIn("workflow-weekly-$(date +%G-W%V)", provision)
+        self.assertIn("workflow-monthly-$(date +%Y-%m)", provision)
+        self.assertIn("WORKSTATION1 workflow backup weekly ZFS snapshot forever", provision)
+
+    def test_windows_sync_excludes_vcs_metadata(self) -> None:
+        ps1 = (ROOT / "scripts/sync-windows-critical.ps1").read_text()
+        self.assertIn("'.git'", ps1)
+        self.assertIn("'.hg'", ps1)
+        self.assertIn("'.svn'", ps1)
 
     def test_restore_docs_reference_zfs_snapshots(self) -> None:
         readme = (ROOT / "README.md").read_text()

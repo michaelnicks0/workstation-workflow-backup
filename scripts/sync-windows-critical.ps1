@@ -76,6 +76,7 @@ $fileItems = @(
 )
 
 $excludeDirs = @(
+    '.git', '.hg', '.svn',
     'node_modules', '.venv', 'venv', '__pycache__', '.pytest_cache', '.mypy_cache', '.ruff_cache',
     '.cache', 'Cache', 'Code Cache', 'GPUCache', 'DawnGraphiteCache', 'GrShaderCache', 'ShaderCache',
     'AppData\Local\Temp', 'AppData\Local\Microsoft\Windows\INetCache', 'AppData\Local\Microsoft\Windows\WebCache'

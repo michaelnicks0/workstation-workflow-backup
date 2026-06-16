@@ -15,13 +15,15 @@ import json
 import os
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 DATASET = sys.argv[1]
 SHARE_NAME = sys.argv[2]
 MOUNTPOINT = Path('/mnt') / DATASET
-SNAPSHOT_SCHEMA = 'workflow-%Y-%m-%d_%H-%M'
+HOURLY_SCHEMA = 'workflow-hourly-%Y-%m-%d_%H-%M'
+DAILY_SCHEMA = 'workflow-daily-%Y-%m-%d_%H-%M'
+WEEKLY_CRON_DESCRIPTION = 'WORKSTATION1 workflow backup weekly ZFS snapshot forever'
+MONTHLY_CRON_DESCRIPTION = 'WORKSTATION1 workflow backup monthly ZFS snapshot forever'
 
 
 def run(cmd, check=True):
@@ -47,6 +49,40 @@ def midclt(method: str, *args):
     if not out.strip():
         return None
     return json.loads(out)
+
+
+def ensure_snapshot_task(tasks, schema: str, payload: dict) -> dict:
+    matching = [task for task in tasks if task.get('dataset') == DATASET and task.get('naming_schema') == schema]
+    if matching:
+        task = matching[0]
+        print(f'snapshot task exists: id={task["id"]} schema={schema}')
+        updated = midclt('pool.snapshottask.update', task['id'], payload)
+        return updated if isinstance(updated, dict) else task
+    created = midclt('pool.snapshottask.create', payload)
+    print(f'created snapshot task: {created.get("id") if isinstance(created, dict) else created} schema={schema}')
+    return created
+
+
+def ensure_cron_job(description: str, command: str, schedule: dict) -> dict:
+    jobs = midclt('cronjob.query')
+    matching = [job for job in jobs if job.get('description') == description]
+    payload = {
+        'enabled': True,
+        'stderr': True,
+        'stdout': False,
+        'schedule': schedule,
+        'command': command,
+        'description': description,
+        'user': 'root',
+    }
+    if matching:
+        job = matching[0]
+        print(f'cron job exists: id={job["id"]} description={description}')
+        updated = midclt('cronjob.update', job['id'], payload)
+        return updated if isinstance(updated, dict) else job
+    created = midclt('cronjob.create', payload)
+    print(f'created cron job: {created.get("id") if isinstance(created, dict) else created} description={description}')
+    return created
 
 
 if not zfs_exists(DATASET):
@@ -97,16 +133,35 @@ try:
 except Exception as exc:
     print(f'warning: CIFS reload failed or unsupported; share may still be active: {exc!r}')
 
+ops_dir = MOUNTPOINT / '_ops'
+ops_dir.mkdir(parents=True, exist_ok=True)
+forever_script = ops_dir / 'create-forever-snapshot.sh'
+forever_script.write_text(f'''#!/bin/sh
+set -eu
+DATASET={DATASET!r}
+kind=${{1:?usage: create-forever-snapshot.sh weekly|monthly}}
+case "$kind" in
+  weekly) name="workflow-weekly-$(date +%G-W%V)" ;;
+  monthly) name="workflow-monthly-$(date +%Y-%m)" ;;
+  *) echo "unsupported snapshot kind: $kind" >&2; exit 64 ;;
+esac
+snapshot="$DATASET@$name"
+if zfs list -H -t snapshot "$snapshot" >/dev/null 2>&1; then
+  exit 0
+fi
+exec zfs snapshot -r "$snapshot"
+''')
+forever_script.chmod(0o755)
+
 tasks = midclt('pool.snapshottask.query')
-matching = [task for task in tasks if task.get('dataset') == DATASET and task.get('naming_schema') == SNAPSHOT_SCHEMA]
-snapshot_payload = {
+hourly_task = ensure_snapshot_task(tasks, HOURLY_SCHEMA, {
     'dataset': DATASET,
     'recursive': True,
     'lifetime_value': 1,
     'lifetime_unit': 'WEEK',
     'enabled': True,
     'exclude': [],
-    'naming_schema': SNAPSHOT_SCHEMA,
+    'naming_schema': HOURLY_SCHEMA,
     'allow_empty': False,
     'schedule': {
         'minute': '0',
@@ -117,21 +172,56 @@ snapshot_payload = {
         'begin': '00:00',
         'end': '23:59',
     },
-}
-if matching:
-    task = matching[0]
-    print(f'snapshot task exists: id={task["id"]}')
-    try:
-        midclt('pool.snapshottask.update', task['id'], snapshot_payload)
-    except Exception as exc:
-        print(f'warning: snapshot task update failed: {exc!r}')
-else:
-    created = midclt('pool.snapshottask.create', snapshot_payload)
-    print(f'created snapshot task: {created.get("id") if isinstance(created, dict) else created}')
+})
+daily_task = ensure_snapshot_task(tasks, DAILY_SCHEMA, {
+    'dataset': DATASET,
+    'recursive': True,
+    'lifetime_value': 2,
+    'lifetime_unit': 'MONTH',
+    'enabled': True,
+    'exclude': [],
+    'naming_schema': DAILY_SCHEMA,
+    'allow_empty': True,
+    'schedule': {
+        'minute': '10',
+        'hour': '0',
+        'dom': '*',
+        'month': '*',
+        'dow': '*',
+        'begin': '00:00',
+        'end': '23:59',
+    },
+})
 
-manual_snapshot = f'{DATASET}@manual-bootstrap-{time.strftime("%Y%m%d-%H%M%S")}'
-if subprocess.run(['zfs', 'list', '-H', '-t', 'snapshot', manual_snapshot], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0:
-    run(['zfs', 'snapshot', '-r', manual_snapshot])
+ensure_cron_job(
+    WEEKLY_CRON_DESCRIPTION,
+    f'{forever_script} weekly',
+    {'minute': '20', 'hour': '0', 'dom': '*', 'month': '*', 'dow': '7'},
+)
+ensure_cron_job(
+    MONTHLY_CRON_DESCRIPTION,
+    f'{forever_script} monthly',
+    {'minute': '30', 'hour': '0', 'dom': '1', 'month': '*', 'dow': '*'},
+)
+
+# Keep the legacy hourly task out of the way after migrating to the explicit
+# workflow-hourly naming schema. Existing snapshots are preserved.
+for task in tasks:
+    if task.get('dataset') == DATASET and task.get('naming_schema') == 'workflow-%Y-%m-%d_%H-%M':
+        print(f'disabling legacy hourly task id={task["id"]} schema={task["naming_schema"]}')
+        midclt('pool.snapshottask.update', task['id'], {'enabled': False})
+
+for task in (hourly_task, daily_task):
+    task_id = task.get('id') if isinstance(task, dict) else None
+    if task_id:
+        try:
+            print(f'running snapshot task id={task_id} once for immediate coverage')
+            midclt('pool.snapshottask.run', task_id)
+        except Exception as exc:
+            print(f'warning: immediate snapshot run failed for task {task_id}: {exc!r}')
+
+for kind in ('weekly', 'monthly'):
+    run([str(forever_script), kind], check=False)
 
 print('--- dataset ---')
 print(capture(['zfs', 'list', '-o', 'name,mountpoint,used,avail', DATASET]).strip())

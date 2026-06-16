@@ -22,6 +22,6 @@ This repo contains the high-frequency WORKSTATION1 → TrueNAS workflow backup s
 ## Operating model
 
 - Local sync cadence: systemd user timer every 15 minutes.
-- NAS retention: TrueNAS periodic snapshot task, hourly snapshots retained for 1 week.
+- NAS retention: hourly snapshots retained 1 week, daily snapshots retained 2 months, weekly/monthly snapshots retained forever via TrueNAS root cron snapshot jobs.
 - Alert policy: successful runs are silent; Telegram is sent only from the systemd `OnFailure` notifier.
 - Restore source of truth: `/mnt/volume1/workstation1-workflow-backup/.zfs/snapshot/<snapshot>/current/...` on the NAS.

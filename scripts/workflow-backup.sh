@@ -34,10 +34,16 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-mkdir -p "$LOCAL_STATE/logs" "$LOCAL_STATE/sqlite-snapshots"
+mkdir -p "$LOCAL_STATE/logs" "$LOCAL_STATE/sqlite-snapshots" "$LOCAL_STATE/nas-export"
 LOG_FILE="$LOCAL_STATE/logs/workflow-backup-$(date -u +%Y%m%dT%H%M%SZ).log"
 LAST_STATUS="$LOCAL_STATE/last-run.json"
 LOCK_FILE="$LOCAL_STATE/backup.lock"
+LEDGER_DB="$LOCAL_STATE/runs.sqlite3"
+LEDGER_DB_SNAPSHOT="$LOCAL_STATE/nas-export/runs.sqlite3"
+LEDGER_HISTORY_JSON="$LOCAL_STATE/nas-export/run-history.json"
+SQLITE_MANIFEST_CACHE="$LOCAL_STATE/current-sqlite-snapshot-manifest.json"
+WINDOWS_MANIFEST_CACHE="$LOCAL_STATE/current-windows-sync-finish.json"
+RUN_ID="$(hostname)-$(date -u +%Y%m%dT%H%M%SZ)-$$"
 START_EPOCH=$(date +%s)
 STATUS="running"
 ERROR_MESSAGE=""
@@ -45,6 +51,13 @@ ERROR_MESSAGE=""
 exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
   # Another timer run is still active. This is not a failure and should stay silent.
+  python3 "$SCRIPT_DIR/record-run-ledger.py" event \
+    --db "$LEDGER_DB" \
+    --run-id "$RUN_ID" \
+    --event-type skipped_lock \
+    --status skipped \
+    --dry-run "$DRY_RUN" \
+    --log-file "$LOG_FILE" >/dev/null 2>&1 || true
   exit 0
 fi
 
@@ -91,6 +104,85 @@ ssh_nas() {
   ssh -i "$NAS_SSH_KEY" -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$NAS_USER@$NAS_HOST" "$@"
 }
 
+elapsed_seconds() {
+  local finished_epoch
+  finished_epoch=$(date +%s)
+  printf '%s' "$((finished_epoch - START_EPOCH))"
+}
+
+record_ledger_event() {
+  local event_type=$1
+  local status=$2
+  local duration=${3:-}
+  local -a args=(
+    "$SCRIPT_DIR/record-run-ledger.py" event
+    --db "$LEDGER_DB"
+    --run-id "$RUN_ID"
+    --event-type "$event_type"
+    --status "$status"
+    --dry-run "$DRY_RUN"
+    --log-file "$LOG_FILE"
+    --error "$ERROR_MESSAGE"
+  )
+  if [[ -n "$duration" ]]; then
+    args+=(--duration-seconds "$duration")
+  fi
+  if [[ "$event_type" != "started" ]]; then
+    if [[ -r "$SQLITE_MANIFEST_CACHE" ]]; then
+      args+=(--sqlite-manifest "$SQLITE_MANIFEST_CACHE")
+    fi
+    if [[ -r "$WINDOWS_MANIFEST_CACHE" ]]; then
+      args+=(--windows-manifest "$WINDOWS_MANIFEST_CACHE")
+    fi
+  fi
+
+  local rc
+  set +e
+  python3 "${args[@]}" >> "$LOG_FILE" 2>&1
+  rc=$?
+  set -e
+  if [[ "$rc" != "0" ]]; then
+    log "ledger warning: failed to record $event_type event rc=$rc"
+  fi
+  return 0
+}
+
+refresh_windows_manifest_cache() {
+  if [[ "$DRY_RUN" == "1" || "$SKIP_WINDOWS" == "1" ]]; then
+    return 0
+  fi
+  local tmp="$WINDOWS_MANIFEST_CACHE.tmp-$$"
+  local remote_manifest="$NAS_PATH/current/windows/_manifests/windows-sync-finish.json"
+  local rc
+  set +e
+  ssh_nas "cat $(remote_quote "$remote_manifest")" > "$tmp"
+  rc=$?
+  set -e
+  if [[ "$rc" == "0" ]]; then
+    mv "$tmp" "$WINDOWS_MANIFEST_CACHE"
+  else
+    rm -f "$tmp"
+    log "ledger warning: could not fetch Windows manifest rc=$rc"
+  fi
+}
+
+sync_status_artifacts() {
+  if [[ "$DRY_RUN" == "1" ]]; then
+    return 0
+  fi
+  python3 "$SCRIPT_DIR/record-run-ledger.py" snapshot-db \
+    --db "$LEDGER_DB" \
+    --output "$LEDGER_DB_SNAPSHOT"
+  python3 "$SCRIPT_DIR/record-run-ledger.py" export-json \
+    --db "$LEDGER_DB" \
+    --output-json "$LEDGER_HISTORY_JSON" \
+    --limit 100
+  ssh_nas "umask 077; mkdir -p $(remote_quote "$NAS_PATH/current/_manifests")"
+  ssh_nas "umask 077; cat > $(remote_quote "$NAS_PATH/current/_manifests/last-run.json")" < "$LAST_STATUS"
+  ssh_nas "umask 077; cat > $(remote_quote "$NAS_PATH/current/_manifests/runs.sqlite3")" < "$LEDGER_DB_SNAPSHOT"
+  ssh_nas "umask 077; cat > $(remote_quote "$NAS_PATH/current/_manifests/run-history.json")" < "$LEDGER_HISTORY_JSON"
+}
+
 run_logged() {
   local rc
   set +e
@@ -111,9 +203,8 @@ on_error() {
   STATUS="failed"
   log "FAILED: $ERROR_MESSAGE"
   write_status || true
-  if [[ "$DRY_RUN" != "1" ]]; then
-    ssh_nas "mkdir -p $(remote_quote "$NAS_PATH/current/_manifests") && cat > $(remote_quote "$NAS_PATH/current/_manifests/last-run.json")" < "$LAST_STATUS" || true
-  fi
+  record_ledger_event failed failed "$(elapsed_seconds)" || true
+  sync_status_artifacts || true
   exit "$rc"
 }
 trap on_error ERR
@@ -200,6 +291,7 @@ run_sqlite_snapshots() {
   fi
   log "creating SQLite consistent snapshots"
   run_logged python3 "${args[@]}"
+  cp "$LOCAL_STATE/sqlite-snapshots/_manifest.json" "$SQLITE_MANIFEST_CACHE"
   rsync_to_nas "$LOCAL_STATE/sqlite-snapshots/" "wsl-sqlite-snapshots" general
 }
 
@@ -232,11 +324,14 @@ run_windows_phase() {
   fi
   log "Windows phase start"
   run_logged "$PS_EXE" "${args[@]}"
+  refresh_windows_manifest_cache
   log "Windows phase done"
 }
 
 main() {
-  log "backup start dry_run=$DRY_RUN skip_wsl=$SKIP_WSL skip_windows=$SKIP_WINDOWS"
+  rm -f "$SQLITE_MANIFEST_CACHE" "$WINDOWS_MANIFEST_CACHE"
+  log "backup start run_id=$RUN_ID dry_run=$DRY_RUN skip_wsl=$SKIP_WSL skip_windows=$SKIP_WINDOWS"
+  record_ledger_event started running
   if [[ "$DRY_RUN" != "1" ]]; then
     ssh_nas "mkdir -p $(remote_quote "$NAS_PATH/current/_manifests")"
   fi
@@ -251,9 +346,8 @@ main() {
   STATUS="ok"
   ERROR_MESSAGE=""
   write_status
-  if [[ "$DRY_RUN" != "1" ]]; then
-    ssh_nas "cat > $(remote_quote "$NAS_PATH/current/_manifests/last-run.json")" < "$LAST_STATUS"
-  fi
+  record_ledger_event completed ok "$(elapsed_seconds)"
+  sync_status_artifacts
   log "backup complete status=ok"
   if [[ "$VERBOSE" == "1" ]]; then
     cat "$LAST_STATUS"

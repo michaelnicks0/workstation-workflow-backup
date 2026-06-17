@@ -16,6 +16,10 @@ logs/
 *.wim
 *.bak
 *.sqlite-backup
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
 *.db-backup
 
 # Local secrets / overrides

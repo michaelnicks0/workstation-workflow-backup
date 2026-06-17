@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import json
 import pathlib
 import re
+import sqlite3
+import subprocess
+import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -20,7 +24,7 @@ class StaticBackupRepoTests(unittest.TestCase):
 
     def test_no_payload_patterns_allowed(self) -> None:
         gitignore = (ROOT / ".gitignore").read_text()
-        for pattern in ("*.tar", "*.vhdx", "*.wim", "*.db-backup"):
+        for pattern in ("*.tar", "*.vhdx", "*.wim", "*.db-backup", "*.sqlite3", "*.db"):
             self.assertIn(pattern, gitignore)
 
     def test_config_points_to_expected_dataset(self) -> None:
@@ -50,6 +54,121 @@ class StaticBackupRepoTests(unittest.TestCase):
         restore = (ROOT / "docs/restore-runbook.md").read_text()
         self.assertRegex(readme, re.compile(r"hourly snapshots", re.I))
         self.assertIn(".zfs/snapshot", restore)
+
+    def test_workflow_records_and_syncs_run_ledger(self) -> None:
+        workflow = (ROOT / "scripts/workflow-backup.sh").read_text()
+        verify = (ROOT / "scripts/verify-backup.sh").read_text()
+        self.assertIn("record-run-ledger.py", workflow)
+        self.assertIn("runs.sqlite3", workflow)
+        self.assertIn("run-history.json", workflow)
+        self.assertIn("runs.sqlite3", verify)
+
+    def test_run_ledger_records_latest_run_and_exports(self) -> None:
+        script = ROOT / "scripts/record-run-ledger.py"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = pathlib.Path(tmpdir)
+            db = tmp / "runs.sqlite3"
+            log = tmp / "run.log"
+            sqlite_manifest = tmp / "sqlite-manifest.json"
+            windows_manifest = tmp / "windows-manifest.json"
+            sqlite_manifest.write_text(
+                json.dumps({"database_count": 3, "failure_count": 0, "duration_seconds": 1.25}),
+                encoding="utf-8",
+            )
+            windows_manifest.write_bytes(
+                ("\ufeff" + json.dumps({"duration_seconds": 2.5, "results": [{"status": "ok"}, {"status": "failed"}]})).encode(
+                    "utf-8"
+                )
+            )
+
+            subprocess.run(
+                [
+                    "python3",
+                    str(script),
+                    "event",
+                    "--db",
+                    str(db),
+                    "--run-id",
+                    "run-1",
+                    "--event-type",
+                    "started",
+                    "--status",
+                    "running",
+                    "--dry-run",
+                    "0",
+                    "--log-file",
+                    str(log),
+                ],
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "python3",
+                    str(script),
+                    "event",
+                    "--db",
+                    str(db),
+                    "--run-id",
+                    "run-1",
+                    "--event-type",
+                    "completed",
+                    "--status",
+                    "ok",
+                    "--dry-run",
+                    "0",
+                    "--log-file",
+                    str(log),
+                    "--duration-seconds",
+                    "7",
+                    "--sqlite-manifest",
+                    str(sqlite_manifest),
+                    "--windows-manifest",
+                    str(windows_manifest),
+                ],
+                check=True,
+            )
+
+            conn = sqlite3.connect(db)
+            try:
+                row = conn.execute(
+                    """
+                    SELECT status, duration_seconds, sqlite_database_count,
+                           sqlite_failure_count, windows_result_count, windows_failure_count
+                    FROM latest_runs
+                    WHERE run_id = 'run-1'
+                    """
+                ).fetchone()
+            finally:
+                conn.close()
+            self.assertEqual(row, ("ok", 7, 3, 0, 2, 1))
+
+            status = subprocess.run(
+                ["python3", str(script), "status", "--db", str(db), "--limit", "1"],
+                check=True,
+                text=True,
+                capture_output=True,
+            )
+            self.assertIn("run-1", status.stdout)
+            self.assertIn("ok", status.stdout)
+
+            exported = tmp / "run-history.json"
+            snapshot = tmp / "runs.snapshot.sqlite3"
+            subprocess.run(
+                ["python3", str(script), "export-json", "--db", str(db), "--output-json", str(exported), "--limit", "5"],
+                check=True,
+            )
+            subprocess.run(
+                ["python3", str(script), "snapshot-db", "--db", str(db), "--output", str(snapshot)],
+                check=True,
+            )
+            exported_payload = json.loads(exported.read_text(encoding="utf-8"))
+            self.assertEqual(exported_payload["runs"][0]["run_id"], "run-1")
+            snap_conn = sqlite3.connect(snapshot)
+            try:
+                snap_count = snap_conn.execute("SELECT count(*) FROM run_events").fetchone()[0]
+            finally:
+                snap_conn.close()
+            self.assertEqual(snap_count, 2)
 
 
 if __name__ == "__main__":

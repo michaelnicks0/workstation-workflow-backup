@@ -21,6 +21,13 @@ else
   echo "No local last-run.json yet at ${LOCAL_STATE}/last-run.json"
 fi
 
+printf '\n== Local run ledger ==\n'
+if [[ -r "${LOCAL_STATE}/runs.sqlite3" ]]; then
+  python3 "$SCRIPT_DIR/record-run-ledger.py" status --db "${LOCAL_STATE}/runs.sqlite3" --limit 12
+else
+  echo "No local runs.sqlite3 yet at ${LOCAL_STATE}/runs.sqlite3"
+fi
+
 printf '\n== NAS dataset / snapshots / manifests ==\n'
 ssh_nas "set -e
 zfs list -H -o name,mountpoint,used,avail,refer '$NAS_DATASET'
@@ -32,7 +39,9 @@ for p in \
   '$NAS_PATH/current/wsl/home/mnicks/.hermes' \
   '$NAS_PATH/current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db' \
   '$NAS_PATH/current/windows/_manifests/windows-sync-finish.json' \
-  '$NAS_PATH/current/_manifests/last-run.json'; do
+  '$NAS_PATH/current/_manifests/last-run.json' \
+  '$NAS_PATH/current/_manifests/runs.sqlite3' \
+  '$NAS_PATH/current/_manifests/run-history.json'; do
   if [ -e \"\$p\" ]; then
     ls -ld \"\$p\"
   else

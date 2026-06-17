@@ -9,7 +9,7 @@ for script in scripts/*.sh; do
   bash -n "$script"
 done
 
-python3 -m py_compile scripts/snapshot-sqlite-dbs.py
+python3 -m py_compile scripts/snapshot-sqlite-dbs.py scripts/record-run-ledger.py
 python3 -m unittest discover -s tests -v
 
 PS_EXE=${PS_EXE:-/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe}

@@ -39,6 +39,7 @@ WORKSTATION1 WSL + selected Windows artifacts
 | REQ-007: Telegram only on failure. | `OnFailure=...failure-notify@%n.service`; notifier reads `~/.hermes/.env`. | No success message; failure unit logs / Telegram Bot API on nonzero backup. |
 | REQ-008: Keep daily snapshots for 2 months. | TrueNAS daily periodic snapshot task with `lifetime_value=2`, `lifetime_unit=MONTH`. | `scripts/verify-backup.sh` snapshot task dump. |
 | REQ-009: Keep weekly and monthly snapshots forever. | TrueNAS root cron jobs create `workflow-weekly-*` and `workflow-monthly-*` snapshots with no retention/deletion job. | `scripts/verify-backup.sh` cron job dump and snapshot list. |
+| REQ-010: Keep queryable backup-run history. | `scripts/workflow-backup.sh` records start/completion/failure events in `~/.local/state/workstation-workflow-backup/runs.sqlite3` and mirrors a DB snapshot plus JSON export to NAS manifests. | `scripts/record-run-ledger.py status`; `scripts/verify-backup.sh`. |
 
 ## Backup scope
 
@@ -93,6 +94,26 @@ Successful timer runs are quiet. Logs and state live under:
 
 ```text
 ~/.local/state/workstation-workflow-backup/
+├── last-run.json              # compatibility latest-run status
+├── runs.sqlite3               # append-only run event ledger
+├── nas-export/run-history.json # exported recent run summaries before NAS sync
+└── logs/workflow-backup-*.log # one log per run
+```
+
+Query recent runs:
+
+```bash
+python3 scripts/record-run-ledger.py status \
+  --db ~/.local/state/workstation-workflow-backup/runs.sqlite3 \
+  --limit 12
+```
+
+The current NAS mirror keeps the latest status artifacts at:
+
+```text
+/mnt/volume1/workstation1-workflow-backup/current/_manifests/last-run.json
+/mnt/volume1/workstation1-workflow-backup/current/_manifests/runs.sqlite3
+/mnt/volume1/workstation1-workflow-backup/current/_manifests/run-history.json
 ```
 
 ## Restore quick reference

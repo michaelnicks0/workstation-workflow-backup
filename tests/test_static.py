@@ -63,6 +63,17 @@ class StaticBackupRepoTests(unittest.TestCase):
         self.assertIn("run-history.json", workflow)
         self.assertIn("runs.sqlite3", verify)
 
+    def test_workflow_uses_windows_interop_fallback(self) -> None:
+        workflow = (ROOT / "scripts/workflow-backup.sh").read_text()
+        runner = (ROOT / "scripts/run-tests.sh").read_text()
+        helper = (ROOT / "scripts/windows-interop.sh").read_text()
+        self.assertIn("windows-interop.sh", workflow)
+        self.assertIn("resolve_windows_launcher", workflow)
+        self.assertIn("windows-interop.sh", runner)
+        self.assertIn("resolve_windows_launcher", runner)
+        self.assertIn("/init", helper)
+        self.assertIn("/run/WSL/*_interop", helper)
+
     def test_run_ledger_records_latest_run_and_exports(self) -> None:
         script = ROOT / "scripts/record-run-ledger.py"
         with tempfile.TemporaryDirectory() as tmpdir:

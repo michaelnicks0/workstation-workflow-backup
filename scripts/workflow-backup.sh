@@ -4,8 +4,10 @@ umask 077
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd -- "$SCRIPT_DIR/.." && pwd)
-# shellcheck disable=SC1091
+# shellcheck disable=SC1090
 source "$REPO_ROOT/config/backup.env"
+# shellcheck disable=SC1090
+source "$SCRIPT_DIR/windows-interop.sh"
 
 DRY_RUN=0
 VERBOSE=0
@@ -236,7 +238,7 @@ rsync_to_nas() {
 
   local -a args=(
     -aH --numeric-ids --delete-delay --delete-excluded --partial --human-readable --stats
-    --rsync-path=/usr/local/bin/rsync
+    "--rsync-path=/usr/local/bin/rsync"
     -e "ssh -i $NAS_SSH_KEY -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/home/mnicks/.ssh/known_hosts"
   )
   if [[ "$DRY_RUN" == "1" ]]; then
@@ -309,10 +311,10 @@ run_wsl_phase() {
 }
 
 run_windows_phase() {
-  if [[ ! -x "$PS_EXE" ]]; then
-    echo "PowerShell executable not found: $PS_EXE" >&2
-    return 1
-  fi
+  local -a windows_launcher
+  resolve_windows_launcher "$PS_EXE"
+  windows_launcher=("${WINDOWS_LAUNCHER[@]}")
+
   local ps_win_path
   ps_win_path=$(copy_windows_helper_to_temp)
   local -a args=(-NoProfile -ExecutionPolicy Bypass -File "$ps_win_path" -NasRoot "$NAS_UNC")
@@ -322,8 +324,8 @@ run_windows_phase() {
   if [[ "$VERBOSE" == "1" ]]; then
     args+=(-VerboseLog)
   fi
-  log "Windows phase start"
-  run_logged "$PS_EXE" "${args[@]}"
+  log "Windows phase start launcher=$WINDOWS_LAUNCHER_MODE"
+  run_logged "${windows_launcher[@]}" "${args[@]}"
   refresh_windows_manifest_cache
   log "Windows phase done"
 }

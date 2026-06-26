@@ -21,7 +21,7 @@ This repo contains the high-frequency WORKSTATION1 → TrueNAS workflow backup s
 
 ## Operating model
 
-- Local sync cadence: systemd user timer every 15 minutes.
+- Local sync cadence: systemd user timer hourly at minute 45.
 - NAS retention: hourly snapshots retained 1 day, daily snapshots retained 1 week, weekly snapshots retained latest 8, monthly snapshots retained latest 12.
 - Growth guard: `scripts/check-nas-growth-guard.sh` fails backup runs before/after writes when dataset/snapshot/free-space budgets are exceeded; it does not delete data.
 - Alert policy: successful runs are silent; Telegram is sent only from the systemd `OnFailure` notifier.

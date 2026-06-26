@@ -19,7 +19,7 @@ usage() {
   cat <<'EOF'
 Usage: workflow-backup.sh [--dry-run] [--verbose] [--skip-windows] [--skip-wsl] [--quick-check-sqlite]
 
-Runs the 15-minute WORKSTATION1 workflow backup. Default mode is silent on success.
+Runs the hourly WORKSTATION1 workflow backup. Default mode is silent on success.
 EOF
 }
 

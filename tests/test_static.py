@@ -12,9 +12,9 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 class StaticBackupRepoTests(unittest.TestCase):
-    def test_timer_runs_every_15_minutes(self) -> None:
+    def test_timer_runs_hourly(self) -> None:
         timer = (ROOT / "systemd/workstation-workflow-backup.timer").read_text()
-        self.assertIn("OnCalendar=*:0/15", timer)
+        self.assertIn("OnCalendar=*:45", timer)
         self.assertIn("Persistent=true", timer)
 
     def test_service_has_failure_notifier(self) -> None:

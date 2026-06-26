@@ -114,7 +114,7 @@ share_payload = {
     'path': str(MOUNTPOINT),
     'name': SHARE_NAME,
     'purpose': 'DEFAULT_SHARE',
-    'comment': 'WORKSTATION1 15-minute workflow backup target',
+    'comment': 'WORKSTATION1 hourly workflow backup target',
     'enabled': True,
     'ro': False,
     'browsable': True,

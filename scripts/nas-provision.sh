@@ -10,7 +10,7 @@ ssh_nas() {
   ssh -i "$NAS_SSH_KEY" -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$NAS_USER@$NAS_HOST" "$@"
 }
 
-ssh_nas python3 - "$NAS_DATASET" "$SMB_SHARE_NAME" <<'PY'
+ssh_nas python3 - "$NAS_DATASET" "$SMB_SHARE_NAME" "$NAS_WEEKLY_SNAPSHOT_RETAIN" "$NAS_MONTHLY_SNAPSHOT_RETAIN" <<'PY'
 import json
 import os
 import subprocess
@@ -19,11 +19,15 @@ from pathlib import Path
 
 DATASET = sys.argv[1]
 SHARE_NAME = sys.argv[2]
+WEEKLY_RETAIN = int(sys.argv[3])
+MONTHLY_RETAIN = int(sys.argv[4])
 MOUNTPOINT = Path('/mnt') / DATASET
 HOURLY_SCHEMA = 'workflow-hourly-%Y-%m-%d_%H-%M'
 DAILY_SCHEMA = 'workflow-daily-%Y-%m-%d_%H-%M'
-WEEKLY_CRON_DESCRIPTION = 'WORKSTATION1 workflow backup weekly ZFS snapshot forever'
-MONTHLY_CRON_DESCRIPTION = 'WORKSTATION1 workflow backup monthly ZFS snapshot forever'
+WEEKLY_CRON_DESCRIPTION = 'WORKSTATION1 workflow backup weekly ZFS snapshot retained'
+MONTHLY_CRON_DESCRIPTION = 'WORKSTATION1 workflow backup monthly ZFS snapshot retained'
+OLD_WEEKLY_CRON_DESCRIPTIONS = ('WORKSTATION1 workflow backup weekly ZFS snapshot forever',)
+OLD_MONTHLY_CRON_DESCRIPTIONS = ('WORKSTATION1 workflow backup monthly ZFS snapshot forever',)
 
 
 def run(cmd, check=True):
@@ -63,9 +67,10 @@ def ensure_snapshot_task(tasks, schema: str, payload: dict) -> dict:
     return created
 
 
-def ensure_cron_job(description: str, command: str, schedule: dict) -> dict:
+def ensure_cron_job(description: str, command: str, schedule: dict, old_descriptions=()) -> dict:
     jobs = midclt('cronjob.query')
-    matching = [job for job in jobs if job.get('description') == description]
+    descriptions = {description, *old_descriptions}
+    matching = [job for job in jobs if job.get('description') in descriptions]
     payload = {
         'enabled': True,
         'stderr': True,
@@ -135,23 +140,77 @@ except Exception as exc:
 
 ops_dir = MOUNTPOINT / '_ops'
 ops_dir.mkdir(parents=True, exist_ok=True)
-forever_script = ops_dir / 'create-forever-snapshot.sh'
-forever_script.write_text(f'''#!/bin/sh
-set -eu
-DATASET={DATASET!r}
-kind=${{1:?usage: create-forever-snapshot.sh weekly|monthly}}
-case "$kind" in
-  weekly) name="workflow-weekly-$(date +%G-W%V)" ;;
-  monthly) name="workflow-monthly-$(date +%Y-%m)" ;;
-  *) echo "unsupported snapshot kind: $kind" >&2; exit 64 ;;
-esac
-snapshot="$DATASET@$name"
-if zfs list -H -t snapshot "$snapshot" >/dev/null 2>&1; then
-  exit 0
-fi
-exec zfs snapshot -r "$snapshot"
+retained_script = ops_dir / 'create-retained-snapshot.py'
+retained_script.write_text(f'''#!/usr/bin/env python3
+import re
+import subprocess
+import sys
+
+DATASET = {DATASET!r}
+
+
+def capture(cmd):
+    return subprocess.check_output(cmd, text=True, stderr=subprocess.STDOUT)
+
+
+def run(cmd):
+    print('+ ' + ' '.join(cmd))
+    subprocess.run(cmd, check=True)
+
+
+def snapshot_exists(name):
+    return subprocess.run(['zfs', 'list', '-H', '-t', 'snapshot', name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+
+
+def main():
+    if len(sys.argv) != 3:
+        print('usage: create-retained-snapshot.py weekly|monthly RETAIN_COUNT', file=sys.stderr)
+        return 64
+    kind = sys.argv[1]
+    try:
+        retain = int(sys.argv[2])
+    except ValueError:
+        print('retain count must be an integer', file=sys.stderr)
+        return 64
+    if retain < 1:
+        print('retain count must be >= 1', file=sys.stderr)
+        return 64
+
+    if kind == 'weekly':
+        suffix = capture(['date', '+%G-W%V']).strip()
+        prefix = 'workflow-weekly-'
+        pattern = re.compile(r'^' + re.escape(DATASET) + r'@workflow-weekly-\d{{4}}-W\d{{2}}$')
+    elif kind == 'monthly':
+        suffix = capture(['date', '+%Y-%m']).strip()
+        prefix = 'workflow-monthly-'
+        pattern = re.compile(r'^' + re.escape(DATASET) + r'@workflow-monthly-\d{{4}}-\d{{2}}$')
+    else:
+        print(f'unsupported snapshot kind: {{kind}}', file=sys.stderr)
+        return 64
+
+    snapshot = f'{{DATASET}}@{{prefix}}{{suffix}}'
+    if not snapshot_exists(snapshot):
+        run(['zfs', 'snapshot', '-r', snapshot])
+
+    snapshots = [
+        line.strip()
+        for line in capture(['zfs', 'list', '-H', '-t', 'snapshot', '-o', 'name', '-s', 'name', '-r', DATASET]).splitlines()
+        if pattern.match(line.strip())
+    ]
+    delete_count = max(0, len(snapshots) - retain)
+    for old_snapshot in snapshots[:delete_count]:
+        if not pattern.match(old_snapshot):
+            print(f'refusing to destroy unexpected snapshot name: {{old_snapshot}}', file=sys.stderr)
+            return 65
+        run(['zfs', 'destroy', old_snapshot])
+    print(f'{{kind}} retained snapshot count={{len(snapshots) - delete_count}} retain={{retain}} deleted={{delete_count}}')
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
 ''')
-forever_script.chmod(0o755)
+retained_script.chmod(0o755)
 
 tasks = midclt('pool.snapshottask.query')
 hourly_task = ensure_snapshot_task(tasks, HOURLY_SCHEMA, {
@@ -195,13 +254,15 @@ daily_task = ensure_snapshot_task(tasks, DAILY_SCHEMA, {
 
 ensure_cron_job(
     WEEKLY_CRON_DESCRIPTION,
-    f'{forever_script} weekly',
+    f'{retained_script} weekly {WEEKLY_RETAIN}',
     {'minute': '20', 'hour': '0', 'dom': '*', 'month': '*', 'dow': '7'},
+    OLD_WEEKLY_CRON_DESCRIPTIONS,
 )
 ensure_cron_job(
     MONTHLY_CRON_DESCRIPTION,
-    f'{forever_script} monthly',
+    f'{retained_script} monthly {MONTHLY_RETAIN}',
     {'minute': '30', 'hour': '0', 'dom': '1', 'month': '*', 'dow': '*'},
+    OLD_MONTHLY_CRON_DESCRIPTIONS,
 )
 
 # Keep the legacy hourly task out of the way after migrating to the explicit
@@ -220,8 +281,8 @@ for task in (hourly_task, daily_task):
         except Exception as exc:
             print(f'warning: immediate snapshot run failed for task {task_id}: {exc!r}')
 
-for kind in ('weekly', 'monthly'):
-    run([str(forever_script), kind], check=False)
+for kind, retain in (('weekly', WEEKLY_RETAIN), ('monthly', MONTHLY_RETAIN)):
+    run([str(retained_script), kind, str(retain)], check=False)
 
 print('--- dataset ---')
 print(capture(['zfs', 'list', '-o', 'name,mountpoint,used,avail', DATASET]).strip())

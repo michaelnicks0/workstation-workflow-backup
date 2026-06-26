@@ -199,9 +199,25 @@ run_logged() {
   return "$rc"
 }
 
+run_growth_guard() {
+  local stage=$1
+  if [[ "${NAS_GROWTH_GUARD_ENABLED:-1}" != "1" ]]; then
+    log "growth guard disabled: stage=$stage"
+    return 0
+  fi
+  log "growth guard check start: stage=$stage"
+  if ! run_logged "$SCRIPT_DIR/check-nas-growth-guard.sh" --stage "$stage"; then
+    ERROR_MESSAGE="NAS growth guard failed at stage=$stage; see $LOG_FILE"
+    return 75
+  fi
+  log "growth guard check done: stage=$stage"
+}
+
 on_error() {
   local rc=$?
-  ERROR_MESSAGE="command failed near line ${BASH_LINENO[0]} with exit code $rc"
+  if [[ -z "$ERROR_MESSAGE" ]]; then
+    ERROR_MESSAGE="command failed near line ${BASH_LINENO[0]} with exit code $rc"
+  fi
   STATUS="failed"
   log "FAILED: $ERROR_MESSAGE"
   write_status || true
@@ -334,6 +350,7 @@ main() {
   rm -f "$SQLITE_MANIFEST_CACHE" "$WINDOWS_MANIFEST_CACHE"
   log "backup start run_id=$RUN_ID dry_run=$DRY_RUN skip_wsl=$SKIP_WSL skip_windows=$SKIP_WINDOWS"
   record_ledger_event started running
+  run_growth_guard pre
   if [[ "$DRY_RUN" != "1" ]]; then
     ssh_nas "mkdir -p $(remote_quote "$NAS_PATH/current/_manifests")"
   fi
@@ -344,6 +361,8 @@ main() {
   if [[ "$SKIP_WINDOWS" != "1" ]]; then
     run_windows_phase
   fi
+
+  run_growth_guard post
 
   STATUS="ok"
   ERROR_MESSAGE=""

@@ -28,6 +28,9 @@ else
   echo "No local runs.sqlite3 yet at ${LOCAL_STATE}/runs.sqlite3"
 fi
 
+printf '\n== NAS growth guard ==\n'
+"$SCRIPT_DIR/check-nas-growth-guard.sh" --stage verify
+
 printf '\n== NAS dataset / snapshots / manifests ==\n'
 ssh_nas "set -e
 zfs list -H -o name,mountpoint,used,avail,refer '$NAS_DATASET'
@@ -58,7 +61,7 @@ for task in json.load(open(sys.argv[1], encoding='utf-8')):
         print(json.dumps(task, indent=2, sort_keys=True))
 PY
 rm -f \"\$tmp\"
-echo '-- forever snapshot cron jobs --'
+echo '-- retained snapshot cron jobs --'
 tmp=/tmp/workstation-workflow-backup-cron.json
 midclt call cronjob.query > \"\$tmp\"
 python3 - \"\$tmp\" <<'PY'

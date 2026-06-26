@@ -35,13 +35,34 @@ class StaticBackupRepoTests(unittest.TestCase):
 
     def test_snapshot_policy_includes_daily_weekly_monthly(self) -> None:
         provision = (ROOT / "scripts/nas-provision.sh").read_text()
+        config = (ROOT / "config/backup.env").read_text()
         self.assertIn("workflow-hourly-%Y-%m-%d_%H-%M", provision)
         self.assertIn("workflow-daily-%Y-%m-%d_%H-%M", provision)
         self.assertIn("lifetime_unit': 'MONTH'", provision)
         self.assertIn("'allow_empty': True", provision)
-        self.assertIn("workflow-weekly-$(date +%G-W%V)", provision)
-        self.assertIn("workflow-monthly-$(date +%Y-%m)", provision)
-        self.assertIn("WORKSTATION1 workflow backup weekly ZFS snapshot forever", provision)
+        self.assertIn("create-retained-snapshot.py", provision)
+        self.assertIn("WORKSTATION1 workflow backup weekly ZFS snapshot retained", provision)
+        self.assertIn("WORKSTATION1 workflow backup monthly ZFS snapshot retained", provision)
+        self.assertIn("OLD_WEEKLY_CRON_DESCRIPTIONS", provision)
+        self.assertIn("zfs", provision)
+        self.assertIn("destroy", provision)
+        self.assertIn("NAS_WEEKLY_SNAPSHOT_RETAIN=8", config)
+        self.assertIn("NAS_MONTHLY_SNAPSHOT_RETAIN=12", config)
+
+    def test_growth_guard_is_configured_and_wired(self) -> None:
+        config = (ROOT / "config/backup.env").read_text()
+        workflow = (ROOT / "scripts/workflow-backup.sh").read_text()
+        verify = (ROOT / "scripts/verify-backup.sh").read_text()
+        guard = (ROOT / "scripts/check-nas-growth-guard.sh").read_text()
+        self.assertIn("NAS_GROWTH_GUARD_ENABLED=1", config)
+        self.assertIn("NAS_DATASET_MAX_USED_BYTES=1099511627776", config)
+        self.assertIn("NAS_DATASET_MAX_SNAPSHOT_BYTES=274877906944", config)
+        self.assertIn("NAS_DATASET_MIN_AVAILABLE_BYTES=1099511627776", config)
+        self.assertIn("run_growth_guard pre", workflow)
+        self.assertIn("run_growth_guard post", workflow)
+        self.assertIn("check-nas-growth-guard.sh", verify)
+        self.assertIn("usedbysnapshots", guard)
+        self.assertIn("snapshot count", guard)
 
     def test_windows_sync_excludes_vcs_metadata(self) -> None:
         ps1 = (ROOT / "scripts/sync-windows-critical.ps1").read_text()

@@ -23,7 +23,8 @@ Snapshot classes:
 
 - `workflow-hourly-*` — retained for 7 days; use for ≤1 hour RPO.
 - `workflow-daily-*` — retained for 2 months.
-- `workflow-weekly-*` / `workflow-monthly-*` — retained forever until manually destroyed.
+- `workflow-weekly-*` — latest 8 weekly snapshots retained by NAS cron.
+- `workflow-monthly-*` — latest 12 monthly snapshots retained by NAS cron.
 
 Pick the newest snapshot before the loss/corruption.
 

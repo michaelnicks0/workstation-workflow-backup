@@ -21,8 +21,8 @@ ssh root@10.99.98.221 'zfs list -t snapshot -r volume1/workstation1-workflow-bac
 
 Snapshot classes:
 
-- `workflow-hourly-*` — retained for 7 days; use for ≤1 hour RPO.
-- `workflow-daily-*` — retained for 2 months.
+- `workflow-hourly-*` — retained for 1 day; use for ≤1 hour RPO.
+- `workflow-daily-*` — retained for 1 week.
 - `workflow-weekly-*` — latest 8 weekly snapshots retained by NAS cron.
 - `workflow-monthly-*` — latest 12 monthly snapshots retained by NAS cron.
 

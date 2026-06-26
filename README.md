@@ -27,7 +27,20 @@ WORKSTATION1 WSL + selected Windows artifacts
 - Daily snapshots: `workflow-daily-%Y-%m-%d_%H-%M`, retained `2 MONTH`
 - Weekly snapshots: `workflow-weekly-YYYY-Www`, retained latest 8
 - Monthly snapshots: `workflow-monthly-YYYY-MM`, retained latest 12
-- Growth guard: fails backup when dataset exceeds 1 TiB used, 256 GiB snapshot-held blocks, 500 snapshots, or leaves less than 1 TiB free on `volume1`
+- Growth guard: fails backup when dataset exceeds 2 TiB used, 512 GiB snapshot-held blocks, 500 snapshots, or leaves less than 2 TiB free on `volume1`
+
+## Snapshot schedule / pruning
+
+| Layer | Scheduler | Enabled | Schedule | Snapshot name | Pruning / retention |
+|---|---|---:|---|---|---|
+| Current mirror sync | WSL systemd user timer | Yes | `OnCalendar=*:0/15`, `OnBootSec=3min`, `AccuracySec=1min`, `RandomizedDelaySec=30s`, `Persistent=true` | Not a ZFS snapshot; writes `current/...` | No mirror history; delete/corruption recovery depends on ZFS snapshots below |
+| Hourly ZFS snapshots | TrueNAS periodic snapshot task | Yes | every hour at minute `0`, all day | `workflow-hourly-%Y-%m-%d_%H-%M` | TrueNAS lifetime `1 WEEK`; `allow_empty=false`; recursive |
+| Daily ZFS snapshots | TrueNAS periodic snapshot task | Yes | every day at `00:10` | `workflow-daily-%Y-%m-%d_%H-%M` | TrueNAS lifetime `2 MONTH`; `allow_empty=true`; recursive |
+| Weekly ZFS snapshots | TrueNAS root cron job | Yes | Sunday at `00:20` (`dow=7`) | `workflow-weekly-YYYY-Www` from ISO `%G-W%V` | `_ops/create-retained-snapshot.py weekly 8`; exact-pattern oldest-first prune, latest 8 retained |
+| Monthly ZFS snapshots | TrueNAS root cron job | Yes | day `1` at `00:30` | `workflow-monthly-YYYY-MM` | `_ops/create-retained-snapshot.py monthly 12`; exact-pattern oldest-first prune, latest 12 retained |
+| Legacy hourly task | TrueNAS periodic snapshot task | No | formerly every hour at minute `0` | `workflow-%Y-%m-%d_%H-%M` | Disabled by `nas-provision.sh`; existing snapshots are preserved if any remain |
+
+Manual snapshots, such as `post-cleanup-*`, are outside configured pruning and must be reviewed/deleted explicitly.
 
 ## Requirements / traceability
 
@@ -122,9 +135,9 @@ Default fail-closed budget in `config/backup.env`:
 
 | Guard | Limit |
 |---|---:|
-| Total dataset used | 1 TiB |
-| Snapshot-held blocks | 256 GiB |
-| Minimum free space on `volume1` | 1 TiB |
+| Total dataset used | 2 TiB |
+| Snapshot-held blocks | 512 GiB |
+| Minimum free space on `volume1` | 2 TiB |
 | Snapshot count | 500 |
 
 The guard is intentionally non-destructive. It stops the backup and lets the normal failure alert fire; it does not destroy snapshots or payload files.

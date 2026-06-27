@@ -29,6 +29,19 @@ WORKSTATION1 WSL + selected Windows artifacts
 - Monthly snapshots: `wf-m-YYYY-MM`, retained latest 12
 - Growth guard: fails backup when dataset exceeds 2 TiB used, 512 GiB snapshot-held blocks, 500 snapshots, or leaves less than 2 TiB free on `v1`
 
+## NAS encryption/key state
+
+The workflow backup dataset lives under encrypted pool root `v1`. Post-rename verification checked both ZFS and TrueNAS middleware state:
+
+| Check | Verified result |
+|---|---|
+| ZFS root | `v1` reports `encryption=aes-256-gcm`, `encryptionroot=v1`, `keystatus=available`, `mounted=yes`. |
+| Middleware lock state | `midclt call zfs.dataset.locked_datasets` returned `[]`. |
+| Middleware encrypted metadata | encrypted-dataset metadata references `v1`/`v2`; stale `volume1%` / `volume2%` encrypted rows were verified absent. |
+| Backup smoke | A real workflow backup completed successfully to `/mnt/v1/ws1/wf/current/...` after the cutover. |
+
+This repo must never store TrueNAS encryption keys, config DB exports, SMB credentials, or backed-up payload contents. This verifies the live unlocked state; it does not replace a separate cold reboot/import/unlock drill.
+
 ## Snapshot schedule / pruning
 
 | Layer | Scheduler | Enabled | Schedule | Snapshot name | Pruning / retention |

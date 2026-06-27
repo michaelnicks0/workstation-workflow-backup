@@ -13,6 +13,22 @@ systemctl --user stop workstation-workflow-backup.timer
 
 Do **not** destroy NAS snapshots.
 
+## NAS pool/unlock preflight
+
+Before using `.zfs/snapshot` paths, verify the encrypted pool root is imported, unlocked, and mounted. Do not create fallback directories under `/mnt/v1` if the ZFS dataset is missing; that can create a fake tree on the base filesystem.
+
+```bash
+ssh root@10.99.98.221 'zfs get -H -o name,property,value encryption,encryptionroot,keystatus,mounted v1; midclt call zfs.dataset.locked_datasets'
+```
+
+Expected live state for ordinary restores:
+
+- `v1` has `keystatus=available` and `mounted=yes`.
+- `zfs.dataset.locked_datasets` returns `[]`.
+- TrueNAS encrypted-dataset metadata was verified after the rename to reference `v1`/`v2`, not stale `volume1`/`volume2` names.
+
+Do not print, copy, or commit raw encryption keys while doing restore work.
+
 ## 2. Pick a snapshot
 
 ```bash

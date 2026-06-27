@@ -30,14 +30,14 @@ class StaticBackupRepoTests(unittest.TestCase):
     def test_config_points_to_expected_dataset(self) -> None:
         config = (ROOT / "config/backup.env").read_text()
         self.assertIn("NAS_HOST=10.99.98.221", config)
-        self.assertIn("NAS_DATASET=volume1/workstation1-workflow-backup", config)
-        self.assertIn("SMB_SHARE_NAME=workstation1-workflow-backup", config)
+        self.assertIn("NAS_DATASET=v1/ws1/wf", config)
+        self.assertIn("SMB_SHARE_NAME=ws1-wf", config)
 
     def test_snapshot_policy_includes_daily_weekly_monthly(self) -> None:
         provision = (ROOT / "scripts/nas-provision.sh").read_text()
         config = (ROOT / "config/backup.env").read_text()
-        self.assertIn("workflow-hourly-%Y-%m-%d_%H-%M", provision)
-        self.assertIn("workflow-daily-%Y-%m-%d_%H-%M", provision)
+        self.assertIn("wf-h-%Y%m%d-%H%M", provision)
+        self.assertIn("wf-d-%Y%m%d-%H%M", provision)
         self.assertIn("lifetime_unit': 'DAY'", provision)
         self.assertIn("lifetime_unit': 'WEEK'", provision)
         self.assertIn("'allow_empty': True", provision)

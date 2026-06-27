@@ -13,7 +13,7 @@ usage() {
   cat <<'EOF'
 Usage: check-nas-growth-guard.sh [--stage NAME] [--warn-only]
 
-Read-only ZFS budget check for volume1/workstation1-workflow-backup. Exits nonzero
+Read-only ZFS budget check for v1/ws1/wf. Exits nonzero
 when configured dataset/snapshot/available-space limits are violated unless
 --warn-only is set.
 EOF

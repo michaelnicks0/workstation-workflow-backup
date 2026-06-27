@@ -16,23 +16,23 @@ Do **not** destroy NAS snapshots.
 ## 2. Pick a snapshot
 
 ```bash
-ssh root@10.99.98.221 'zfs list -t snapshot -r volume1/workstation1-workflow-backup -o name,creation,used,refer | tail -80'
+ssh root@10.99.98.221 'zfs list -t snapshot -r v1/ws1/wf -o name,creation,used,refer | tail -80'
 ```
 
 Snapshot classes:
 
-- `workflow-hourly-*` — retained for 1 day; use for ≤1 hour RPO.
-- `workflow-daily-*` — retained for 1 week.
-- `workflow-weekly-*` — latest 8 weekly snapshots retained by NAS cron.
-- `workflow-monthly-*` — latest 12 monthly snapshots retained by NAS cron.
+- `wf-h-*` — retained for 1 day; use for ≤1 hour RPO.
+- `wf-d-*` — retained for 1 week.
+- `wf-w-*` — latest 8 weekly snapshots retained by NAS cron.
+- `wf-m-*` — latest 12 monthly snapshots retained by NAS cron.
 
 Pick the newest snapshot before the loss/corruption.
 
 ## 3. Locate the artifact
 
 ```bash
-SNAP=workflow-hourly-YYYY-MM-DD_HH-MM
-BASE=/mnt/volume1/workstation1-workflow-backup/.zfs/snapshot/$SNAP/current
+SNAP=wf-h-YYYYMMDD-HHMM
+BASE=/mnt/v1/ws1/wf/.zfs/snapshot/$SNAP/current
 ssh root@10.99.98.221 "find $BASE -maxdepth 5 -name 'target-name' 2>/dev/null | head"
 ```
 
@@ -43,7 +43,7 @@ Prefer targeted paths over recursive searches on huge trees.
 Never overwrite the live copy blindly. Copy to a restore candidate, inspect, then replace.
 
 ```bash
-rsync -a root@10.99.98.221:/mnt/volume1/workstation1-workflow-backup/.zfs/snapshot/$SNAP/current/wsl/home/mnicks/repos/example \
+rsync -a root@10.99.98.221:/mnt/v1/ws1/wf/.zfs/snapshot/$SNAP/current/wsl/home/mnicks/repos/example \
   /home/mnicks/restore-candidate-example
 ```
 
@@ -52,8 +52,8 @@ rsync -a root@10.99.98.221:/mnt/volume1/workstation1-workflow-backup/.zfs/snapsh
 Use the `wsl-sqlite-snapshots` tree for Hermes/lifelog/browser-memory DBs. Those files are produced with SQLite's backup API and are the canonical restore copies.
 
 ```bash
-SNAP=workflow-hourly-YYYY-MM-DD_HH-MM
-REMOTE=/mnt/volume1/workstation1-workflow-backup/.zfs/snapshot/$SNAP/current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db
+SNAP=wf-h-YYYYMMDD-HHMM
+REMOTE=/mnt/v1/ws1/wf/.zfs/snapshot/$SNAP/current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db
 rsync -a root@10.99.98.221:"$REMOTE" /home/mnicks/.hermes/state.db.restore-candidate
 ```
 

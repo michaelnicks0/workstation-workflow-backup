@@ -4,7 +4,7 @@ This repo contains the high-frequency WORKSTATION1 → TrueNAS workflow backup s
 
 ## Safety
 
-- Backup payloads live only on the NAS dataset `volume1/workstation1-workflow-backup`; never store payloads in this Git repo.
+- Backup payloads live only on the NAS dataset `v1/ws1/wf`; never store payloads in this Git repo.
 - The NAS dataset contains secrets (`~/.hermes/.env`, OAuth/auth stores, SSH keys, browser/workflow configs). Do not print payload contents into chat or logs.
 - Do not destroy snapshots or datasets without explicit Michael approval.
 - Use `scripts/verify-backup.sh` before declaring backup health.
@@ -25,4 +25,4 @@ This repo contains the high-frequency WORKSTATION1 → TrueNAS workflow backup s
 - NAS retention: hourly snapshots retained 1 day, daily snapshots retained 1 week, weekly snapshots retained latest 8, monthly snapshots retained latest 12.
 - Growth guard: `scripts/check-nas-growth-guard.sh` fails backup runs before/after writes when dataset/snapshot/free-space budgets are exceeded; it does not delete data.
 - Alert policy: successful runs are silent; Telegram is sent only from the systemd `OnFailure` notifier.
-- Restore source of truth: `/mnt/volume1/workstation1-workflow-backup/.zfs/snapshot/<snapshot>/current/...` on the NAS.
+- Restore source of truth: `/mnt/v1/ws1/wf/.zfs/snapshot/<snapshot>/current/...` on the NAS.

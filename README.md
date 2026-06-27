@@ -19,26 +19,26 @@ WORKSTATION1 WSL + selected Windows artifacts
   └─ on backup failure only: Telegram alert through existing Hermes bot env
 ```
 
-- NAS dataset: `volume1/workstation1-workflow-backup`
-- NAS mountpoint: `/mnt/volume1/workstation1-workflow-backup`
-- SMB share: `\\10.99.98.221\workstation1-workflow-backup`
+- NAS dataset: `v1/ws1/wf`
+- NAS mountpoint: `/mnt/v1/ws1/wf`
+- SMB share: `\\10.99.98.221\ws1-wf`
 - Systemd timer: `workstation-workflow-backup.timer`
-- Hourly snapshots: `workflow-hourly-%Y-%m-%d_%H-%M`, retained `1 DAY`
-- Daily snapshots: `workflow-daily-%Y-%m-%d_%H-%M`, retained `1 WEEK`
-- Weekly snapshots: `workflow-weekly-YYYY-Www`, retained latest 8
-- Monthly snapshots: `workflow-monthly-YYYY-MM`, retained latest 12
-- Growth guard: fails backup when dataset exceeds 2 TiB used, 512 GiB snapshot-held blocks, 500 snapshots, or leaves less than 2 TiB free on `volume1`
+- Hourly snapshots: `wf-h-%Y%m%d-%H%M`, retained `1 DAY`
+- Daily snapshots: `wf-d-%Y%m%d-%H%M`, retained `1 WEEK`
+- Weekly snapshots: `wf-w-YYYY-Www`, retained latest 8
+- Monthly snapshots: `wf-m-YYYY-MM`, retained latest 12
+- Growth guard: fails backup when dataset exceeds 2 TiB used, 512 GiB snapshot-held blocks, 500 snapshots, or leaves less than 2 TiB free on `v1`
 
 ## Snapshot schedule / pruning
 
 | Layer | Scheduler | Enabled | Schedule | Snapshot name | Pruning / retention |
 |---|---|---:|---|---|---|
 | Current mirror sync | WSL systemd user timer | Yes | `OnCalendar=*:45`, `OnBootSec=3min`, `AccuracySec=1min`, `RandomizedDelaySec=30s`, `Persistent=true` | Not a ZFS snapshot; writes `current/...` | No mirror history; delete/corruption recovery depends on ZFS snapshots below |
-| Hourly ZFS snapshots | TrueNAS periodic snapshot task | Yes | every hour at minute `0`, all day | `workflow-hourly-%Y-%m-%d_%H-%M` | TrueNAS lifetime `1 DAY`; `allow_empty=false`; recursive |
-| Daily ZFS snapshots | TrueNAS periodic snapshot task | Yes | every day at `00:10` | `workflow-daily-%Y-%m-%d_%H-%M` | TrueNAS lifetime `1 WEEK`; `allow_empty=true`; recursive |
-| Weekly ZFS snapshots | TrueNAS root cron job | Yes | Sunday at `00:20` (`dow=7`) | `workflow-weekly-YYYY-Www` from ISO `%G-W%V` | `_ops/create-retained-snapshot.py weekly 8`; exact-pattern oldest-first prune, latest 8 retained |
-| Monthly ZFS snapshots | TrueNAS root cron job | Yes | day `1` at `00:30` | `workflow-monthly-YYYY-MM` | `_ops/create-retained-snapshot.py monthly 12`; exact-pattern oldest-first prune, latest 12 retained |
-| Legacy hourly task | TrueNAS periodic snapshot task | No | formerly every hour at minute `0` | `workflow-%Y-%m-%d_%H-%M` | Disabled by `nas-provision.sh`; existing snapshots are preserved if any remain |
+| Hourly ZFS snapshots | TrueNAS periodic snapshot task | Yes | every hour at minute `0`, all day | `wf-h-%Y%m%d-%H%M` | TrueNAS lifetime `1 DAY`; `allow_empty=false`; recursive |
+| Daily ZFS snapshots | TrueNAS periodic snapshot task | Yes | every day at `00:10` | `wf-d-%Y%m%d-%H%M` | TrueNAS lifetime `1 WEEK`; `allow_empty=true`; recursive |
+| Weekly ZFS snapshots | TrueNAS root cron job | Yes | Sunday at `00:20` (`dow=7`) | `wf-w-YYYY-Www` from ISO `%G-W%V` | `_ops/create-retained-snapshot.py weekly 8`; exact-pattern oldest-first prune, latest 8 retained |
+| Monthly ZFS snapshots | TrueNAS root cron job | Yes | day `1` at `00:30` | `wf-m-YYYY-MM` | `_ops/create-retained-snapshot.py monthly 12`; exact-pattern oldest-first prune, latest 12 retained |
+| Legacy hourly task | TrueNAS periodic snapshot task | No | formerly every hour at minute `0` | `wf-%Y%m%d-%H%M` | Disabled by `nas-provision.sh`; existing snapshots are preserved if any remain |
 
 Manual snapshots, such as `post-cleanup-*`, are outside configured pruning and must be reviewed/deleted explicitly.
 
@@ -50,7 +50,7 @@ Manual snapshots, such as `post-cleanup-*`, are outside configured pruning and m
 | REQ-002: Back up Hermes DB/config/session/profile state. | `~/.hermes/` rsync plus consistent SQLite snapshots. | `current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db`. |
 | REQ-003: Back up relevant local WSL DBs. | SQLite backup API snapshots for Hermes, lifelog, and browser-memory DBs. | SQLite snapshot manifest on NAS. |
 | REQ-004: Back up critical Windows workflow artifacts. | Windows PowerShell helper uses `robocopy.exe` to SMB. | `current/windows/...` plus Windows manifest. |
-| REQ-005: Recover accidental deletes within 1 day with ≤1h loss. | TrueNAS hourly periodic snapshot task, 1-day retention. | `zfs list -t snapshot -r volume1/workstation1-workflow-backup`. |
+| REQ-005: Recover accidental deletes within 1 day with ≤1h loss. | TrueNAS hourly periodic snapshot task, 1-day retention. | `zfs list -t snapshot -r v1/ws1/wf`. |
 | REQ-006: Run silently hourly. | User systemd timer `OnCalendar=*:45`; logs to local state. | `systemctl --user list-timers workstation-workflow-backup.timer`. |
 | REQ-007: Telegram only on failure. | `OnFailure=...failure-notify@%n.service`; notifier reads `~/.hermes/.env`. | No success message; failure unit logs / Telegram Bot API on nonzero backup. |
 | REQ-008: Keep daily snapshots for 1 week. | TrueNAS daily periodic snapshot task with `lifetime_value=1`, `lifetime_unit=WEEK`. | `scripts/verify-backup.sh` snapshot task dump. |
@@ -137,7 +137,7 @@ Default fail-closed budget in `config/backup.env`:
 |---|---:|
 | Total dataset used | 2 TiB |
 | Snapshot-held blocks | 512 GiB |
-| Minimum free space on `volume1` | 2 TiB |
+| Minimum free space on `v1` | 2 TiB |
 | Snapshot count | 500 |
 
 The guard is intentionally non-destructive. It stops the backup and lets the normal failure alert fire; it does not destroy snapshots or payload files.
@@ -145,9 +145,9 @@ The guard is intentionally non-destructive. It stops the backup and lets the nor
 The current NAS mirror keeps the latest status artifacts at:
 
 ```text
-/mnt/volume1/workstation1-workflow-backup/current/_manifests/last-run.json
-/mnt/volume1/workstation1-workflow-backup/current/_manifests/runs.sqlite3
-/mnt/volume1/workstation1-workflow-backup/current/_manifests/run-history.json
+/mnt/v1/ws1/wf/current/_manifests/last-run.json
+/mnt/v1/ws1/wf/current/_manifests/runs.sqlite3
+/mnt/v1/ws1/wf/current/_manifests/run-history.json
 ```
 
 ## Restore quick reference
@@ -155,21 +155,21 @@ The current NAS mirror keeps the latest status artifacts at:
 ### List snapshots
 
 ```bash
-ssh root@10.99.98.221 'zfs list -t snapshot -r volume1/workstation1-workflow-backup'
+ssh root@10.99.98.221 'zfs list -t snapshot -r v1/ws1/wf'
 ```
 
 Snapshot prefixes:
 
-- `workflow-hourly-*` — hourly, retained for 1 day
-- `workflow-daily-*` — daily, retained for 1 week
-- `workflow-weekly-*` — latest 8 weekly snapshots retained by NAS cron
-- `workflow-monthly-*` — latest 12 monthly snapshots retained by NAS cron
+- `wf-h-*` — hourly, retained for 1 day
+- `wf-d-*` — daily, retained for 1 week
+- `wf-w-*` — latest 8 weekly snapshots retained by NAS cron
+- `wf-m-*` — latest 12 monthly snapshots retained by NAS cron
 
 ### Restore a missing repo file
 
 ```bash
-SNAP=workflow-hourly-YYYY-MM-DD_HH-MM
-REMOTE=/mnt/volume1/workstation1-workflow-backup/.zfs/snapshot/$SNAP/current/wsl/home/mnicks/repos/path/to/file
+SNAP=wf-h-YYYYMMDD-HHMM
+REMOTE=/mnt/v1/ws1/wf/.zfs/snapshot/$SNAP/current/wsl/home/mnicks/repos/path/to/file
 rsync -a root@10.99.98.221:"$REMOTE" /home/mnicks/repos/path/to/file
 ```
 
@@ -178,21 +178,21 @@ rsync -a root@10.99.98.221:"$REMOTE" /home/mnicks/repos/path/to/file
 Stop active Hermes processes first if replacing the live DB.
 
 ```bash
-SNAP=workflow-hourly-YYYY-MM-DD_HH-MM
+SNAP=wf-h-YYYYMMDD-HHMM
 ssh root@10.99.98.221 \
-  'ls -lh /mnt/volume1/workstation1-workflow-backup/.zfs/snapshot/'"$SNAP"'/current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db'
+  'ls -lh /mnt/v1/ws1/wf/.zfs/snapshot/'"$SNAP"'/current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db'
 
 # Copy to a staging file first; inspect before replacing live state.
-rsync -a root@10.99.98.221:/mnt/volume1/workstation1-workflow-backup/.zfs/snapshot/"$SNAP"/current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db \
+rsync -a root@10.99.98.221:/mnt/v1/ws1/wf/.zfs/snapshot/"$SNAP"/current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db \
   /home/mnicks/.hermes/state.db.restore-candidate
 ```
 
 ### Restore Windows artifacts
 
-Browse `\\10.99.98.221\workstation1-workflow-backup\current\windows` or use the NAS snapshot path:
+Browse `\\10.99.98.221\ws1-wf\current\windows` or use the NAS snapshot path:
 
 ```text
-/mnt/volume1/workstation1-workflow-backup/.zfs/snapshot/<snapshot>/current/windows/Users/mnicks/...
+/mnt/v1/ws1/wf/.zfs/snapshot/<snapshot>/current/windows/Users/mnicks/...
 ```
 
 The SMB share has shadow-copy support enabled, so Windows Previous Versions may also surface snapshots.

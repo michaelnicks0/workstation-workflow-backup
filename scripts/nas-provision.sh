@@ -22,8 +22,8 @@ SHARE_NAME = sys.argv[2]
 WEEKLY_RETAIN = int(sys.argv[3])
 MONTHLY_RETAIN = int(sys.argv[4])
 MOUNTPOINT = Path('/mnt') / DATASET
-HOURLY_SCHEMA = 'workflow-hourly-%Y-%m-%d_%H-%M'
-DAILY_SCHEMA = 'workflow-daily-%Y-%m-%d_%H-%M'
+HOURLY_SCHEMA = 'wf-h-%Y%m%d-%H%M'
+DAILY_SCHEMA = 'wf-d-%Y%m%d-%H%M'
 WEEKLY_CRON_DESCRIPTION = 'WORKSTATION1 workflow backup weekly ZFS snapshot retained'
 MONTHLY_CRON_DESCRIPTION = 'WORKSTATION1 workflow backup monthly ZFS snapshot retained'
 OLD_WEEKLY_CRON_DESCRIPTIONS = ('WORKSTATION1 workflow backup weekly ZFS snapshot forever',)
@@ -178,12 +178,12 @@ def main():
 
     if kind == 'weekly':
         suffix = capture(['date', '+%G-W%V']).strip()
-        prefix = 'workflow-weekly-'
-        pattern = re.compile(r'^' + re.escape(DATASET) + r'@workflow-weekly-\d{{4}}-W\d{{2}}$')
+        prefix = 'wf-w-'
+        pattern = re.compile(r'^' + re.escape(DATASET) + r'@wf-w-\d{{4}}-W\d{{2}}$')
     elif kind == 'monthly':
         suffix = capture(['date', '+%Y-%m']).strip()
-        prefix = 'workflow-monthly-'
-        pattern = re.compile(r'^' + re.escape(DATASET) + r'@workflow-monthly-\d{{4}}-\d{{2}}$')
+        prefix = 'wf-m-'
+        pattern = re.compile(r'^' + re.escape(DATASET) + r'@wf-m-\d{{4}}-\d{{2}}$')
     else:
         print(f'unsupported snapshot kind: {{kind}}', file=sys.stderr)
         return 64
@@ -266,9 +266,9 @@ ensure_cron_job(
 )
 
 # Keep the legacy hourly task out of the way after migrating to the explicit
-# workflow-hourly naming schema. Existing snapshots are preserved.
+# wf-h naming schema. Existing snapshots are preserved.
 for task in tasks:
-    if task.get('dataset') == DATASET and task.get('naming_schema') == 'workflow-%Y-%m-%d_%H-%M':
+    if task.get('dataset') == DATASET and task.get('naming_schema') == 'wf-%Y%m%d-%H%M':
         print(f'disabling legacy hourly task id={task["id"]} schema={task["naming_schema"]}')
         midclt('pool.snapshottask.update', task['id'], {'enabled': False})
 

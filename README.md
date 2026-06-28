@@ -27,7 +27,7 @@ WORKSTATION1 WSL + selected Windows artifacts
 - Daily snapshots: `wf-d-%Y%m%d-%H%M`, retained `2 WEEKS`
 - Weekly snapshots: `wf-w-%Y%m%d-%H%M`, retained `8 WEEKS`
 - Monthly snapshots: `wf-m-%Y%m%d-%H%M`, retained `1 YEAR`
-- Growth guard: fails backup when dataset exceeds 2 TiB used, 512 GiB snapshot-held blocks, 5000 snapshots, or leaves less than 2 TiB free on `v1`
+- Growth guard: fails backup when dataset exceeds 2 TiB used, 1 TiB snapshot-held blocks, 5000 snapshots, or leaves less than 2 TiB free on `v1`
 
 ## NAS encryption/key state
 
@@ -150,7 +150,7 @@ Default fail-closed budget in `config/backup.env`:
 | Guard | Limit |
 |---|---:|
 | Total dataset used | 2 TiB |
-| Snapshot-held blocks | 512 GiB |
+| Snapshot-held blocks | 1 TiB |
 | Minimum free space on `v1` | 2 TiB |
 | Snapshot count | 5000 |
 

@@ -1,0 +1,37 @@
+digraph {
+  compound=true
+  graph [fontname="Arial", rankdir=LR, ranksep=1.0, nodesep=1.0]
+  node [fontname="Arial", shape=box, margin="0.4,0.3"]
+  edge [fontname="Arial"]
+  label=<<br /><font point-size="34">Dynamic View: WORKSTATION1 Workflow Backup</font><br /><font point-size="24">Second half of a successful hourly run: WSL and Windows mirroring, post-write guard, ledger completion, and NAS manifest publication.</font>>
+
+  subgraph cluster_2 {
+    margin=25
+    label=<<font point-size="24"><br />WORKSTATION1 Workflow Backup</font><br /><font point-size="19">[Software System]</font>>
+    labelloc=b
+    color="#444444"
+    fontcolor="#444444"
+    fillcolor="#444444"
+
+    16 [id=16,shape=hexagon, label=<<font point-size="34">Windows Critical Sync<br />Helper</font><br /><font point-size="19">[Container: PowerShell + robocopy.exe]</font><br /><br /><font point-size="24">PowerShell script launched<br />from WSL that uses<br />robocopy.exe to mirror<br />selected Windows profile<br />directories/files to the SMB<br />share and writes a Windows<br />sync manifest.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+    17 [id=17,shape=hexagon, label=<<font point-size="34">NAS Growth Guard</font><br /><font point-size="19">[Container: Bash + remote Python + zfs CLI]</font><br /><br /><font point-size="24">Read-only ZFS budget check<br />that enforces dataset-used,<br />snapshot-held, free-space, and<br />snapshot-count limits<br />before/after writes.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+    21 [id=21,shape=cylinder, label=<<font point-size="34">Run Ledger and Local<br />State</font><br /><font point-size="19">[Container: SQLite + JSON + logs on WSL filesystem]</font><br /><br /><font point-size="24">Local status, logs, SQLite run<br />ledger, exported run-history<br />JSON, SQLite snapshot cache,<br />and Windows manifest cache<br />under<br />~/.local/state/workstation-workflow-backup.</font>>, style=filled, color="#d97706", fillcolor="#fef3c7", fontcolor="#111827"]
+    4 [id=4,shape=rect, label=<<font point-size="34">Backup Orchestrator</font><br /><font point-size="19">[Container: Bash]</font><br /><br /><font point-size="24">scripts/workflow-backup.sh<br />coordinates one backup run:<br />locking, logging, pre/post<br />guard checks, WSL rsync,<br />SQLite snapshots, Windows<br />sync, run-ledger updates, and<br />NAS manifest publication.</font>>, style=filled, color="#0284c7", fillcolor="#e0f2fe", fontcolor="#111827"]
+  }
+
+  22 [id=22,shape=cylinder, label=<<font point-size="34">WSL Workflow Sources</font><br /><font point-size="19">[Software System]</font><br /><br /><font point-size="24">Workflow-critical WSL paths:<br />~/repos, ~/.hermes, ~/.ssh,<br />systemd user config,<br />lifelog/browser-memory data,<br />and optional brain-code tree.</font>>, style=filled, color="#d97706", fillcolor="#fef3c7", fontcolor="#111827"]
+  23 [id=23,shape=cylinder, label=<<font point-size="34">Windows Workflow<br />Sources</font><br /><font point-size="19">[Software System]</font><br /><br /><font point-size="24">Selected Windows user-profile<br />artifacts: Desktop, Documents,<br />Downloads, Windows<br />.ssh/.wslconfig, Terminal/VS<br />Code/PowerShell config, Chrome<br />profile metadata, and Startup<br />entries.</font>>, style=filled, color="#d97706", fillcolor="#fef3c7", fontcolor="#111827"]
+  24 [id=24,shape=cylinder, label=<<font point-size="34">TrueNAS Backup<br />Dataset</font><br /><font point-size="19">[Software System]</font><br /><br /><font point-size="24">Encrypted TrueNAS dataset<br />v1/ws1/wf with current mirror<br />tree, manifests, SMB share<br />ws1-wf, and ZFS snapshot<br />history.</font>>, style=filled, color="#d97706", fillcolor="#fef3c7", fontcolor="#111827"]
+  25 [id=25,shape=rect, label=<<font point-size="34">TrueNAS Middleware<br />and ZFS Control Plane</font><br /><font point-size="19">[Software System]</font><br /><br /><font point-size="24">root@10.99.98.221 management<br />surface used for ZFS<br />properties, snapshot tasks,<br />SMB share configuration, and<br />verification.</font>>, style=filled, color="#9333ea", fillcolor="#f3e8ff", fontcolor="#111827"]
+
+  4 -> 22 [id=45, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">1. Read WSL source trees</font><br /><font point-size="19">[sudo rsync]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  4 -> 24 [id=46, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">2. Mirror WSL current tree</font><br /><font point-size="19">[SSH rsync + SSH cat]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  4 -> 16 [id=48, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">3. Launch PowerShell<br />robocopy helper</font><br /><font point-size="19">[PowerShell via WSL interop]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  16 -> 23 [id=49, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">4. Read selected Windows<br />artifacts</font><br /><font point-size="19">[robocopy.exe]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  16 -> 24 [id=51, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">5. Mirror Windows current<br />tree and manifest</font><br /><font point-size="19">[SMB \\10.99.98.221\\ws1-wf]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  4 -> 17 [id=38, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">6. Run post-write guard</font><br /><font point-size="19">[subprocess]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  17 -> 25 [id=39, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">7. Read ZFS budget values</font><br /><font point-size="19">[SSH + zfs]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  4 -> 21 [id=37, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">8. Record completed event<br />and export history</font><br /><font point-size="19">[filesystem + sqlite3]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  4 -> 24 [id=46, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">9. Publish _manifests<br />status files</font><br /><font point-size="19">[SSH rsync + SSH cat]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+
+}

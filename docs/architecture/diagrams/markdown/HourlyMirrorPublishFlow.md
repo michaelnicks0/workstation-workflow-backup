@@ -1,0 +1,69 @@
+# Hourly Mirror Publish Flow
+
+> Generated Markdown wrapper for C4 view `HourlyMirrorPublishFlow`. Canonical model: [`workspace.dsl`](../../workspace.dsl).
+
+<!-- Generated from Structurizr exports; refresh from docs/architecture/workspace.dsl. -->
+
+## Diagram
+
+![Hourly Mirror Publish Flow](../dot-rendered/structurizr-HourlyMirrorPublishFlow.svg)
+
+_Preferred Markdown display: Graphviz SVG. Mermaid source is retained below for text review._
+
+<details>
+<summary>Mermaid source</summary>
+
+```mermaid
+graph LR
+  linkStyle default fill:#ffffff
+
+  subgraph diagram ["Dynamic View: WORKSTATION1 Workflow Backup"]
+    style diagram fill:#ffffff,stroke:#ffffff
+
+    subgraph 2 ["WORKSTATION1 Workflow Backup"]
+      style 2 fill:#ffffff,stroke:#16a34a,color:#16a34a
+
+      16["<div style='font-weight: bold'>Windows Critical Sync Helper</div><div style='font-size: 70%; margin-top: 0px'>[Container: PowerShell + robocopy.exe]</div><div style='font-size: 80%; margin-top:10px'>PowerShell script launched<br />from WSL that uses<br />robocopy.exe to mirror<br />selected Windows profile<br />directories/files to the SMB<br />share and writes a Windows<br />sync manifest.</div>"]
+      style 16 fill:#ecfeff,stroke:#0891b2,color:#111827
+      17["<div style='font-weight: bold'>NAS Growth Guard</div><div style='font-size: 70%; margin-top: 0px'>[Container: Bash + remote Python + zfs CLI]</div><div style='font-size: 80%; margin-top:10px'>Read-only ZFS budget check<br />that enforces dataset-used,<br />snapshot-held, free-space,<br />and snapshot-count limits<br />before/after writes.</div>"]
+      style 17 fill:#ecfeff,stroke:#0891b2,color:#111827
+      21[("<div style='font-weight: bold'>Run Ledger and Local State</div><div style='font-size: 70%; margin-top: 0px'>[Container: SQLite + JSON + logs on WSL filesystem]</div><div style='font-size: 80%; margin-top:10px'>Local status, logs, SQLite<br />run ledger, exported<br />run-history JSON, SQLite<br />snapshot cache, and Windows<br />manifest cache under<br />~/.local/state/workstation-workflow-backup.</div>")]
+      style 21 fill:#fef3c7,stroke:#d97706,color:#111827
+      4["<div style='font-weight: bold'>Backup Orchestrator</div><div style='font-size: 70%; margin-top: 0px'>[Container: Bash]</div><div style='font-size: 80%; margin-top:10px'>scripts/workflow-backup.sh<br />coordinates one backup run:<br />locking, logging, pre/post<br />guard checks, WSL rsync,<br />SQLite snapshots, Windows<br />sync, run-ledger updates, and<br />NAS manifest publication.</div>"]
+      style 4 fill:#e0f2fe,stroke:#0284c7,color:#111827
+    end
+
+    22[("<div style='font-weight: bold'>WSL Workflow Sources</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Workflow-critical WSL paths:<br />~/repos, ~/.hermes, ~/.ssh,<br />systemd user config,<br />lifelog/browser-memory data,<br />and optional brain-code tree.</div>")]
+    style 22 fill:#fef3c7,stroke:#d97706,color:#111827
+    23[("<div style='font-weight: bold'>Windows Workflow Sources</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Selected Windows user-profile<br />artifacts: Desktop,<br />Documents, Downloads, Windows<br />.ssh/.wslconfig, Terminal/VS<br />Code/PowerShell config,<br />Chrome profile metadata, and<br />Startup entries.</div>")]
+    style 23 fill:#fef3c7,stroke:#d97706,color:#111827
+    24[("<div style='font-weight: bold'>TrueNAS Backup Dataset</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Encrypted TrueNAS dataset<br />v1/ws1/wf with current mirror<br />tree, manifests, SMB share<br />ws1-wf, and ZFS snapshot<br />history.</div>")]
+    style 24 fill:#fef3c7,stroke:#d97706,color:#111827
+    25["<div style='font-weight: bold'>TrueNAS Middleware and ZFS Control Plane</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>root@10.99.98.221 management<br />surface used for ZFS<br />properties, snapshot tasks,<br />SMB share configuration, and<br />verification.</div>"]
+    style 25 fill:#f3e8ff,stroke:#9333ea,color:#111827
+
+    4-. "<div>1. Read WSL source trees</div><div style='font-size: 70%'>[sudo rsync]</div>" .->22
+    4-. "<div>2. Mirror WSL current tree</div><div style='font-size: 70%'>[SSH rsync + SSH cat]</div>" .->24
+    4-. "<div>3. Launch PowerShell robocopy<br />helper</div><div style='font-size: 70%'>[PowerShell via WSL interop]</div>" .->16
+    16-. "<div>4. Read selected Windows<br />artifacts</div><div style='font-size: 70%'>[robocopy.exe]</div>" .->23
+    16-. "<div>5. Mirror Windows current<br />tree and manifest</div><div style='font-size: 70%'>[SMB \\10.99.98.221\\ws1-wf]</div>" .->24
+    4-. "<div>6. Run post-write guard</div><div style='font-size: 70%'>[subprocess]</div>" .->17
+    17-. "<div>7. Read ZFS budget values</div><div style='font-size: 70%'>[SSH + zfs]</div>" .->25
+    4-. "<div>8. Record completed event and<br />export history</div><div style='font-size: 70%'>[filesystem + sqlite3]</div>" .->21
+    4-. "<div>9. Publish _manifests status<br />files</div><div style='font-size: 70%'>[SSH rsync + SSH cat]</div>" .->24
+
+  end
+```
+
+</details>
+
+## Derived artifacts
+
+| Artifact | Link |
+|---|---|
+| Mermaid source | [`structurizr-HourlyMirrorPublishFlow.mmd`](../structurizr-HourlyMirrorPublishFlow.mmd) |
+| Mermaid SVG | [`structurizr-HourlyMirrorPublishFlow.svg`](../structurizr-HourlyMirrorPublishFlow.svg) |
+| Mermaid PNG | [`structurizr-HourlyMirrorPublishFlow.png`](../structurizr-HourlyMirrorPublishFlow.png) |
+| DOT source | [`structurizr-HourlyMirrorPublishFlow.dot`](../dot/structurizr-HourlyMirrorPublishFlow.dot) |
+| Graphviz SVG | [`structurizr-HourlyMirrorPublishFlow.svg`](../dot-rendered/structurizr-HourlyMirrorPublishFlow.svg) |
+| Graphviz PNG | [`structurizr-HourlyMirrorPublishFlow.png`](../dot-rendered/structurizr-HourlyMirrorPublishFlow.png) |

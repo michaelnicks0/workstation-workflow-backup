@@ -1,0 +1,39 @@
+digraph {
+  compound=true
+  graph [fontname="Arial", rankdir=LR, ranksep=1.0, nodesep=1.0]
+  node [fontname="Arial", shape=box, margin="0.4,0.3"]
+  edge [fontname="Arial"]
+  label=<<br /><font point-size="34">Container View: WORKSTATION1 Workflow Backup</font><br /><font point-size="24">C2: operator-facing provisioning, verification, restore, and NAS-control surfaces.</font>>
+
+  1 [id=1,shape=rect, label=<<font point-size="34">Michael</font><br /><font point-size="19">[Person]</font><br /><br /><font point-size="24">Sole operator who installs,<br />verifies, and restores<br />WORKSTATION1 workflow backups.</font>>, style=filled, color="#2563eb", fillcolor="#dbeafe", fontcolor="#111827"]
+  24 [id=24,shape=cylinder, label=<<font point-size="34">TrueNAS Backup<br />Dataset</font><br /><font point-size="19">[Software System]</font><br /><br /><font point-size="24">Encrypted TrueNAS dataset<br />v1/ws1/wf with current mirror<br />tree, manifests, SMB share<br />ws1-wf, and ZFS snapshot<br />history.</font>>, style=filled, color="#d97706", fillcolor="#fef3c7", fontcolor="#111827"]
+  25 [id=25,shape=rect, label=<<font point-size="34">TrueNAS Middleware<br />and ZFS Control Plane</font><br /><font point-size="19">[Software System]</font><br /><br /><font point-size="24">root@10.99.98.221 management<br />surface used for ZFS<br />properties, snapshot tasks,<br />SMB share configuration, and<br />verification.</font>>, style=filled, color="#9333ea", fillcolor="#f3e8ff", fontcolor="#111827"]
+  28 [id=28,shape=rect, label=<<font point-size="34">Operator Shell and<br />Restore Tools</font><br /><font point-size="19">[Software System]</font><br /><br /><font point-size="24">Local shell, rsync, SSH,<br />Windows Previous Versions, and<br />README/runbook commands used<br />for verification and targeted<br />restores.</font>>, style=filled, color="#9333ea", fillcolor="#f3e8ff", fontcolor="#111827"]
+
+  subgraph cluster_2 {
+    margin=25
+    label=<<font point-size="24"><br />WORKSTATION1 Workflow Backup</font><br /><font point-size="19">[Software System]</font>>
+    labelloc=b
+    color="#444444"
+    fontcolor="#444444"
+    fillcolor="#444444"
+
+    17 [id=17,shape=hexagon, label=<<font point-size="34">NAS Growth Guard</font><br /><font point-size="19">[Container: Bash + remote Python + zfs CLI]</font><br /><br /><font point-size="24">Read-only ZFS budget check<br />that enforces dataset-used,<br />snapshot-held, free-space, and<br />snapshot-count limits<br />before/after writes.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+    18 [id=18,shape=hexagon, label=<<font point-size="34">NAS Provisioner</font><br /><font point-size="19">[Container: Bash + remote Python + midclt/zfs]</font><br /><br /><font point-size="24">Idempotent provisioning script<br />for the TrueNAS dataset, SMB<br />share, periodic snapshot<br />tasks, and retired legacy<br />snapshot cron jobs.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+    19 [id=19,shape=hexagon, label=<<font point-size="34">Backup Verifier</font><br /><font point-size="19">[Container: Bash + systemctl + SSH]</font><br /><br /><font point-size="24">Operational verification<br />script that checks the local<br />timer, last status, run<br />ledger, growth guard, NAS<br />dataset, snapshots, manifests,<br />snapshot tasks, and retired<br />cron jobs.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+    21 [id=21,shape=cylinder, label=<<font point-size="34">Run Ledger and Local<br />State</font><br /><font point-size="19">[Container: SQLite + JSON + logs on WSL filesystem]</font><br /><br /><font point-size="24">Local status, logs, SQLite run<br />ledger, exported run-history<br />JSON, SQLite snapshot cache,<br />and Windows manifest cache<br />under<br />~/.local/state/workstation-workflow-backup.</font>>, style=filled, color="#d97706", fillcolor="#fef3c7", fontcolor="#111827"]
+  }
+
+  1 -> 28 [id=30, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Runs backup, verification,<br />provisioning, and restore<br />commands from</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  28 -> 19 [id=32, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Runs backup health checks<br />through</font><br /><font point-size="19">[shell]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  28 -> 25 [id=33, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Lists snapshots and<br />inspects NAS state through</font><br /><font point-size="19">[SSH + zfs/midclt]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  28 -> 24 [id=34, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Restores selected files<br />from .zfs/snapshot/current<br />paths</font><br /><font point-size="19">[SSH rsync or SMB Previous Versions]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  17 -> 25 [id=39, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Reads ZFS used, available,<br />usedbysnapshots, and<br />snapshot count from</font><br /><font point-size="19">[SSH + zfs]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  18 -> 25 [id=60, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Creates/updates dataset,<br />SMB share, snapshot tasks,<br />and disabled retired cron<br />jobs through</font><br /><font point-size="19">[SSH + zfs + midclt]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  18 -> 24 [id=61, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Configures mountpoint, SMB<br />share, and snapshot<br />naming/retention for</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  19 -> 21 [id=63, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Reads local last status<br />and recent run ledger from</font><br /><font point-size="19">[filesystem + sqlite3]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  19 -> 17 [id=64, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Runs read-only guard<br />verification through</font><br /><font point-size="19">[subprocess]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  19 -> 25 [id=65, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Reads dataset, snapshot<br />tasks, and retired cron<br />job state from</font><br /><font point-size="19">[SSH + midclt + zfs]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  19 -> 24 [id=66, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Checks required backup<br />paths and manifests in</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+
+}

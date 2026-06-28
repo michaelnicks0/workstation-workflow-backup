@@ -1,0 +1,35 @@
+graph LR
+  linkStyle default fill:#ffffff
+
+  subgraph diagram ["System Context View: WORKSTATION1 Workflow Backup"]
+    style diagram fill:#ffffff,stroke:#ffffff
+
+    1["<div style='font-weight: bold'>Michael</div><div style='font-size: 70%; margin-top: 0px'>[Person]</div><div style='font-size: 80%; margin-top:10px'>Sole operator who installs,<br />verifies, and restores<br />WORKSTATION1 workflow<br />backups.</div>"]
+    style 1 fill:#dbeafe,stroke:#2563eb,color:#111827
+    2["<div style='font-weight: bold'>WORKSTATION1 Workflow Backup</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Repo-owned backup automation<br />that mirrors<br />workflow-critical WSL and<br />Windows artifacts to TrueNAS,<br />preserves rollback points<br />with ZFS snapshots, records<br />run history, and alerts only<br />on failure.</div>"]
+    style 2 fill:#dcfce7,stroke:#16a34a,color:#111827
+    22[("<div style='font-weight: bold'>WSL Workflow Sources</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Workflow-critical WSL paths:<br />~/repos, ~/.hermes, ~/.ssh,<br />systemd user config,<br />lifelog/browser-memory data,<br />and optional brain-code tree.</div>")]
+    style 22 fill:#fef3c7,stroke:#d97706,color:#111827
+    23[("<div style='font-weight: bold'>Windows Workflow Sources</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Selected Windows user-profile<br />artifacts: Desktop,<br />Documents, Downloads, Windows<br />.ssh/.wslconfig, Terminal/VS<br />Code/PowerShell config,<br />Chrome profile metadata, and<br />Startup entries.</div>")]
+    style 23 fill:#fef3c7,stroke:#d97706,color:#111827
+    24[("<div style='font-weight: bold'>TrueNAS Backup Dataset</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Encrypted TrueNAS dataset<br />v1/ws1/wf with current mirror<br />tree, manifests, SMB share<br />ws1-wf, and ZFS snapshot<br />history.</div>")]
+    style 24 fill:#fef3c7,stroke:#d97706,color:#111827
+    25["<div style='font-weight: bold'>TrueNAS Middleware and ZFS Control Plane</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>root@10.99.98.221 management<br />surface used for ZFS<br />properties, snapshot tasks,<br />SMB share configuration, and<br />verification.</div>"]
+    style 25 fill:#f3e8ff,stroke:#9333ea,color:#111827
+    27["<div style='font-weight: bold'>Telegram Bot API</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>External API used only for<br />backup failure notifications.</div>"]
+    style 27 fill:#f3e8ff,stroke:#9333ea,color:#111827
+    28["<div style='font-weight: bold'>Operator Shell and Restore Tools</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Local shell, rsync, SSH,<br />Windows Previous Versions,<br />and README/runbook commands<br />used for verification and<br />targeted restores.</div>"]
+    style 28 fill:#f3e8ff,stroke:#9333ea,color:#111827
+
+    1-. "<div>Installs, verifies, and<br />restores through</div><div style='font-size: 70%'></div>" .->2
+    1-. "<div>Runs backup, verification,<br />provisioning, and restore<br />commands from</div><div style='font-size: 70%'></div>" .->28
+    28-. "<div>Executes scripts and reads<br />documentation in</div><div style='font-size: 70%'>[shell]</div>" .->2
+    28-. "<div>Lists snapshots and inspects<br />NAS state through</div><div style='font-size: 70%'>[SSH + zfs/midclt]</div>" .->25
+    28-. "<div>Restores selected files from<br />.zfs/snapshot/current paths</div><div style='font-size: 70%'>[SSH rsync or SMB Previous Versions]</div>" .->24
+    2-. "<div>Reads ZFS used, available,<br />usedbysnapshots, and snapshot<br />count from</div><div style='font-size: 70%'>[SSH + zfs]</div>" .->25
+    2-. "<div>Reads live SQLite databases<br />from</div><div style='font-size: 70%'>[sqlite3 backup API]</div>" .->22
+    2-. "<div>Writes current/wsl,<br />wsl-sqlite-snapshots, and<br />_manifests to</div><div style='font-size: 70%'>[SSH rsync + SSH cat]</div>" .->24
+    2-. "<div>Mirrors selected Windows<br />artifacts from</div><div style='font-size: 70%'>[robocopy.exe]</div>" .->23
+    2-. "<div>Sends failure-only<br />notification to</div><div style='font-size: 70%'>[HTTPS]</div>" .->27
+
+  end

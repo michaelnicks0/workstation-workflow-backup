@@ -1,0 +1,50 @@
+digraph {
+  compound=true
+  graph [fontname="Arial", rankdir=LR, ranksep=1.0, nodesep=1.0]
+  node [fontname="Arial", shape=box, margin="0.4,0.3"]
+  edge [fontname="Arial"]
+  label=<<br /><font point-size="34">Component View: WORKSTATION1 Workflow Backup - Backup Orchestrator</font><br /><font point-size="24">C3: workflow-backup.sh data-movement path for SQLite snapshots, WSL rsync, and Windows robocopy helper launch.</font>>
+
+  22 [id=22,shape=cylinder, label=<<font point-size="34">WSL Workflow Sources</font><br /><font point-size="19">[Software System]</font><br /><br /><font point-size="24">Workflow-critical WSL paths:<br />~/repos, ~/.hermes, ~/.ssh,<br />systemd user config,<br />lifelog/browser-memory data,<br />and optional brain-code tree.</font>>, style=filled, color="#d97706", fillcolor="#fef3c7", fontcolor="#111827"]
+  23 [id=23,shape=cylinder, label=<<font point-size="34">Windows Workflow<br />Sources</font><br /><font point-size="19">[Software System]</font><br /><br /><font point-size="24">Selected Windows user-profile<br />artifacts: Desktop, Documents,<br />Downloads, Windows<br />.ssh/.wslconfig, Terminal/VS<br />Code/PowerShell config, Chrome<br />profile metadata, and Startup<br />entries.</font>>, style=filled, color="#d97706", fillcolor="#fef3c7", fontcolor="#111827"]
+  24 [id=24,shape=cylinder, label=<<font point-size="34">TrueNAS Backup<br />Dataset</font><br /><font point-size="19">[Software System]</font><br /><br /><font point-size="24">Encrypted TrueNAS dataset<br />v1/ws1/wf with current mirror<br />tree, manifests, SMB share<br />ws1-wf, and ZFS snapshot<br />history.</font>>, style=filled, color="#d97706", fillcolor="#fef3c7", fontcolor="#111827"]
+
+  subgraph cluster_2 {
+    margin=25
+    label=<<font point-size="24"><br />WORKSTATION1 Workflow Backup</font><br /><font point-size="19">[Software System]</font>>
+    labelloc=b
+    color="#444444"
+    fontcolor="#444444"
+    fillcolor="#444444"
+
+    subgraph cluster_4 {
+      margin=25
+      label=<<font point-size="24"><br />Backup Orchestrator</font><br /><font point-size="19">[Container: Bash]</font>>
+      labelloc=b
+      color="#444444"
+      fontcolor="#444444"
+      fillcolor="#444444"
+
+      10 [id=10,shape=rect, label=<<font point-size="34">SQLite Snapshot Phase</font><br /><font point-size="19">[Component: Python subprocess + rsync]</font><br /><br /><font point-size="24">Runs the SQLite backup API<br />snapshotter and mirrors the<br />consistent DB snapshot tree to<br />NAS.</font>>, style=filled, color="#22c55e", fillcolor="#f0fdf4", fontcolor="#111827"]
+      11 [id=11,shape=rect, label=<<font point-size="34">WSL Rsync Phase</font><br /><font point-size="19">[Component: rsync over SSH]</font><br /><br /><font point-size="24">Mirrors configured WSL<br />directories to current/wsl<br />using sudo rsync over SSH with<br />payload exclusions.</font>>, style=filled, color="#22c55e", fillcolor="#f0fdf4", fontcolor="#111827"]
+      12 [id=12,shape=rect, label=<<font point-size="34">Windows Phase<br />Launcher</font><br /><font point-size="19">[Component: Bash + WSL interop]</font><br /><br /><font point-size="24">Copies the PowerShell helper<br />to Windows temp and launches<br />it through direct WSL interop<br />or /init fallback.</font>>, style=filled, color="#22c55e", fillcolor="#f0fdf4", fontcolor="#111827"]
+    }
+
+    15 [id=15,shape=hexagon, label=<<font point-size="34">SQLite Snapshotter</font><br /><font point-size="19">[Container: Python 3, sqlite3]</font><br /><br /><font point-size="24">Creates application-consistent<br />copies of Hermes, lifelog,<br />browser-memory, and related<br />SQLite databases using sqlite3<br />backup API; can quick_check<br />copies.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+    16 [id=16,shape=hexagon, label=<<font point-size="34">Windows Critical Sync<br />Helper</font><br /><font point-size="19">[Container: PowerShell + robocopy.exe]</font><br /><br /><font point-size="24">PowerShell script launched<br />from WSL that uses<br />robocopy.exe to mirror<br />selected Windows profile<br />directories/files to the SMB<br />share and writes a Windows<br />sync manifest.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+    21 [id=21,shape=cylinder, label=<<font point-size="34">Run Ledger and Local<br />State</font><br /><font point-size="19">[Container: SQLite + JSON + logs on WSL filesystem]</font><br /><br /><font point-size="24">Local status, logs, SQLite run<br />ledger, exported run-history<br />JSON, SQLite snapshot cache,<br />and Windows manifest cache<br />under<br />~/.local/state/workstation-workflow-backup.</font>>, style=filled, color="#d97706", fillcolor="#fef3c7", fontcolor="#111827"]
+  }
+
+  15 -> 22 [id=42, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Reads live SQLite<br />databases from</font><br /><font point-size="19">[sqlite3 backup API]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  15 -> 21 [id=44, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Writes local SQLite<br />snapshot cache and<br />manifest under</font><br /><font point-size="19">[filesystem]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  16 -> 23 [id=49, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Mirrors selected Windows<br />artifacts from</font><br /><font point-size="19">[robocopy.exe]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  16 -> 24 [id=51, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Writes current/windows and<br />Windows manifests to</font><br /><font point-size="19">[SMB \\10.99.98.221\\ws1-wf]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  16 -> 21 [id=52, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Leaves manifest cache for<br />ledger summaries</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  10 -> 15 [id=74, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Creates consistent DB<br />snapshot tree through</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  10 -> 24 [id=75, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Mirrors DB snapshot tree<br />to</font><br /><font point-size="19">[rsync]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  11 -> 22 [id=76, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Reads configured WSL paths<br />from</font><br /><font point-size="19">[filesystem]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  11 -> 24 [id=77, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Mirrors WSL trees to</font><br /><font point-size="19">[rsync over SSH]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  12 -> 16 [id=78, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Launches and monitors</font><br /><font point-size="19">[PowerShell]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  12 -> 24 [id=79, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Uses SMB root for Windows<br />helper destination</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+
+}

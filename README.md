@@ -56,6 +56,13 @@ This repo must never store TrueNAS encryption keys, config DB exports, SMB crede
 
 Manual snapshots, such as `post-cleanup-*`, are outside configured pruning and must be reviewed/deleted explicitly.
 
+## Architecture / ADRs
+
+- C4 model source: [`docs/architecture/workspace.dsl`](docs/architecture/workspace.dsl)
+- Generated C4 diagram atlas: [`docs/architecture/c4-diagrams.md`](docs/architecture/c4-diagrams.md)
+- Architecture guide: [`docs/architecture/README.md`](docs/architecture/README.md)
+- Architecture Decision Records: [`docs/architecture/adr/README.md`](docs/architecture/adr/README.md)
+
 ## Requirements / traceability
 
 | Requirement | Implementation | Verification |

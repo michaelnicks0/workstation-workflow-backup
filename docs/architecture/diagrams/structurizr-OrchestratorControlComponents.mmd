@@ -1,0 +1,54 @@
+graph LR
+  linkStyle default fill:#ffffff
+
+  subgraph diagram ["Component View: WORKSTATION1 Workflow Backup - Backup Orchestrator"]
+    style diagram fill:#ffffff,stroke:#ffffff
+
+    24[("<div style='font-weight: bold'>TrueNAS Backup Dataset</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Encrypted TrueNAS dataset<br />v1/ws1/wf with current mirror<br />tree, manifests, SMB share<br />ws1-wf, and ZFS snapshot<br />history.</div>")]
+    style 24 fill:#fef3c7,stroke:#d97706,color:#111827
+    25["<div style='font-weight: bold'>TrueNAS Middleware and ZFS Control Plane</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>root@10.99.98.221 management<br />surface used for ZFS<br />properties, snapshot tasks,<br />SMB share configuration, and<br />verification.</div>"]
+    style 25 fill:#f3e8ff,stroke:#9333ea,color:#111827
+
+    subgraph 2 ["WORKSTATION1 Workflow Backup"]
+      style 2 fill:#ffffff,stroke:#16a34a,color:#16a34a
+
+      subgraph 4 ["Backup Orchestrator"]
+        style 4 fill:#ffffff,stroke:#0284c7,color:#0284c7
+
+        13["<div style='font-weight: bold'>NAS Status Publisher</div><div style='font-size: 70%; margin-top: 0px'>[Component: Python + SSH cat]</div><div style='font-size: 80%; margin-top:10px'>Exports the run ledger to<br />JSON/SQLite snapshots and<br />writes last-run/run-history<br />manifests to NAS.</div>"]
+        style 13 fill:#f0fdf4,stroke:#22c55e,color:#111827
+        14["<div style='font-weight: bold'>Error Trap</div><div style='font-size: 70%; margin-top: 0px'>[Component: Bash ERR trap]</div><div style='font-size: 80%; margin-top:10px'>Converts command failures<br />into failed status, ledger<br />event, best-effort NAS status<br />sync, and nonzero service<br />exit.</div>"]
+        style 14 fill:#f0fdf4,stroke:#22c55e,color:#111827
+        5["<div style='font-weight: bold'>Argument Parser</div><div style='font-size: 70%; margin-top: 0px'>[Component: Bash case parser]</div><div style='font-size: 80%; margin-top:10px'>Handles --dry-run, --verbose,<br />--skip-windows, --skip-wsl,<br />and --quick-check-sqlite<br />flags.</div>"]
+        style 5 fill:#f0fdf4,stroke:#22c55e,color:#111827
+        6["<div style='font-weight: bold'>Lock and Run Identity</div><div style='font-size: 70%; margin-top: 0px'>[Component: Bash + flock]</div><div style='font-size: 80%; margin-top:10px'>Creates the local state/log<br />directories, acquires a flock<br />lock, generates run_id, and<br />skips concurrent runs<br />silently.</div>"]
+        style 6 fill:#f0fdf4,stroke:#22c55e,color:#111827
+        7["<div style='font-weight: bold'>Log and Last-Status Writer</div><div style='font-size: 70%; margin-top: 0px'>[Component: Bash + Python JSON helper]</div><div style='font-size: 80%; margin-top:10px'>Writes per-run logs and<br />last-run.json with host,<br />status, duration, dry-run,<br />error, and log path.</div>"]
+        style 7 fill:#f0fdf4,stroke:#22c55e,color:#111827
+        8["<div style='font-weight: bold'>Run Ledger Adapter</div><div style='font-size: 70%; margin-top: 0px'>[Component: record-run-ledger.py CLI]</div><div style='font-size: 80%; margin-top:10px'>Appends<br />started/completed/failed/skipped<br />events with SQLite and<br />Windows manifest summaries.</div>"]
+        style 8 fill:#f0fdf4,stroke:#22c55e,color:#111827
+        9["<div style='font-weight: bold'>Growth Guard Runner</div><div style='font-size: 70%; margin-top: 0px'>[Component: Bash subprocess]</div><div style='font-size: 80%; margin-top:10px'>Invokes<br />check-nas-growth-guard.sh<br />before and after writes and<br />fails closed on budget<br />violations.</div>"]
+        style 9 fill:#f0fdf4,stroke:#22c55e,color:#111827
+      end
+
+      17["<div style='font-weight: bold'>NAS Growth Guard</div><div style='font-size: 70%; margin-top: 0px'>[Container: Bash + remote Python + zfs CLI]</div><div style='font-size: 80%; margin-top:10px'>Read-only ZFS budget check<br />that enforces dataset-used,<br />snapshot-held, free-space,<br />and snapshot-count limits<br />before/after writes.</div>"]
+      style 17 fill:#ecfeff,stroke:#0891b2,color:#111827
+      21[("<div style='font-weight: bold'>Run Ledger and Local State</div><div style='font-size: 70%; margin-top: 0px'>[Container: SQLite + JSON + logs on WSL filesystem]</div><div style='font-size: 80%; margin-top:10px'>Local status, logs, SQLite<br />run ledger, exported<br />run-history JSON, SQLite<br />snapshot cache, and Windows<br />manifest cache under<br />~/.local/state/workstation-workflow-backup.</div>")]
+      style 21 fill:#fef3c7,stroke:#d97706,color:#111827
+    end
+
+    17-. "<div>Reads ZFS used, available,<br />usedbysnapshots, and snapshot<br />count from</div><div style='font-size: 70%'>[SSH + zfs]</div>" .->25
+    5-. "<div>Passes selected run mode to</div><div style='font-size: 70%'></div>" .->6
+    6-. "<div>Initializes log and status<br />paths for</div><div style='font-size: 70%'></div>" .->7
+    6-. "<div>Records skipped_lock when<br />another run is active</div><div style='font-size: 70%'></div>" .->8
+    8-. "<div>Writes run events to</div><div style='font-size: 70%'>[sqlite3]</div>" .->21
+    7-. "<div>Writes last-run.json and logs<br />to</div><div style='font-size: 70%'>[filesystem]</div>" .->21
+    9-. "<div>Executes guard stages through</div><div style='font-size: 70%'></div>" .->17
+    9-. "<div>Stores guard failure message<br />through</div><div style='font-size: 70%'></div>" .->7
+    13-. "<div>Snapshots ledger DB and<br />exports run history from</div><div style='font-size: 70%'>[sqlite3]</div>" .->21
+    13-. "<div>Publishes<br />_manifests/last-run.json,<br />runs.sqlite3, and<br />run-history.json to</div><div style='font-size: 70%'>[SSH cat]</div>" .->24
+    14-. "<div>Marks failed status through</div><div style='font-size: 70%'></div>" .->7
+    14-. "<div>Records failed event through</div><div style='font-size: 70%'></div>" .->8
+    14-. "<div>Best-effort syncs failure<br />status through</div><div style='font-size: 70%'></div>" .->13
+
+  end

@@ -1,0 +1,54 @@
+digraph {
+  compound=true
+  graph [fontname="Arial", rankdir=LR, ranksep=1.0, nodesep=1.0]
+  node [fontname="Arial", shape=box, margin="0.4,0.3"]
+  edge [fontname="Arial"]
+  label=<<br /><font point-size="34">Component View: WORKSTATION1 Workflow Backup - Backup Orchestrator</font><br /><font point-size="24">C3: workflow-backup.sh control path for argument handling, locking, status, ledger, guard checks, publication, and error handling.</font>>
+
+  24 [id=24,shape=cylinder, label=<<font point-size="34">TrueNAS Backup<br />Dataset</font><br /><font point-size="19">[Software System]</font><br /><br /><font point-size="24">Encrypted TrueNAS dataset<br />v1/ws1/wf with current mirror<br />tree, manifests, SMB share<br />ws1-wf, and ZFS snapshot<br />history.</font>>, style=filled, color="#d97706", fillcolor="#fef3c7", fontcolor="#111827"]
+  25 [id=25,shape=rect, label=<<font point-size="34">TrueNAS Middleware<br />and ZFS Control Plane</font><br /><font point-size="19">[Software System]</font><br /><br /><font point-size="24">root@10.99.98.221 management<br />surface used for ZFS<br />properties, snapshot tasks,<br />SMB share configuration, and<br />verification.</font>>, style=filled, color="#9333ea", fillcolor="#f3e8ff", fontcolor="#111827"]
+
+  subgraph cluster_2 {
+    margin=25
+    label=<<font point-size="24"><br />WORKSTATION1 Workflow Backup</font><br /><font point-size="19">[Software System]</font>>
+    labelloc=b
+    color="#444444"
+    fontcolor="#444444"
+    fillcolor="#444444"
+
+    subgraph cluster_4 {
+      margin=25
+      label=<<font point-size="24"><br />Backup Orchestrator</font><br /><font point-size="19">[Container: Bash]</font>>
+      labelloc=b
+      color="#444444"
+      fontcolor="#444444"
+      fillcolor="#444444"
+
+      13 [id=13,shape=rect, label=<<font point-size="34">NAS Status Publisher</font><br /><font point-size="19">[Component: Python + SSH cat]</font><br /><br /><font point-size="24">Exports the run ledger to<br />JSON/SQLite snapshots and<br />writes last-run/run-history<br />manifests to NAS.</font>>, style=filled, color="#22c55e", fillcolor="#f0fdf4", fontcolor="#111827"]
+      14 [id=14,shape=rect, label=<<font point-size="34">Error Trap</font><br /><font point-size="19">[Component: Bash ERR trap]</font><br /><br /><font point-size="24">Converts command failures into<br />failed status, ledger event,<br />best-effort NAS status sync,<br />and nonzero service exit.</font>>, style=filled, color="#22c55e", fillcolor="#f0fdf4", fontcolor="#111827"]
+      5 [id=5,shape=rect, label=<<font point-size="34">Argument Parser</font><br /><font point-size="19">[Component: Bash case parser]</font><br /><br /><font point-size="24">Handles --dry-run, --verbose,<br />--skip-windows, --skip-wsl,<br />and --quick-check-sqlite<br />flags.</font>>, style=filled, color="#22c55e", fillcolor="#f0fdf4", fontcolor="#111827"]
+      6 [id=6,shape=rect, label=<<font point-size="34">Lock and Run Identity</font><br /><font point-size="19">[Component: Bash + flock]</font><br /><br /><font point-size="24">Creates the local state/log<br />directories, acquires a flock<br />lock, generates run_id, and<br />skips concurrent runs<br />silently.</font>>, style=filled, color="#22c55e", fillcolor="#f0fdf4", fontcolor="#111827"]
+      7 [id=7,shape=rect, label=<<font point-size="34">Log and Last-Status<br />Writer</font><br /><font point-size="19">[Component: Bash + Python JSON helper]</font><br /><br /><font point-size="24">Writes per-run logs and<br />last-run.json with host,<br />status, duration, dry-run,<br />error, and log path.</font>>, style=filled, color="#22c55e", fillcolor="#f0fdf4", fontcolor="#111827"]
+      8 [id=8,shape=rect, label=<<font point-size="34">Run Ledger Adapter</font><br /><font point-size="19">[Component: record-run-ledger.py CLI]</font><br /><br /><font point-size="24">Appends<br />started/completed/failed/skipped<br />events with SQLite and Windows<br />manifest summaries.</font>>, style=filled, color="#22c55e", fillcolor="#f0fdf4", fontcolor="#111827"]
+      9 [id=9,shape=rect, label=<<font point-size="34">Growth Guard Runner</font><br /><font point-size="19">[Component: Bash subprocess]</font><br /><br /><font point-size="24">Invokes<br />check-nas-growth-guard.sh<br />before and after writes and<br />fails closed on budget<br />violations.</font>>, style=filled, color="#22c55e", fillcolor="#f0fdf4", fontcolor="#111827"]
+    }
+
+    17 [id=17,shape=hexagon, label=<<font point-size="34">NAS Growth Guard</font><br /><font point-size="19">[Container: Bash + remote Python + zfs CLI]</font><br /><br /><font point-size="24">Read-only ZFS budget check<br />that enforces dataset-used,<br />snapshot-held, free-space, and<br />snapshot-count limits<br />before/after writes.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+    21 [id=21,shape=cylinder, label=<<font point-size="34">Run Ledger and Local<br />State</font><br /><font point-size="19">[Container: SQLite + JSON + logs on WSL filesystem]</font><br /><br /><font point-size="24">Local status, logs, SQLite run<br />ledger, exported run-history<br />JSON, SQLite snapshot cache,<br />and Windows manifest cache<br />under<br />~/.local/state/workstation-workflow-backup.</font>>, style=filled, color="#d97706", fillcolor="#fef3c7", fontcolor="#111827"]
+  }
+
+  17 -> 25 [id=39, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Reads ZFS used, available,<br />usedbysnapshots, and<br />snapshot count from</font><br /><font point-size="19">[SSH + zfs]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  5 -> 6 [id=67, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Passes selected run mode<br />to</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  6 -> 7 [id=68, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Initializes log and status<br />paths for</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  6 -> 8 [id=69, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Records skipped_lock when<br />another run is active</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  8 -> 21 [id=70, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Writes run events to</font><br /><font point-size="19">[sqlite3]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  7 -> 21 [id=71, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Writes last-run.json and<br />logs to</font><br /><font point-size="19">[filesystem]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  9 -> 17 [id=72, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Executes guard stages<br />through</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  9 -> 7 [id=73, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Stores guard failure<br />message through</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  13 -> 21 [id=80, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Snapshots ledger DB and<br />exports run history from</font><br /><font point-size="19">[sqlite3]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  13 -> 24 [id=81, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Publishes<br />_manifests/last-run.json,<br />runs.sqlite3, and<br />run-history.json to</font><br /><font point-size="19">[SSH cat]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  14 -> 7 [id=82, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Marks failed status<br />through</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  14 -> 8 [id=83, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Records failed event<br />through</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  14 -> 13 [id=84, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Best-effort syncs failure<br />status through</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+
+}

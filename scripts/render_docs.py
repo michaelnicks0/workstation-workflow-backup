@@ -237,6 +237,15 @@ def render_mermaid(code: str, retheme: bool = True) -> str:
                  r"\1opacity:1;\2fill:#0e1a30;", svg)
     svg = re.sub(r"\.labelBkg\{background-color:rgba\([^)]*\);\}",
                  ".labelBkg{background-color:#0e1a30;}", svg)
+    # Mermaid emits an empty edge-label foreignObject for every unlabeled edge:
+    # <span class="edgeLabel"></span>. On dark pages these render as tiny stray
+    # label-background marks near the graph origin. Remove only genuinely empty
+    # edge-label groups; real edge labels stay intact.
+    svg = re.sub(
+        r'<g class="edgeLabel">\s*<g class="label"[^>]*>\s*'
+        r'<foreignObject[^>]*>\s*<div[^>]*class="labelBkg"[^>]*>\s*'
+        r'<span class="edgeLabel">\s*</span>\s*</div>\s*</foreignObject>\s*</g>\s*</g>',
+        '', svg)
 
     # Mermaid emits the ROOT <svg> with width="100%" + style="max-width:<native>px".
     # When dropped into a ~700px column the browser scales the ENTIRE drawing (text

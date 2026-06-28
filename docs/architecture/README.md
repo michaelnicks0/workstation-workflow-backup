@@ -11,6 +11,80 @@
 | Generated C4 atlas | [`c4-diagrams.md`](c4-diagrams.md) |
 | ADR index | [`adr/README.md`](adr/README.md) |
 
+## Architecture at a glance
+
+Compact human-first map. The generated C4 views below remain the maintainer-depth source.
+
+```mermaid
+flowchart TB
+    Operator["Michael<br/>operator"] --> Shell["Operator shell<br/>verify · restore · provision"]
+    Shell --> Backup["WORKSTATION1 Workflow Backup<br/>systemd timer + repo scripts"]
+    Sources["Workflow sources<br/>WSL + selected Windows paths"] --> Backup
+    Backup --> Dataset["TrueNAS backup dataset<br/>current tree · manifests · snapshots"]
+    Backup --> Ledger["Local run ledger<br/>SQLite + JSON status"]
+    Backup --> Control["TrueNAS control plane<br/>restricted SSH + ZFS checks"]
+    Backup --> Alert["Telegram Bot API<br/>failure-only alert"]
+
+    classDef actor fill:#1d3358,stroke:#7dd3fc,stroke-width:2px,color:#eaf2ff;
+    classDef core fill:#123f3a,stroke:#34d399,stroke-width:3px,color:#ecfeff;
+    classDef source fill:#3a2e14,stroke:#f59e0b,stroke-width:2px,color:#fff7ed;
+    classDef store fill:#2b2345,stroke:#a78bfa,stroke-width:2px,color:#f5f3ff;
+    classDef alert fill:#3f1230,stroke:#fb7185,stroke-width:2px,color:#fff1f2;
+    class Operator,Shell actor;
+    class Backup core;
+    class Sources,Dataset source;
+    class Ledger,Control store;
+    class Alert alert;
+```
+
+## Hourly runtime spine
+
+```mermaid
+flowchart TB
+    Timer["systemd timer<br/>hourly :45"] --> Lock["lock + status<br/>no overlapping runs"]
+    Lock --> Guard1["pre-write growth guard<br/>used · free · snapshots"]
+    Guard1 --> Snap["SQLite snapshots<br/>Hermes · lifelog · BMD"]
+    Guard1 --> Mirror["mirror phases<br/>WSL rsync + Windows robocopy"]
+    Snap --> Publish["publish restore tree<br/>current + manifests"]
+    Mirror --> Publish
+    Publish --> Guard2["post-write growth guard"]
+    Guard2 --> Ledger2["strict run ledger<br/>completion or failure"]
+    Ledger2 --> Alert2["Telegram alert<br/>only on nonzero"]
+
+    classDef sched fill:#1d3358,stroke:#7dd3fc,stroke-width:2px,color:#eaf2ff;
+    classDef guard fill:#3a2e14,stroke:#f59e0b,stroke-width:2px,color:#fff7ed;
+    classDef work fill:#123f3a,stroke:#34d399,stroke-width:2px,color:#ecfeff;
+    classDef record fill:#2b2345,stroke:#a78bfa,stroke-width:2px,color:#f5f3ff;
+    classDef fail fill:#3f1230,stroke:#fb7185,stroke-width:2px,color:#fff1f2;
+    class Timer,Lock sched;
+    class Guard1,Guard2 guard;
+    class Snap,Mirror,Publish work;
+    class Ledger2 record;
+    class Alert2 fail;
+```
+
+## Restore path
+
+```mermaid
+flowchart TB
+    Need["Need a restore"] --> Choose["Choose current tree<br/>or ZFS snapshot"]
+    Choose --> Stage["Stage outside live path"]
+    Stage --> Verify["Inspect + checksum<br/>before replacement"]
+    Verify --> Decision{"Replace live file?"}
+    Decision --> Replace["Yes: copy into<br/>target path"]
+    Decision --> Stop["No: keep<br/>staged copy only"]
+    Replace --> Smoke["Run targeted verification"]
+
+    classDef start fill:#1d3358,stroke:#7dd3fc,stroke-width:2px,color:#eaf2ff;
+    classDef action fill:#123f3a,stroke:#34d399,stroke-width:2px,color:#ecfeff;
+    classDef decision fill:#3a2e14,stroke:#f59e0b,stroke-width:2px,color:#fff7ed;
+    classDef stop fill:#2b2345,stroke:#a78bfa,stroke-width:2px,color:#f5f3ff;
+    class Need start;
+    class Choose,Stage,Verify,Replace,Smoke action;
+    class Decision decision;
+    class Stop stop;
+```
+
 ## Scope
 
 The architecture covers the repo-owned automation for:

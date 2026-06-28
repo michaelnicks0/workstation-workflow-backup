@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>User Guide — workstation-workflow-backup</title>
+<style>
+:root{--bg:#060d18;--bg2:#0a1426;--panel:#0e1a30;--card:#111f38;--line:#21324f;--line2:#2c4060;--text:#eaf2ff;--muted:#9fb1cc;--dim:#6f82a0;--blue:#5aa6ff;--blue2:#3b82f6;--cyan:#52d4ff;--green:#5be19c;--amber:#ffb454;--rose:#ff6f9c;--violet:#b79bff;--ink:#04122a}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;color:var(--text);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,ui-sans-serif,system-ui,sans-serif;background:radial-gradient(1100px 520px at 78% -8%,rgba(59,130,246,.22),transparent 60%),radial-gradient(820px 480px at 6% 4%,rgba(82,212,255,.12),transparent 55%),radial-gradient(700px 700px at 92% 96%,rgba(91,225,156,.08),transparent 55%),var(--bg);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:30px 22px 70px}
+a{color:var(--cyan);text-decoration:none}a:hover{text-decoration:underline}
+code{font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:#08152b;border:1px solid var(--line);border-radius:6px;padding:.1em .42em;color:#d6e6ff}
+h1,h2,h3{letter-spacing:-.02em;margin:0}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;color:var(--cyan);font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:.72rem}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--cyan);box-shadow:0 0 16px 2px rgba(82,212,255,.85);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+.hero{position:relative;border:1px solid var(--line2);border-radius:26px;padding:38px 36px 30px;margin-bottom:18px;background:linear-gradient(165deg,rgba(31,52,92,.55),rgba(10,20,38,.7));box-shadow:0 30px 90px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.05);overflow:hidden}
+.hero h1{font-size:clamp(2.3rem,5.2vw,3.9rem);line-height:1.02;margin:14px 0 12px}
+.hero h1 .g{background:linear-gradient(92deg,var(--cyan),var(--blue) 55%,var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{color:#cfe0f7;font-size:1.12rem;max-width:62ch;margin:0 0 8px}
+.hero .sub{color:var(--muted);max-width:64ch}
+.pillbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:.82rem;color:#dce8fb;background:rgba(11,22,42,.7);border:1px solid var(--line2);border-radius:999px;padding:7px 13px}
+.pill b{color:#fff}.pill .k{width:7px;height:7px;border-radius:50%}
+.k.live{background:var(--amber)}.k.local{background:var(--green)}.k.priv{background:var(--rose)}.k.blue{background:var(--blue)}
+.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:18px 0 6px}
+.metric{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));border:1px solid var(--line);border-radius:16px;padding:15px 14px;text-align:center}
+.metric .n{font-size:1.85rem;font-weight:800;letter-spacing:-.03em;background:linear-gradient(180deg,#fff,#bcd2f2);-webkit-background-clip:text;background-clip:text;color:transparent}
+.metric .l{display:block;color:var(--dim);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+@media(max-width:880px){.metrics{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:520px){.metrics{grid-template-columns:repeat(2,1fr)}}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 26px}
+.toc a{font-size:.84rem;color:#cfe0f7;border:1px solid var(--line2);background:rgba(10,20,38,.6);border-radius:999px;padding:8px 14px}
+.toc a:hover{border-color:var(--cyan);text-decoration:none;color:#fff}
+section.block{margin:30px 0}
+.block>h2{font-size:1.5rem;margin-bottom:6px;display:flex;align-items:center;gap:11px}
+.block>h2 .num{font-size:.8rem;color:var(--ink);background:linear-gradient(180deg,var(--cyan),var(--blue));width:26px;height:26px;border-radius:8px;display:inline-grid;place-items:center;font-weight:800}
+.block>p.intro{color:var(--muted);max-width:74ch;margin:6px 0 16px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+.figure{border:1px solid var(--line);border-radius:20px;background:radial-gradient(700px 300px at 50% 0,rgba(35,60,105,.4),rgba(8,17,33,.6));padding:24px;overflow:hidden}
+.figure svg{display:block;width:100%;height:auto}
+.cap{color:var(--dim);font-size:.82rem;text-align:center;margin-top:12px}
+.lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:820px){.lanes{grid-template-columns:1fr}}
+.lane{position:relative;border:1px solid var(--line2);border-radius:18px;padding:20px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));transition:transform .15s ease,border-color .15s ease}
+.lane:hover{transform:translateY(-3px);border-color:var(--cyan)}
+.lane .tag{font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700}
+.lane.exec .tag{color:var(--violet)}.lane.user .tag{color:var(--green)}.lane.maint .tag{color:var(--amber)}
+.lane h3{font-size:1.16rem;margin:8px 0 6px}.lane p{color:var(--muted);font-size:.9rem;margin:0 0 14px}
+.lane .go{font-size:.86rem;font-weight:600}
+.lane .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;margin-bottom:6px;border:1px solid var(--line2);font-size:1.2rem}
+.lane.exec .ic{background:rgba(183,155,255,.13)}.lane.user .ic{background:rgba(91,225,156,.13)}.lane.maint .ic{background:rgba(255,180,84,.13)}
+table{width:100%;border-collapse:collapse;margin-top:6px;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line)}
+th{color:var(--dim);font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700}
+tr:last-child td{border-bottom:0}td b{color:#fff}
+.note{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line2);border-left:3px solid var(--cyan);border-radius:12px;padding:14px 16px;background:rgba(10,20,38,.5);color:#cfe0f7;font-size:.9rem;margin-top:14px}
+.note .i{font-size:1.1rem;line-height:1.2}
+footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);color:var(--dim);font-size:.82rem}
+.prov{margin-top:8px;color:#5e7193}.prov code{font-size:11.5px}
+.featgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px}
+.feat{background:linear-gradient(180deg,rgba(20,32,54,.7),rgba(12,21,38,.6));border:1px solid var(--line);border-radius:16px;padding:18px}
+.feat .fic{font-size:1.4rem;margin-bottom:8px}
+.feat h3{font-size:1.02rem;margin:0 0 6px;color:#eaf2ff}
+.feat p{margin:0;color:#b8c8e4;font-size:.9rem;line-height:1.55}
+ol.flow{list-style:none;margin:0;padding:0}
+ol.flow li{display:flex;gap:14px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
+ol.flow li:last-child{border-bottom:0}
+ol.flow .fstep{flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.92rem;color:#06101f;background:linear-gradient(135deg,var(--cyan),var(--blue))}
+ol.flow .fwrap{display:flex;flex-direction:column;gap:2px}
+ol.flow .fwrap b{color:#eaf2ff;font-size:.98rem}
+ol.flow .fwrap span{color:#aebfdc;font-size:.88rem;line-height:1.5}
+table.cmdtable{width:100%;border-collapse:collapse;font-size:.86rem}
+table.cmdtable th,table.cmdtable td{text-align:left;padding:9px 12px;border:1px solid var(--line);vertical-align:top}
+table.cmdtable th{background:rgba(35,60,105,.4);color:#dbe8ff;font-weight:700}
+table.cmdtable tr:nth-child(even) td{background:rgba(255,255,255,.018)}
+table.cmdtable code{font:11.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:#08152b;border:1px solid var(--line);border-radius:5px;padding:.08em .38em;color:#d6e6ff;white-space:nowrap}
+@media(max-width:760px){.featgrid{grid-template-columns:1fr}}
+
+.docbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:14px;padding:12px 20px;margin:-30px -22px 24px;background:rgba(8,15,28,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line2)}
+.docbar a.home{display:inline-flex;align-items:center;gap:8px;font-weight:700;color:var(--cyan);font-size:.9rem}
+.docbar .crumb{color:var(--dim);font-size:.84rem}
+.docbar .crumb b{color:var(--text)}
+.md-body{max-width:none}
+.md-body h1{font-size:2.1rem;margin:6px 0 14px;letter-spacing:-.02em}
+.md-body h2{font-size:1.5rem;margin:30px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--line);letter-spacing:-.02em}
+.md-body h3{font-size:1.2rem;margin:22px 0 8px}
+.md-body h4{font-size:1.02rem;margin:18px 0 6px;color:#cfe0f7}
+.md-body p{color:#cdd9ee;margin:10px 0}
+.md-body ul,.md-body ol{color:#cdd9ee;padding-left:24px}
+.md-body li{margin:5px 0}
+.md-body a{color:var(--cyan)}
+.md-body strong{color:#fff}
+.md-body blockquote{margin:14px 0;padding:10px 16px;border-left:3px solid var(--blue);background:rgba(10,20,38,.55);border-radius:0 10px 10px 0;color:#bcd0ec}
+.md-body code{font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:#08152b;border:1px solid var(--line);border-radius:6px;padding:.1em .42em;color:#d6e6ff}
+.md-body pre{background:#070f1f;border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow:auto;margin:14px 0}
+.md-body pre code{background:none;border:0;padding:0;color:#d6e6ff;font-size:12.5px;line-height:1.6}
+.md-body table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.88rem}
+.md-body th,.md-body td{text-align:left;padding:9px 12px;border:1px solid var(--line)}
+.md-body th{background:rgba(35,60,105,.4);color:#dbe8ff;font-weight:700}
+.md-body tr:nth-child(even) td{background:rgba(255,255,255,.018)}
+.md-body hr{border:0;border-top:1px solid var(--line);margin:26px 0}
+.md-body .mmd{margin:18px 0;padding:16px;border:1px solid var(--line);border-radius:16px;background:radial-gradient(700px 280px at 50% 0,rgba(35,60,105,.32),rgba(8,17,33,.55))}
+.md-body .mmd-scroll{overflow-x:auto;overflow-y:hidden;text-align:center}
+.md-body .mmd:not(.wide) .mmd-scroll{text-align:center}
+.md-body .mmd.wide .mmd-scroll{text-align:left}
+.md-body .mmd svg{height:auto;display:inline-block}
+.md-body .mmd-hint{font:600 11px/1.4 ui-sans-serif,system-ui;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px;opacity:.8}
+.md-body .mmd-scroll::-webkit-scrollbar{height:9px}
+.md-body .mmd-scroll::-webkit-scrollbar-thumb{background:var(--line2);border-radius:6px}
+.md-body .mmd-scroll::-webkit-scrollbar-track{background:transparent}
+.md-body .codehilite{background:#070f1f;border:1px solid var(--line);border-radius:12px;margin:14px 0}
+.md-body .codehilite pre{border:0;margin:0;background:none}
+.md-footer{margin-top:42px;padding-top:18px;border-top:1px solid var(--line);color:var(--dim);font-size:.82rem}
+.md-footer code{font-size:11.5px}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="docbar">
+    <a class="home" href="../workstation-workflow-backup-high-level-doc.html">⌂ workstation-workflow-backup overview</a>
+    <span class="crumb">/ <b>docs/USER_GUIDE.md</b></span>
+  </div>
+  <article class="md-body">
+<h1 id="user-guide-workstation1-workflow-backup">User Guide — WORKSTATION1 Workflow Backup</h1>
+<h2 id="mental-model-in-one-sentence">Mental model in one sentence</h2>
+<p>Every hour, this system <strong>silently rsyncs your workflow state to TrueNAS,
+snaps a ZFS timeline, and shouts only if something breaks.</strong></p>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code>WORKSTATION1 (:45 each hour)
+  │
+  ├─ pre-flight: growth guard (fail-closed)
+  ├─ SQLite snapshots (consistent copies of live DBs)
+  ├─ WSL rsync → NAS current/wsl/...
+  ├─ Windows robocopy → NAS current/windows/...
+  ├─ post-flight: growth guard (fail-closed)
+  ├─ run ledger + integrity manifest → NAS current/_manifests/
+  └─ silent on success / Telegram on failure
+        │
+        └─ TrueNAS ZFS snapshot ladder
+             wf-h-*  2 days      ←── ≤1h RPO window
+             wf-d-*  2 weeks
+             wf-w-*  8 weeks
+             wf-m-*  1 year
+</code></pre></div>
+
+<p>Once installed and configured, you never interact with this system unless something breaks or you need to restore.</p>
+<hr />
+<h2 id="first-run-journey">First-run journey</h2>
+<h3 id="1-configure">1. Configure</h3>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><span style="color: #F8F8F2">cd </span>~/repos/workstation/workstation-workflow-backup
+cp<span style="color: #F8F8F2"> </span>config/backup.env.example<span style="color: #F8F8F2"> </span>config/backup.env
+<span style="color: #F8F8F2">$EDITOR </span>config/backup.env<span style="color: #F8F8F2">          </span><span style="color: #959077"># fill in NAS_HOST, NAS_USER, paths, keys</span>
+</code></pre></div>
+
+<p>Key values to set:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>What it controls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NAS_HOST</code></td>
+<td>TrueNAS hostname or IP</td>
+</tr>
+<tr>
+<td><code>NAS_USER</code> / <code>NAS_RUNTIME_USER</code></td>
+<td>Dedicated restricted backup user (default: <code>ws1backup</code>)</td>
+</tr>
+<tr>
+<td><code>NAS_ADMIN_USER</code></td>
+<td>Admin SSH user for restore/provisioning only</td>
+</tr>
+<tr>
+<td><code>NAS_SSH_KEY</code></td>
+<td>Path to dedicated runtime SSH private key</td>
+</tr>
+<tr>
+<td><code>NAS_KNOWN_HOSTS</code></td>
+<td>Path to pinned-host-key file</td>
+</tr>
+<tr>
+<td><code>NAS_HOST_KEY_ALIAS</code></td>
+<td>Logical alias for the pinned host key</td>
+</tr>
+<tr>
+<td><code>NAS_DATASET</code></td>
+<td>TrueNAS ZFS dataset path (e.g. <code>pool/workstation/workflow</code>)</td>
+</tr>
+<tr>
+<td><code>NAS_PATH</code></td>
+<td>Mountpoint of the dataset (e.g. <code>/mnt/pool/workstation/workflow</code>)</td>
+</tr>
+<tr>
+<td><code>NAS_UNC</code></td>
+<td>SMB share UNC path for Windows robocopy phase</td>
+</tr>
+</tbody>
+</table>
+<h3 id="2-generate-a-runtime-ssh-key-if-needed">2. Generate a runtime SSH key (if needed)</h3>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><span style="color: #F8F8F2">source </span>config/backup.env
+ssh-keygen<span style="color: #F8F8F2"> </span>-t<span style="color: #F8F8F2"> </span>ed25519<span style="color: #F8F8F2"> </span>-N<span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&#39;&#39;</span><span style="color: #F8F8F2"> </span>-C<span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&#39;workstation-workflow-backup runtime&#39;</span><span style="color: #F8F8F2"> </span>-f<span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2">$NAS_SSH_KEY</span><span style="color: #E6DB74">&quot;</span>
+ssh-keyscan<span style="color: #F8F8F2"> </span>-t<span style="color: #F8F8F2"> </span>ed25519<span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2">$NAS_HOST</span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2"> | </span>sed<span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;s/^</span><span style="color: #F8F8F2">$NAS_HOST</span><span style="color: #E6DB74"> /</span><span style="color: #F8F8F2">$NAS_HOST_KEY_ALIAS</span><span style="color: #E6DB74"> /&quot;</span><span style="color: #F8F8F2"> </span>&gt;<span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2">$NAS_KNOWN_HOSTS</span><span style="color: #E6DB74">&quot;</span>
+chmod<span style="color: #F8F8F2"> </span><span style="color: #AE81FF">600</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2">$NAS_SSH_KEY</span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2">$NAS_KNOWN_HOSTS</span><span style="color: #E6DB74">&quot;</span>
+</code></pre></div>
+
+<h3 id="3-verify-and-provision">3. Verify and provision</h3>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code>./scripts/run-tests.sh
+./scripts/nas-provision.sh<span style="color: #F8F8F2">         </span><span style="color: #959077"># create dataset/share/snapshot tasks on TrueNAS</span>
+./scripts/install-nas-runtime-hardening.sh<span style="color: #F8F8F2">   </span><span style="color: #959077"># install restricted user/key/forced-command on NAS</span>
+./scripts/install-systemd-user.sh<span style="color: #F8F8F2">  </span><span style="color: #959077"># install and enable the systemd user timer</span>
+</code></pre></div>
+
+<h3 id="4-smoke-test-optional-manual-run">4. Smoke-test (optional manual run)</h3>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code>./scripts/workflow-backup.sh<span style="color: #F8F8F2"> </span>--verbose<span style="color: #F8F8F2">   </span><span style="color: #959077"># runs a full backup cycle, verbose output</span>
+./scripts/verify-backup.sh<span style="color: #F8F8F2">               </span><span style="color: #959077"># health check against live NAS state</span>
+</code></pre></div>
+
+<h3 id="5-confirm-the-timer-is-running">5. Confirm the timer is running</h3>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code>systemctl<span style="color: #F8F8F2"> </span>--user<span style="color: #F8F8F2"> </span>list-timers<span style="color: #F8F8F2"> </span>workstation-workflow-backup.timer
+</code></pre></div>
+
+<p>You should see the timer scheduled for the next <code>:45</code> mark. Successful runs are silent.</p>
+<hr />
+<h2 id="i-want-to-start-here">I want to… → start here</h2>
+<table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Command / doc</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Check if the backup ran recently</strong></td>
+<td><code>python3 scripts/record-run-ledger.py status --db ~/.local/state/workstation-workflow-backup/runs.sqlite3 --limit 12</code></td>
+</tr>
+<tr>
+<td><strong>Check NAS dataset growth budget</strong></td>
+<td><code>./scripts/check-nas-growth-guard.sh --stage manual</code></td>
+</tr>
+<tr>
+<td><strong>Restore a missing repo file</strong></td>
+<td><a href="restore-runbook.html">Restore Runbook</a> → "Restore a missing repo file"</td>
+</tr>
+<tr>
+<td><strong>Restore Hermes state.db</strong></td>
+<td><a href="restore-runbook.html">Restore Runbook</a> → "Restore Hermes state.db from a consistent snapshot"</td>
+</tr>
+<tr>
+<td><strong>Restore Windows artifacts</strong></td>
+<td><a href="restore-runbook.html">Restore Runbook</a> → "Restore Windows artifacts"</td>
+</tr>
+<tr>
+<td><strong>Pick a snapshot</strong></td>
+<td><code>ssh_nas_admin "zfs list -t snapshot -r '$NAS_DATASET' -o name,creation,used,refer \| tail -80"</code></td>
+</tr>
+<tr>
+<td><strong>Verify a staged restore file</strong></td>
+<td><a href="restore-runbook.html">Restore Runbook</a> → "Verify a staged restore against the integrity manifest"</td>
+</tr>
+<tr>
+<td><strong>Investigate a failure alert</strong></td>
+<td>Check <code>~/.local/state/workstation-workflow-backup/logs/</code> for the latest log; also run <code>systemctl --user status workstation-workflow-backup.service</code></td>
+</tr>
+<tr>
+<td><strong>Temporarily pause the timer</strong></td>
+<td><code>systemctl --user stop workstation-workflow-backup.timer</code> (then start when ready)</td>
+</tr>
+<tr>
+<td><strong>Re-provision NAS snapshot tasks</strong></td>
+<td><code>./scripts/nas-provision.sh</code> (idempotent)</td>
+</tr>
+<tr>
+<td><strong>Read architecture docs</strong></td>
+<td><a href="architecture/README.html">Architecture README</a></td>
+</tr>
+<tr>
+<td><strong>Read decision history</strong></td>
+<td><a href="architecture/adr/README.html">ADR Index</a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="the-one-safety-rule-that-matters">The one safety rule that matters</h2>
+<p><strong>Never run <code>./scripts/verify-backup.sh</code> or <code>./scripts/workflow-backup.sh</code> to "test" — instead use <code>./scripts/check-nas-growth-guard.sh --stage manual</code> for a read-only NAS budget check, and <code>python3 scripts/record-run-ledger.py status</code> for run history.</strong></p>
+<p>Specifically:</p>
+<ul>
+<li>Do <strong>not</strong> manually <code>rsync --delete</code> to NAS paths; a wrong target can silently wipe backup history.</li>
+<li>Do <strong>not</strong> bump <code>zfs destroy</code> snapshots to "clean up" — let TrueNAS manage retention; manual destroys bypass the budgets.</li>
+<li>Do <strong>not</strong> disable the growth guard to silence an alert — a guard failure means the dataset needs review, not suppression.</li>
+<li>Do <strong>not</strong> commit or print <code>config/backup.env</code>, SSH private keys, TrueNAS encryption keys, or the contents of backed-up payload files.</li>
+</ul>
+<hr />
+<h2 id="local-state-layout">Local state layout</h2>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code>~/.local/state/workstation-workflow-backup/
+├── last-run.json               # compatibility latest-run status
+├── runs.sqlite3                # append-only run event ledger
+├── nas-export/run-history.json # exported recent run summaries before NAS sync
+└── logs/workflow-backup-*.log  # one log per run, pruned after 90 days
+</code></pre></div>
+
+<hr />
+<h2 id="failure-alert-behavior">Failure alert behavior</h2>
+<p>Successful runs are completely silent. A Telegram message via your Hermes
+bot is sent <strong>only</strong> when the systemd service exits nonzero (via
+<code>OnFailure=workstation-workflow-backup-failure-notify@%n.service</code>).</p>
+<p>When you receive a failure alert:</p>
+<ol>
+<li>Read the log: <code>ls -lt ~/.local/state/workstation-workflow-backup/logs/ | head -3</code> then <code>cat</code> the newest file.</li>
+<li>Check the run ledger: <code>python3 scripts/record-run-ledger.py status --db ~/.local/state/workstation-workflow-backup/runs.sqlite3 --limit 5</code>.</li>
+<li>If the growth guard fired, run <code>./scripts/check-nas-growth-guard.sh --stage manual</code> to inspect each budget dimension.</li>
+<li>Fix the root cause (disk space, NAS connectivity, growth budget) before re-enabling the timer.</li>
+</ol>
+<hr />
+<h2 id="what-this-backup-does-not-cover">What this backup does NOT cover</h2>
+<ul>
+<li>Full WSL distro export or bare-metal recovery: see <code>~/repos/workstation/freenas-windows-backup</code>.</li>
+<li>Windows full-profile or OS images.</li>
+<li>TrueNAS encryption-key custody and cold reboot/import/unlock drills.</li>
+<li>Artifacts that have aged out of the retention window (&gt; 1 year for monthly snapshots).</li>
+</ul>
+<hr />
+<h2 id="further-reading">Further reading</h2>
+<ul>
+<li><a href="../README.html">README</a> — full configuration reference, snapshot schedule table, restore quick reference</li>
+<li><a href="restore-runbook.html">Restore Runbook</a> — step-by-step restore procedures</li>
+<li><a href="architecture/README.html">Architecture README</a> — C4 views and ADR overview</li>
+<li><a href="architecture/adr/README.html">ADR Index</a> — six design decisions with rationale</li>
+<li><a href="architecture/c4-diagrams.html">C4 Diagrams</a> — generated diagram atlas</li>
+<li><a href="TESTS.html">Test Inventory</a> — 14 static contract tests and coverage map</li>
+<li><a href="EXECUTIVE_BRIEF.html">Executive Brief</a> — risk posture and maturity summary</li>
+</ul>
+  </article>
+  <div class="md-footer">
+    Rendered from <code>docs/USER_GUIDE.md</code> — the Markdown file is the canonical,
+    version-controlled source. This HTML is generated (regenerate with
+    <code>scripts/render_docs.py</code>); do not hand-edit.
+  </div>
+</div>
+</body>
+</html>

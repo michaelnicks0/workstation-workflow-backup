@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Readme — workstation-workflow-backup</title>
+<style>
+:root{--bg:#060d18;--bg2:#0a1426;--panel:#0e1a30;--card:#111f38;--line:#21324f;--line2:#2c4060;--text:#eaf2ff;--muted:#9fb1cc;--dim:#6f82a0;--blue:#5aa6ff;--blue2:#3b82f6;--cyan:#52d4ff;--green:#5be19c;--amber:#ffb454;--rose:#ff6f9c;--violet:#b79bff;--ink:#04122a}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;color:var(--text);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,ui-sans-serif,system-ui,sans-serif;background:radial-gradient(1100px 520px at 78% -8%,rgba(59,130,246,.22),transparent 60%),radial-gradient(820px 480px at 6% 4%,rgba(82,212,255,.12),transparent 55%),radial-gradient(700px 700px at 92% 96%,rgba(91,225,156,.08),transparent 55%),var(--bg);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:30px 22px 70px}
+a{color:var(--cyan);text-decoration:none}a:hover{text-decoration:underline}
+code{font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:#08152b;border:1px solid var(--line);border-radius:6px;padding:.1em .42em;color:#d6e6ff}
+h1,h2,h3{letter-spacing:-.02em;margin:0}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;color:var(--cyan);font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:.72rem}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--cyan);box-shadow:0 0 16px 2px rgba(82,212,255,.85);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+.hero{position:relative;border:1px solid var(--line2);border-radius:26px;padding:38px 36px 30px;margin-bottom:18px;background:linear-gradient(165deg,rgba(31,52,92,.55),rgba(10,20,38,.7));box-shadow:0 30px 90px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.05);overflow:hidden}
+.hero h1{font-size:clamp(2.3rem,5.2vw,3.9rem);line-height:1.02;margin:14px 0 12px}
+.hero h1 .g{background:linear-gradient(92deg,var(--cyan),var(--blue) 55%,var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{color:#cfe0f7;font-size:1.12rem;max-width:62ch;margin:0 0 8px}
+.hero .sub{color:var(--muted);max-width:64ch}
+.pillbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:.82rem;color:#dce8fb;background:rgba(11,22,42,.7);border:1px solid var(--line2);border-radius:999px;padding:7px 13px}
+.pill b{color:#fff}.pill .k{width:7px;height:7px;border-radius:50%}
+.k.live{background:var(--amber)}.k.local{background:var(--green)}.k.priv{background:var(--rose)}.k.blue{background:var(--blue)}
+.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:18px 0 6px}
+.metric{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));border:1px solid var(--line);border-radius:16px;padding:15px 14px;text-align:center}
+.metric .n{font-size:1.85rem;font-weight:800;letter-spacing:-.03em;background:linear-gradient(180deg,#fff,#bcd2f2);-webkit-background-clip:text;background-clip:text;color:transparent}
+.metric .l{display:block;color:var(--dim);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+@media(max-width:880px){.metrics{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:520px){.metrics{grid-template-columns:repeat(2,1fr)}}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 26px}
+.toc a{font-size:.84rem;color:#cfe0f7;border:1px solid var(--line2);background:rgba(10,20,38,.6);border-radius:999px;padding:8px 14px}
+.toc a:hover{border-color:var(--cyan);text-decoration:none;color:#fff}
+section.block{margin:30px 0}
+.block>h2{font-size:1.5rem;margin-bottom:6px;display:flex;align-items:center;gap:11px}
+.block>h2 .num{font-size:.8rem;color:var(--ink);background:linear-gradient(180deg,var(--cyan),var(--blue));width:26px;height:26px;border-radius:8px;display:inline-grid;place-items:center;font-weight:800}
+.block>p.intro{color:var(--muted);max-width:74ch;margin:6px 0 16px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+.figure{border:1px solid var(--line);border-radius:20px;background:radial-gradient(700px 300px at 50% 0,rgba(35,60,105,.4),rgba(8,17,33,.6));padding:24px;overflow:hidden}
+.figure svg{display:block;width:100%;height:auto}
+.cap{color:var(--dim);font-size:.82rem;text-align:center;margin-top:12px}
+.lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:820px){.lanes{grid-template-columns:1fr}}
+.lane{position:relative;border:1px solid var(--line2);border-radius:18px;padding:20px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));transition:transform .15s ease,border-color .15s ease}
+.lane:hover{transform:translateY(-3px);border-color:var(--cyan)}
+.lane .tag{font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700}
+.lane.exec .tag{color:var(--violet)}.lane.user .tag{color:var(--green)}.lane.maint .tag{color:var(--amber)}
+.lane h3{font-size:1.16rem;margin:8px 0 6px}.lane p{color:var(--muted);font-size:.9rem;margin:0 0 14px}
+.lane .go{font-size:.86rem;font-weight:600}
+.lane .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;margin-bottom:6px;border:1px solid var(--line2);font-size:1.2rem}
+.lane.exec .ic{background:rgba(183,155,255,.13)}.lane.user .ic{background:rgba(91,225,156,.13)}.lane.maint .ic{background:rgba(255,180,84,.13)}
+table{width:100%;border-collapse:collapse;margin-top:6px;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line)}
+th{color:var(--dim);font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700}
+tr:last-child td{border-bottom:0}td b{color:#fff}
+.note{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line2);border-left:3px solid var(--cyan);border-radius:12px;padding:14px 16px;background:rgba(10,20,38,.5);color:#cfe0f7;font-size:.9rem;margin-top:14px}
+.note .i{font-size:1.1rem;line-height:1.2}
+footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);color:var(--dim);font-size:.82rem}
+.prov{margin-top:8px;color:#5e7193}.prov code{font-size:11.5px}
+.featgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px}
+.feat{background:linear-gradient(180deg,rgba(20,32,54,.7),rgba(12,21,38,.6));border:1px solid var(--line);border-radius:16px;padding:18px}
+.feat .fic{font-size:1.4rem;margin-bottom:8px}
+.feat h3{font-size:1.02rem;margin:0 0 6px;color:#eaf2ff}
+.feat p{margin:0;color:#b8c8e4;font-size:.9rem;line-height:1.55}
+ol.flow{list-style:none;margin:0;padding:0}
+ol.flow li{display:flex;gap:14px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
+ol.flow li:last-child{border-bottom:0}
+ol.flow .fstep{flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.92rem;color:#06101f;background:linear-gradient(135deg,var(--cyan),var(--blue))}
+ol.flow .fwrap{display:flex;flex-direction:column;gap:2px}
+ol.flow .fwrap b{color:#eaf2ff;font-size:.98rem}
+ol.flow .fwrap span{color:#aebfdc;font-size:.88rem;line-height:1.5}
+table.cmdtable{width:100%;border-collapse:collapse;font-size:.86rem}
+table.cmdtable th,table.cmdtable td{text-align:left;padding:9px 12px;border:1px solid var(--line);vertical-align:top}
+table.cmdtable th{background:rgba(35,60,105,.4);color:#dbe8ff;font-weight:700}
+table.cmdtable tr:nth-child(even) td{background:rgba(255,255,255,.018)}
+table.cmdtable code{font:11.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:#08152b;border:1px solid var(--line);border-radius:5px;padding:.08em .38em;color:#d6e6ff;white-space:nowrap}
+@media(max-width:760px){.featgrid{grid-template-columns:1fr}}
+
+.docbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:14px;padding:12px 20px;margin:-30px -22px 24px;background:rgba(8,15,28,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line2)}
+.docbar a.home{display:inline-flex;align-items:center;gap:8px;font-weight:700;color:var(--cyan);font-size:.9rem}
+.docbar .crumb{color:var(--dim);font-size:.84rem}
+.docbar .crumb b{color:var(--text)}
+.md-body{max-width:none}
+.md-body h1{font-size:2.1rem;margin:6px 0 14px;letter-spacing:-.02em}
+.md-body h2{font-size:1.5rem;margin:30px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--line);letter-spacing:-.02em}
+.md-body h3{font-size:1.2rem;margin:22px 0 8px}
+.md-body h4{font-size:1.02rem;margin:18px 0 6px;color:#cfe0f7}
+.md-body p{color:#cdd9ee;margin:10px 0}
+.md-body ul,.md-body ol{color:#cdd9ee;padding-left:24px}
+.md-body li{margin:5px 0}
+.md-body a{color:var(--cyan)}
+.md-body strong{color:#fff}
+.md-body blockquote{margin:14px 0;padding:10px 16px;border-left:3px solid var(--blue);background:rgba(10,20,38,.55);border-radius:0 10px 10px 0;color:#bcd0ec}
+.md-body code{font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:#08152b;border:1px solid var(--line);border-radius:6px;padding:.1em .42em;color:#d6e6ff}
+.md-body pre{background:#070f1f;border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow:auto;margin:14px 0}
+.md-body pre code{background:none;border:0;padding:0;color:#d6e6ff;font-size:12.5px;line-height:1.6}
+.md-body table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.88rem}
+.md-body th,.md-body td{text-align:left;padding:9px 12px;border:1px solid var(--line)}
+.md-body th{background:rgba(35,60,105,.4);color:#dbe8ff;font-weight:700}
+.md-body tr:nth-child(even) td{background:rgba(255,255,255,.018)}
+.md-body hr{border:0;border-top:1px solid var(--line);margin:26px 0}
+.md-body .mmd{margin:18px 0;padding:16px;border:1px solid var(--line);border-radius:16px;background:radial-gradient(700px 280px at 50% 0,rgba(35,60,105,.32),rgba(8,17,33,.55))}
+.md-body .mmd-scroll{overflow-x:auto;overflow-y:hidden;text-align:center}
+.md-body .mmd:not(.wide) .mmd-scroll{text-align:center}
+.md-body .mmd.wide .mmd-scroll{text-align:left}
+.md-body .mmd svg{height:auto;display:inline-block}
+.md-body .mmd-hint{font:600 11px/1.4 ui-sans-serif,system-ui;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px;opacity:.8}
+.md-body .mmd-scroll::-webkit-scrollbar{height:9px}
+.md-body .mmd-scroll::-webkit-scrollbar-thumb{background:var(--line2);border-radius:6px}
+.md-body .mmd-scroll::-webkit-scrollbar-track{background:transparent}
+.md-body .codehilite{background:#070f1f;border:1px solid var(--line);border-radius:12px;margin:14px 0}
+.md-body .codehilite pre{border:0;margin:0;background:none}
+.md-footer{margin-top:42px;padding-top:18px;border-top:1px solid var(--line);color:var(--dim);font-size:.82rem}
+.md-footer code{font-size:11.5px}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="docbar">
+    <a class="home" href="workstation-workflow-backup-high-level-doc.html">⌂ workstation-workflow-backup overview</a>
+    <span class="crumb">/ <b>README.md</b></span>
+  </div>
+  <article class="md-body">
+<h1 id="workstation1-workflow-backup">WORKSTATION1 Workflow Backup</h1>
+<p>High-frequency, ZFS-backed backup for local workflow state that would hurt if WORKSTATION1/WSL damaged or deleted it.</p>
+<h2 id="mission">Mission</h2>
+<p>Keep Michael's WSL/Hermes/workflow state recoverable on the configured TrueNAS dataset with a practical recovery point objective of <strong>≤ 1 hour for the last day</strong> plus bounded daily/weekly/monthly rollback points. Local sync runs hourly; ZFS snapshots protect against accidental local deletes or corruptions that are mirrored into the current backup. A fail-closed growth guard and dataset <code>refquota</code> stop backup writes before this dataset can silently run away.</p>
+<h2 id="operating-concept">Operating concept</h2>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code>WORKSTATION1 WSL + selected Windows artifacts
+  ├─ hourly at :45: rsync / robocopy to NAS current tree
+  ├─ runtime SSH: dedicated restricted NAS user/key, pinned host key, no root automation
+  ├─ before/after sync: fail-closed NAS dataset growth guard
+  ├─ restore checksums: NAS-side integrity manifest for critical restore artifacts
+  ├─ hourly: TrueNAS periodic ZFS snapshot retained 2 days
+  ├─ daily: TrueNAS periodic ZFS snapshot retained 2 weeks
+  ├─ weekly: TrueNAS periodic ZFS snapshot retained 8 weeks
+  ├─ monthly: TrueNAS periodic ZFS snapshot retained 1 year
+  └─ on backup failure only: Telegram alert through existing Hermes bot env
+</code></pre></div>
+
+<p>Local machine/NAS values live in ignored <code>config/backup.env</code>; the public template is <a href="config/backup.env.example"><code>config/backup.env.example</code></a>.</p>
+<p>Key configured surfaces:</p>
+<ul>
+<li>NAS dataset: <code>$NAS_DATASET</code></li>
+<li>NAS mountpoint: <code>$NAS_PATH</code></li>
+<li>SMB share: <code>$NAS_UNC</code></li>
+<li>Runtime SSH user: <code>$NAS_USER</code> (dedicated backup user, not root)</li>
+<li>Admin SSH user: <code>$NAS_ADMIN_USER</code> (manual provisioning/restore only)</li>
+<li>Pinned host key file: <code>$NAS_KNOWN_HOSTS</code> with <code>$NAS_HOST_KEY_ALIAS</code></li>
+<li>Systemd timer: <code>workstation-workflow-backup.timer</code></li>
+<li>Hourly snapshots: <code>wf-h-%Y%m%d-%H%M</code>, retained <code>2 DAYS</code></li>
+<li>Daily snapshots: <code>wf-d-%Y%m%d-%H%M</code>, retained <code>2 WEEKS</code></li>
+<li>Weekly snapshots: <code>wf-w-%Y%m%d-%H%M</code>, retained <code>8 WEEKS</code></li>
+<li>Monthly snapshots: <code>wf-m-%Y%m%d-%H%M</code>, retained <code>1 YEAR</code></li>
+<li>Growth guard: fails backup when dataset exceeds 2 TiB used, 1 TiB snapshot-held blocks, 5000 snapshots, or leaves less than 2 TiB free on the configured availability dataset</li>
+<li>Live current-tree hard cap: ZFS <code>refquota</code> from <code>$NAS_DATASET_REFQUOTA_BYTES</code></li>
+</ul>
+<h2 id="security-model">Security model</h2>
+<p>The hourly path does <strong>not</strong> SSH to the NAS as root. Runtime NAS access is installed by <a href="scripts/install-nas-runtime-hardening.sh"><code>scripts/install-nas-runtime-hardening.sh</code></a>:</p>
+<ul>
+<li>creates/updates a dedicated runtime user (default <code>ws1backup</code>);</li>
+<li>installs a dedicated runtime SSH public key;</li>
+<li>pins the NAS host key through <code>StrictHostKeyChecking=yes</code>, <code>UserKnownHostsFile</code>, and <code>HostKeyAlias</code>;</li>
+<li>forces the runtime key through <code>scripts/nas-runtime-ssh-dispatch.py</code> on the NAS;</li>
+<li>permits only restricted <code>rsync --server</code> writes under <code>$NAS_PATH/current</code>, <code>mkdir -p</code> under that tree, and sudo execution of the NAS-side guard/integrity helpers;</li>
+<li>rejects interactive shell, arbitrary commands, port forwarding, agent forwarding, X11 forwarding, PTY, and rsync sender mode;</li>
+<li>applies a ZFS <code>refquota</code> so direct SMB/robocopy growth is interrupted by ZFS rather than only detected after the run.</li>
+</ul>
+<p>Root/admin SSH remains necessary for explicit provisioning, snapshot inspection, and restore operations. It is not used by the hourly systemd timer.</p>
+<h2 id="nas-encryptionkey-state">NAS encryption/key state</h2>
+<p>The workflow backup dataset lives under encrypted pool root <code>v1</code> on the live WORKSTATION1 NAS. This repo must never store TrueNAS encryption keys, config DB exports, SMB credentials, private SSH keys, or backed-up payload contents. Live unlock/import status should be checked with <code>scripts/verify-backup.sh</code>; this does not replace a separate cold reboot/import/unlock drill.</p>
+<h2 id="snapshot-schedule-pruning">Snapshot schedule / pruning</h2>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Scheduler</th>
+<th style="text-align: right;">Enabled</th>
+<th>Schedule</th>
+<th>Snapshot name</th>
+<th>Pruning / retention</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Current mirror sync</td>
+<td>WSL systemd user timer</td>
+<td style="text-align: right;">Yes</td>
+<td><code>OnCalendar=*:45</code>, <code>OnBootSec=3min</code>, <code>AccuracySec=1min</code>, <code>RandomizedDelaySec=30s</code>, <code>Persistent=true</code></td>
+<td>Not a ZFS snapshot; writes <code>current/...</code></td>
+<td>No mirror history; delete/corruption recovery depends on ZFS snapshots below</td>
+</tr>
+<tr>
+<td>Hourly ZFS snapshots</td>
+<td>TrueNAS periodic snapshot task</td>
+<td style="text-align: right;">Yes</td>
+<td>every hour at minute <code>0</code>, all day</td>
+<td><code>wf-h-%Y%m%d-%H%M</code></td>
+<td>TrueNAS lifetime <code>2 DAYS</code>; <code>allow_empty=false</code>; recursive</td>
+</tr>
+<tr>
+<td>Daily ZFS snapshots</td>
+<td>TrueNAS periodic snapshot task</td>
+<td style="text-align: right;">Yes</td>
+<td>every day at <code>00:10</code></td>
+<td><code>wf-d-%Y%m%d-%H%M</code></td>
+<td>TrueNAS lifetime <code>2 WEEKS</code>; <code>allow_empty=true</code>; recursive</td>
+</tr>
+<tr>
+<td>Weekly ZFS snapshots</td>
+<td>TrueNAS periodic snapshot task</td>
+<td style="text-align: right;">Yes</td>
+<td>Sunday at <code>00:20</code></td>
+<td><code>wf-w-%Y%m%d-%H%M</code></td>
+<td>TrueNAS lifetime <code>8 WEEKS</code>; <code>allow_empty=true</code>; recursive</td>
+</tr>
+<tr>
+<td>Monthly ZFS snapshots</td>
+<td>TrueNAS periodic snapshot task</td>
+<td style="text-align: right;">Yes</td>
+<td>day <code>1</code> at <code>00:30</code></td>
+<td><code>wf-m-%Y%m%d-%H%M</code></td>
+<td>TrueNAS lifetime <code>1 YEAR</code>; <code>allow_empty=true</code>; recursive</td>
+</tr>
+<tr>
+<td>Retired retained-snapshot cron jobs</td>
+<td>TrueNAS root cron jobs</td>
+<td style="text-align: right;">No</td>
+<td>formerly Sunday <code>00:20</code> / day <code>1</code> at <code>00:30</code></td>
+<td><code>wf-w-*</code> / <code>wf-m-*</code></td>
+<td>Disabled by <code>nas-provision.sh</code>; legacy helper is renamed to <code>.retired</code>; retention is managed by TrueNAS periodic snapshot tasks, not repo-owned <code>zfs destroy</code> helpers</td>
+</tr>
+<tr>
+<td>Legacy hourly task</td>
+<td>TrueNAS periodic snapshot task</td>
+<td style="text-align: right;">No</td>
+<td>formerly every hour at minute <code>0</code></td>
+<td><code>wf-%Y%m%d-%H%M</code></td>
+<td>Disabled by <code>nas-provision.sh</code>; existing snapshots are preserved if any remain</td>
+</tr>
+</tbody>
+</table>
+<p>Manual snapshots, such as <code>post-cleanup-*</code>, are outside configured pruning and must be reviewed/deleted explicitly.</p>
+<h2 id="documentation">Documentation</h2>
+<table>
+<thead>
+<tr>
+<th>Doc</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong><a href="workstation-workflow-backup-high-level-doc.html">High-level doc</a></strong></td>
+<td>Front door: what it does, how it works, commands, mental model, safety boundary</td>
+</tr>
+<tr>
+<td><a href="docs/USER_GUIDE.html">User Guide</a></td>
+<td>First-run journey, I want to… routing table, failure alert response, safety rules</td>
+</tr>
+<tr>
+<td><a href="docs/EXECUTIVE_BRIEF.html">Executive Brief</a></td>
+<td>Risk posture, retention schedule, maturity summary</td>
+</tr>
+<tr>
+<td><a href="docs/restore-runbook.html">Restore Runbook</a></td>
+<td>Step-by-step restore for files, DBs, Windows artifacts</td>
+</tr>
+<tr>
+<td><a href="docs/architecture/README.html">Architecture README</a></td>
+<td>C4 views, ADR overview, architecture sources</td>
+</tr>
+<tr>
+<td><a href="docs/architecture/c4-diagrams.html">C4 Diagrams</a></td>
+<td>Generated 10-view diagram atlas</td>
+</tr>
+<tr>
+<td><a href="docs/architecture/adr/README.html">ADR Index</a></td>
+<td>6 decisions with rationale</td>
+</tr>
+<tr>
+<td><a href="docs/TESTS.html">Test Inventory</a></td>
+<td>14 static contract tests, coverage map</td>
+</tr>
+</tbody>
+</table>
+<h2 id="architecture-adrs">Architecture / ADRs</h2>
+<ul>
+<li>C4 model source: <a href="docs/architecture/workspace.dsl"><code>docs/architecture/workspace.dsl</code></a></li>
+<li>Generated C4 diagram atlas: <a href="docs/architecture/c4-diagrams.html"><code>docs/architecture/c4-diagrams.md</code></a></li>
+<li>Architecture guide: <a href="docs/architecture/README.html"><code>docs/architecture/README.md</code></a></li>
+<li>Architecture Decision Records: <a href="docs/architecture/adr/README.html"><code>docs/architecture/adr/README.md</code></a></li>
+</ul>
+<h2 id="requirements-traceability">Requirements / traceability</h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Implementation</th>
+<th>Verification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>REQ-001: Back up <code>~/repos/</code> frequently.</td>
+<td><code>scripts/workflow-backup.sh</code> rsyncs <code>/home/mnicks/repos/</code>.</td>
+<td><code>scripts/verify-backup.sh</code>; NAS <code>current/wsl/home/mnicks/repos/</code>.</td>
+</tr>
+<tr>
+<td>REQ-002: Back up Hermes DB/config/session/profile state.</td>
+<td><code>~/.hermes/</code> rsync plus consistent SQLite snapshots.</td>
+<td><code>current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db</code>.</td>
+</tr>
+<tr>
+<td>REQ-003: Back up relevant local WSL DBs.</td>
+<td>SQLite backup API snapshots for Hermes, lifelog, and browser-memory DBs.</td>
+<td>SQLite snapshot manifest on NAS.</td>
+</tr>
+<tr>
+<td>REQ-004: Back up critical Windows workflow artifacts.</td>
+<td>Windows PowerShell helper uses <code>robocopy.exe</code> to SMB and leaves a local manifest copy for the WSL ledger.</td>
+<td><code>current/windows/...</code> plus Windows manifest.</td>
+</tr>
+<tr>
+<td>REQ-005: Recover accidental deletes within 2 days with ≤1h loss.</td>
+<td>TrueNAS hourly periodic snapshot task, 2-day retention.</td>
+<td><code>zfs list -t snapshot -r "$NAS_DATASET"</code>.</td>
+</tr>
+<tr>
+<td>REQ-006: Run silently hourly.</td>
+<td>User systemd timer <code>OnCalendar=*:45</code>; logs to local state with local retention.</td>
+<td><code>systemctl --user list-timers workstation-workflow-backup.timer</code>.</td>
+</tr>
+<tr>
+<td>REQ-007: Telegram only on failure.</td>
+<td><code>OnFailure=...failure-notify@%n.service</code>; notifier reads <code>~/.hermes/.env</code>.</td>
+<td>No success message; failure unit logs / Telegram Bot API on nonzero backup.</td>
+</tr>
+<tr>
+<td>REQ-008: Keep daily snapshots for 2 weeks.</td>
+<td>TrueNAS daily periodic snapshot task with <code>lifetime_value=2</code>, <code>lifetime_unit=WEEK</code>.</td>
+<td><code>scripts/verify-backup.sh</code> snapshot task dump.</td>
+</tr>
+<tr>
+<td>REQ-009: Keep weekly/monthly rollback points without repo-owned pruning helpers.</td>
+<td>TrueNAS weekly/monthly periodic snapshot tasks retain 8 weeks and 1 year respectively; retired cron helpers are disabled.</td>
+<td><code>scripts/verify-backup.sh</code> snapshot task and retired cron dump.</td>
+</tr>
+<tr>
+<td>REQ-010: Keep queryable backup-run history.</td>
+<td><code>scripts/workflow-backup.sh</code> records start/completion/failure events in <code>~/.local/state/workstation-workflow-backup/runs.sqlite3</code>; final ledger write is strict.</td>
+<td><code>scripts/record-run-ledger.py status</code>; <code>scripts/verify-backup.sh</code>.</td>
+</tr>
+<tr>
+<td>REQ-011: Prevent silent infinite dataset growth.</td>
+<td>NAS-side helper checks ZFS <code>used</code>, availability dataset free space, <code>usedbysnapshots</code>, and snapshot count before/after writes; <code>refquota</code> caps live current-tree growth.</td>
+<td><code>scripts/check-nas-growth-guard.sh --stage verify</code>; <code>scripts/verify-backup.sh</code>.</td>
+</tr>
+<tr>
+<td>REQ-012: Preserve restore integrity evidence.</td>
+<td>NAS-side helper writes <code>_manifests/integrity-manifest.json</code> with SHA-256 checksums for critical restore artifacts every successful live run.</td>
+<td><code>scripts/verify-backup.sh</code> integrity summary; restore runbook checksum commands.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="backup-scope">Backup scope</h2>
+<h3 id="wsl">WSL</h3>
+<p>Primary mirrors:</p>
+<ul>
+<li><code>/home/mnicks/repos/</code></li>
+<li><code>/home/mnicks/.hermes/</code> (excluding live SQLite files; consistent copies are under <code>wsl-sqlite-snapshots</code>)</li>
+<li><code>/home/mnicks/.ssh/</code></li>
+<li><code>/home/mnicks/.config/systemd/user/</code></li>
+<li><code>/home/mnicks/.local/share/lifelog/</code> (SQLite excluded from mirror, backed consistently)</li>
+<li><code>/home/mnicks/.local/share/browser-memory-daemon/</code> (SQLite excluded from mirror, backed consistently)</li>
+<li><code>/home/mnicks/brain-code/</code> when present</li>
+</ul>
+<p>The WSL rsync phase runs through <code>sudo -n rsync</code> locally so root-owned files inside local artifact/quarantine trees are included instead of silently skipped. The remote receiving side is the restricted NAS runtime user, not root; owner/group preservation is disabled by default because the restore source of truth is file content plus ZFS snapshots/checksums.</p>
+<p>Consistent SQLite snapshots include:</p>
+<ul>
+<li><code>~/.hermes/state.db</code></li>
+<li><code>~/.hermes/kanban.db</code>, <code>~/.hermes/ai-usage.db</code>, board/profile DBs</li>
+<li><code>~/.local/share/lifelog/lifelog.sqlite3</code></li>
+<li><code>~/.local/share/browser-memory-daemon/browser-memory.sqlite3</code></li>
+</ul>
+<h3 id="windows-host">Windows host</h3>
+<p>The Windows phase intentionally targets workflow-critical user artifacts, not a full bare-metal image:</p>
+<ul>
+<li><code>Desktop</code>, <code>Documents</code>, <code>Downloads</code></li>
+<li><code>%USERPROFILE%\.ssh</code></li>
+<li><code>%USERPROFILE%\.wslconfig</code></li>
+<li>Windows Terminal <code>LocalState</code></li>
+<li>VS Code <code>User</code> settings/snippets</li>
+<li>PowerShell profile directories</li>
+<li>Chrome Default <code>Bookmarks</code>, <code>Preferences</code>, and <code>Secure Preferences</code></li>
+<li>Startup folder shortcuts/scripts</li>
+</ul>
+<p>For a full profile or WSL distro export, use the older disaster-recovery repo: <code>~/repos/workstation/freenas-windows-backup</code>.</p>
+<h2 id="install-operate">Install / operate</h2>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><span style="color: #F8F8F2">cd </span>~/repos/workstation/workstation-workflow-backup
+cp<span style="color: #F8F8F2"> </span>config/backup.env.example<span style="color: #F8F8F2"> </span>config/backup.env
+<span style="color: #F8F8F2">$EDITOR </span>config/backup.env
+
+<span style="color: #959077"># Create a dedicated runtime key if config points to a new key path.</span>
+ssh-keygen<span style="color: #F8F8F2"> </span>-t<span style="color: #F8F8F2"> </span>ed25519<span style="color: #F8F8F2"> </span>-N<span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&#39;&#39;</span><span style="color: #F8F8F2"> </span>-C<span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&#39;workstation-workflow-backup runtime&#39;</span><span style="color: #F8F8F2"> </span>-f<span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2">$NAS_SSH_KEY</span><span style="color: #E6DB74">&quot;</span>
+ssh-keyscan<span style="color: #F8F8F2"> </span>-t<span style="color: #F8F8F2"> </span>ed25519<span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2">$NAS_HOST</span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2"> | </span>sed<span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;s/^</span><span style="color: #F8F8F2">$NAS_HOST</span><span style="color: #E6DB74"> /</span><span style="color: #F8F8F2">$NAS_HOST_KEY_ALIAS</span><span style="color: #E6DB74"> /&quot;</span><span style="color: #F8F8F2"> </span>&gt;<span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2">$NAS_KNOWN_HOSTS</span><span style="color: #E6DB74">&quot;</span>
+chmod<span style="color: #F8F8F2"> </span><span style="color: #AE81FF">600</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2">$NAS_SSH_KEY</span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2">$NAS_KNOWN_HOSTS</span><span style="color: #E6DB74">&quot;</span>
+
+./scripts/run-tests.sh
+./scripts/nas-provision.sh
+./scripts/install-nas-runtime-hardening.sh
+./scripts/install-systemd-user.sh
+./scripts/workflow-backup.sh<span style="color: #F8F8F2"> </span>--verbose<span style="color: #F8F8F2">   </span><span style="color: #959077"># first live run / smoke</span>
+./scripts/verify-backup.sh
+</code></pre></div>
+
+<p>Successful timer runs are quiet. Logs and state live under:</p>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code>~/.local/state/workstation-workflow-backup/
+├── last-run.json               # compatibility latest-run status
+├── runs.sqlite3                # append-only run event ledger
+├── nas-export/run-history.json # exported recent run summaries before NAS sync
+└── logs/workflow-backup-*.log  # one log per run, pruned by LOCAL_LOG_RETENTION_DAYS
+</code></pre></div>
+
+<p>Query recent runs:</p>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code>python3<span style="color: #F8F8F2"> </span>scripts/record-run-ledger.py<span style="color: #F8F8F2"> </span>status<span style="color: #F8F8F2"> </span><span style="color: #AE81FF">\</span>
+<span style="color: #F8F8F2">  </span>--db<span style="color: #F8F8F2"> </span>~/.local/state/workstation-workflow-backup/runs.sqlite3<span style="color: #F8F8F2"> </span><span style="color: #AE81FF">\</span>
+<span style="color: #F8F8F2">  </span>--limit<span style="color: #F8F8F2"> </span><span style="color: #AE81FF">12</span>
+</code></pre></div>
+
+<p>Check the live ZFS growth budget without mutating the NAS:</p>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code>./scripts/check-nas-growth-guard.sh<span style="color: #F8F8F2"> </span>--stage<span style="color: #F8F8F2"> </span>manual
+</code></pre></div>
+
+<p>Default fail-closed budget in <code>config/backup.env.example</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Guard</th>
+<th style="text-align: right;">Limit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Total dataset used</td>
+<td style="text-align: right;">2 TiB</td>
+</tr>
+<tr>
+<td>Snapshot-held blocks</td>
+<td style="text-align: right;">1 TiB</td>
+</tr>
+<tr>
+<td>Minimum free space on configured availability dataset</td>
+<td style="text-align: right;">2 TiB</td>
+</tr>
+<tr>
+<td>Snapshot count</td>
+<td style="text-align: right;">5000</td>
+</tr>
+<tr>
+<td>Current-tree <code>refquota</code></td>
+<td style="text-align: right;">2 TiB</td>
+</tr>
+</tbody>
+</table>
+<p>The guard is intentionally non-destructive. It stops the backup and lets the normal failure alert fire; it does not destroy snapshots or payload files.</p>
+<p>The current NAS mirror keeps the latest status/integrity artifacts at:</p>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code>$NAS_PATH/current/_manifests/last-run.json
+$NAS_PATH/current/_manifests/runs.sqlite3
+$NAS_PATH/current/_manifests/run-history.json
+$NAS_PATH/current/_manifests/integrity-manifest.json
+</code></pre></div>
+
+<h2 id="restore-quick-reference">Restore quick reference</h2>
+<p>Use the admin SSH identity for restore/snapshot inspection, not the restricted runtime key:</p>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><span style="color: #F8F8F2">source </span>config/backup.env
+<span style="color: #F8F8F2">source </span>scripts/nas-ssh.sh
+ssh_nas_admin<span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;zfs list -t snapshot -r &#39;</span><span style="color: #F8F8F2">$NAS_DATASET</span><span style="color: #E6DB74">&#39;&quot;</span>
+</code></pre></div>
+
+<p>Snapshot prefixes:</p>
+<ul>
+<li><code>wf-h-*</code> — hourly, retained for 2 days</li>
+<li><code>wf-d-*</code> — daily, retained for 2 weeks</li>
+<li><code>wf-w-*</code> — weekly, retained for 8 weeks</li>
+<li><code>wf-m-*</code> — monthly, retained for 1 year</li>
+</ul>
+<h3 id="restore-a-missing-repo-file">Restore a missing repo file</h3>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><span style="color: #F8F8F2">source </span>config/backup.env
+<span style="color: #F8F8F2">SNAP</span><span style="color: #FF4689">=</span>wf-h-YYYYMMDD-HHMM
+<span style="color: #F8F8F2">REMOTE</span><span style="color: #FF4689">=</span><span style="color: #F8F8F2">$NAS_PATH</span>/.zfs/snapshot/<span style="color: #F8F8F2">$SNAP</span>/current/wsl/home/mnicks/repos/path/to/file
+rsync<span style="color: #F8F8F2"> </span>-a<span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2">$NAS_ADMIN_USER</span><span style="color: #E6DB74">@</span><span style="color: #F8F8F2">$NAS_HOST</span><span style="color: #E6DB74">:</span><span style="color: #F8F8F2">$REMOTE</span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2"> </span>/home/mnicks/repos/path/to/file
+</code></pre></div>
+
+<h3 id="restore-hermes-statedb-from-a-consistent-snapshot">Restore Hermes <code>state.db</code> from a consistent snapshot</h3>
+<p>Stop active Hermes processes first if replacing the live DB.</p>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><span style="color: #F8F8F2">source </span>config/backup.env
+<span style="color: #F8F8F2">SNAP</span><span style="color: #FF4689">=</span>wf-h-YYYYMMDD-HHMM
+<span style="color: #F8F8F2">REMOTE</span><span style="color: #FF4689">=</span><span style="color: #F8F8F2">$NAS_PATH</span>/.zfs/snapshot/<span style="color: #F8F8F2">$SNAP</span>/current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db
+
+<span style="color: #959077"># Copy to a staging file first; inspect before replacing live state.</span>
+rsync<span style="color: #F8F8F2"> </span>-a<span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2">$NAS_ADMIN_USER</span><span style="color: #E6DB74">@</span><span style="color: #F8F8F2">$NAS_HOST</span><span style="color: #E6DB74">:</span><span style="color: #F8F8F2">$REMOTE</span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2"> </span>/home/mnicks/.hermes/state.db.restore-candidate
+</code></pre></div>
+
+<h3 id="verify-a-staged-restore-against-the-integrity-manifest">Verify a staged restore against the integrity manifest</h3>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code><span style="color: #F8F8F2">source </span>config/backup.env
+<span style="color: #F8F8F2">SNAP</span><span style="color: #FF4689">=</span>wf-h-YYYYMMDD-HHMM
+<span style="color: #F8F8F2">MANIFEST</span><span style="color: #FF4689">=</span><span style="color: #F8F8F2">$NAS_PATH</span>/.zfs/snapshot/<span style="color: #F8F8F2">$SNAP</span>/current/_manifests/integrity-manifest.json
+ssh<span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2">$NAS_ADMIN_USER</span><span style="color: #E6DB74">@</span><span style="color: #F8F8F2">$NAS_HOST</span><span style="color: #E6DB74">&quot;</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">&quot;python3 -m json.tool &#39;</span><span style="color: #F8F8F2">$MANIFEST</span><span style="color: #E6DB74">&#39; | head&quot;</span>
+</code></pre></div>
+
+<p>For a restored file whose path is present in <code>integrity-manifest.json</code>, compare the local SHA-256 with the manifest entry before replacing live state.</p>
+<h3 id="restore-windows-artifacts">Restore Windows artifacts</h3>
+<p>Browse <code>$NAS_UNC\current\windows</code> or use the NAS snapshot path:</p>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code>$NAS_PATH/.zfs/snapshot/&lt;snapshot&gt;/current/windows/Users/&lt;windows-user&gt;/...
+</code></pre></div>
+
+<p>The SMB share has shadow-copy support enabled, so Windows Previous Versions may also surface snapshots.</p>
+<h2 id="important-caveats">Important caveats</h2>
+<ul>
+<li>This is not a substitute for the existing full WSL distro export / Windows profile dump. It is the high-frequency workflow safety net.</li>
+<li>The NAS dataset contains secrets and credentials. Treat NAS admin, SMB, and runtime SSH access accordingly.</li>
+<li>Local corruption that exists for more than 2 weeks ages out of daily rollback; weekly/monthly rollback coverage is bounded by the configured TrueNAS lifetimes.</li>
+<li>Hourly snapshots mean the protected historical restore point can be up to one hour behind current local state. The current mirror usually trails by ≤1 hour but is not delete-proof by itself.</li>
+<li>A growth-guard failure means the dataset needs manual review before more payload writes; do not disable the guard just to silence the alert.</li>
+<li><code>config/backup.env</code> is intentionally ignored going forward; older public history may still mention local LAN topology and should only be rewritten with explicit history-rewrite approval.</li>
+</ul>
+  </article>
+  <div class="md-footer">
+    Rendered from <code>README.md</code> — the Markdown file is the canonical,
+    version-controlled source. This HTML is generated (regenerate with
+    <code>scripts/render_docs.py</code>); do not hand-edit.
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,1273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>C4-Diagrams — workstation-workflow-backup</title>
+<style>
+:root{--bg:#060d18;--bg2:#0a1426;--panel:#0e1a30;--card:#111f38;--line:#21324f;--line2:#2c4060;--text:#eaf2ff;--muted:#9fb1cc;--dim:#6f82a0;--blue:#5aa6ff;--blue2:#3b82f6;--cyan:#52d4ff;--green:#5be19c;--amber:#ffb454;--rose:#ff6f9c;--violet:#b79bff;--ink:#04122a}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;color:var(--text);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,ui-sans-serif,system-ui,sans-serif;background:radial-gradient(1100px 520px at 78% -8%,rgba(59,130,246,.22),transparent 60%),radial-gradient(820px 480px at 6% 4%,rgba(82,212,255,.12),transparent 55%),radial-gradient(700px 700px at 92% 96%,rgba(91,225,156,.08),transparent 55%),var(--bg);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:30px 22px 70px}
+a{color:var(--cyan);text-decoration:none}a:hover{text-decoration:underline}
+code{font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:#08152b;border:1px solid var(--line);border-radius:6px;padding:.1em .42em;color:#d6e6ff}
+h1,h2,h3{letter-spacing:-.02em;margin:0}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;color:var(--cyan);font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:.72rem}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--cyan);box-shadow:0 0 16px 2px rgba(82,212,255,.85);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+.hero{position:relative;border:1px solid var(--line2);border-radius:26px;padding:38px 36px 30px;margin-bottom:18px;background:linear-gradient(165deg,rgba(31,52,92,.55),rgba(10,20,38,.7));box-shadow:0 30px 90px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.05);overflow:hidden}
+.hero h1{font-size:clamp(2.3rem,5.2vw,3.9rem);line-height:1.02;margin:14px 0 12px}
+.hero h1 .g{background:linear-gradient(92deg,var(--cyan),var(--blue) 55%,var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{color:#cfe0f7;font-size:1.12rem;max-width:62ch;margin:0 0 8px}
+.hero .sub{color:var(--muted);max-width:64ch}
+.pillbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:.82rem;color:#dce8fb;background:rgba(11,22,42,.7);border:1px solid var(--line2);border-radius:999px;padding:7px 13px}
+.pill b{color:#fff}.pill .k{width:7px;height:7px;border-radius:50%}
+.k.live{background:var(--amber)}.k.local{background:var(--green)}.k.priv{background:var(--rose)}.k.blue{background:var(--blue)}
+.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:18px 0 6px}
+.metric{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));border:1px solid var(--line);border-radius:16px;padding:15px 14px;text-align:center}
+.metric .n{font-size:1.85rem;font-weight:800;letter-spacing:-.03em;background:linear-gradient(180deg,#fff,#bcd2f2);-webkit-background-clip:text;background-clip:text;color:transparent}
+.metric .l{display:block;color:var(--dim);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+@media(max-width:880px){.metrics{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:520px){.metrics{grid-template-columns:repeat(2,1fr)}}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 26px}
+.toc a{font-size:.84rem;color:#cfe0f7;border:1px solid var(--line2);background:rgba(10,20,38,.6);border-radius:999px;padding:8px 14px}
+.toc a:hover{border-color:var(--cyan);text-decoration:none;color:#fff}
+section.block{margin:30px 0}
+.block>h2{font-size:1.5rem;margin-bottom:6px;display:flex;align-items:center;gap:11px}
+.block>h2 .num{font-size:.8rem;color:var(--ink);background:linear-gradient(180deg,var(--cyan),var(--blue));width:26px;height:26px;border-radius:8px;display:inline-grid;place-items:center;font-weight:800}
+.block>p.intro{color:var(--muted);max-width:74ch;margin:6px 0 16px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+.figure{border:1px solid var(--line);border-radius:20px;background:radial-gradient(700px 300px at 50% 0,rgba(35,60,105,.4),rgba(8,17,33,.6));padding:24px;overflow:hidden}
+.figure svg{display:block;width:100%;height:auto}
+.cap{color:var(--dim);font-size:.82rem;text-align:center;margin-top:12px}
+.lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:820px){.lanes{grid-template-columns:1fr}}
+.lane{position:relative;border:1px solid var(--line2);border-radius:18px;padding:20px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));transition:transform .15s ease,border-color .15s ease}
+.lane:hover{transform:translateY(-3px);border-color:var(--cyan)}
+.lane .tag{font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700}
+.lane.exec .tag{color:var(--violet)}.lane.user .tag{color:var(--green)}.lane.maint .tag{color:var(--amber)}
+.lane h3{font-size:1.16rem;margin:8px 0 6px}.lane p{color:var(--muted);font-size:.9rem;margin:0 0 14px}
+.lane .go{font-size:.86rem;font-weight:600}
+.lane .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;margin-bottom:6px;border:1px solid var(--line2);font-size:1.2rem}
+.lane.exec .ic{background:rgba(183,155,255,.13)}.lane.user .ic{background:rgba(91,225,156,.13)}.lane.maint .ic{background:rgba(255,180,84,.13)}
+table{width:100%;border-collapse:collapse;margin-top:6px;font-size:.9rem}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line)}
+th{color:var(--dim);font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700}
+tr:last-child td{border-bottom:0}td b{color:#fff}
+.note{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line2);border-left:3px solid var(--cyan);border-radius:12px;padding:14px 16px;background:rgba(10,20,38,.5);color:#cfe0f7;font-size:.9rem;margin-top:14px}
+.note .i{font-size:1.1rem;line-height:1.2}
+footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);color:var(--dim);font-size:.82rem}
+.prov{margin-top:8px;color:#5e7193}.prov code{font-size:11.5px}
+.featgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px}
+.feat{background:linear-gradient(180deg,rgba(20,32,54,.7),rgba(12,21,38,.6));border:1px solid var(--line);border-radius:16px;padding:18px}
+.feat .fic{font-size:1.4rem;margin-bottom:8px}
+.feat h3{font-size:1.02rem;margin:0 0 6px;color:#eaf2ff}
+.feat p{margin:0;color:#b8c8e4;font-size:.9rem;line-height:1.55}
+ol.flow{list-style:none;margin:0;padding:0}
+ol.flow li{display:flex;gap:14px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
+ol.flow li:last-child{border-bottom:0}
+ol.flow .fstep{flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.92rem;color:#06101f;background:linear-gradient(135deg,var(--cyan),var(--blue))}
+ol.flow .fwrap{display:flex;flex-direction:column;gap:2px}
+ol.flow .fwrap b{color:#eaf2ff;font-size:.98rem}
+ol.flow .fwrap span{color:#aebfdc;font-size:.88rem;line-height:1.5}
+table.cmdtable{width:100%;border-collapse:collapse;font-size:.86rem}
+table.cmdtable th,table.cmdtable td{text-align:left;padding:9px 12px;border:1px solid var(--line);vertical-align:top}
+table.cmdtable th{background:rgba(35,60,105,.4);color:#dbe8ff;font-weight:700}
+table.cmdtable tr:nth-child(even) td{background:rgba(255,255,255,.018)}
+table.cmdtable code{font:11.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:#08152b;border:1px solid var(--line);border-radius:5px;padding:.08em .38em;color:#d6e6ff;white-space:nowrap}
+@media(max-width:760px){.featgrid{grid-template-columns:1fr}}
+
+.docbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:14px;padding:12px 20px;margin:-30px -22px 24px;background:rgba(8,15,28,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line2)}
+.docbar a.home{display:inline-flex;align-items:center;gap:8px;font-weight:700;color:var(--cyan);font-size:.9rem}
+.docbar .crumb{color:var(--dim);font-size:.84rem}
+.docbar .crumb b{color:var(--text)}
+.md-body{max-width:none}
+.md-body h1{font-size:2.1rem;margin:6px 0 14px;letter-spacing:-.02em}
+.md-body h2{font-size:1.5rem;margin:30px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--line);letter-spacing:-.02em}
+.md-body h3{font-size:1.2rem;margin:22px 0 8px}
+.md-body h4{font-size:1.02rem;margin:18px 0 6px;color:#cfe0f7}
+.md-body p{color:#cdd9ee;margin:10px 0}
+.md-body ul,.md-body ol{color:#cdd9ee;padding-left:24px}
+.md-body li{margin:5px 0}
+.md-body a{color:var(--cyan)}
+.md-body strong{color:#fff}
+.md-body blockquote{margin:14px 0;padding:10px 16px;border-left:3px solid var(--blue);background:rgba(10,20,38,.55);border-radius:0 10px 10px 0;color:#bcd0ec}
+.md-body code{font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:#08152b;border:1px solid var(--line);border-radius:6px;padding:.1em .42em;color:#d6e6ff}
+.md-body pre{background:#070f1f;border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow:auto;margin:14px 0}
+.md-body pre code{background:none;border:0;padding:0;color:#d6e6ff;font-size:12.5px;line-height:1.6}
+.md-body table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.88rem}
+.md-body th,.md-body td{text-align:left;padding:9px 12px;border:1px solid var(--line)}
+.md-body th{background:rgba(35,60,105,.4);color:#dbe8ff;font-weight:700}
+.md-body tr:nth-child(even) td{background:rgba(255,255,255,.018)}
+.md-body hr{border:0;border-top:1px solid var(--line);margin:26px 0}
+.md-body .mmd{margin:18px 0;padding:16px;border:1px solid var(--line);border-radius:16px;background:radial-gradient(700px 280px at 50% 0,rgba(35,60,105,.32),rgba(8,17,33,.55))}
+.md-body .mmd-scroll{overflow-x:auto;overflow-y:hidden;text-align:center}
+.md-body .mmd:not(.wide) .mmd-scroll{text-align:center}
+.md-body .mmd.wide .mmd-scroll{text-align:left}
+.md-body .mmd svg{height:auto;display:inline-block}
+.md-body .mmd-hint{font:600 11px/1.4 ui-sans-serif,system-ui;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px;opacity:.8}
+.md-body .mmd-scroll::-webkit-scrollbar{height:9px}
+.md-body .mmd-scroll::-webkit-scrollbar-thumb{background:var(--line2);border-radius:6px}
+.md-body .mmd-scroll::-webkit-scrollbar-track{background:transparent}
+.md-body .codehilite{background:#070f1f;border:1px solid var(--line);border-radius:12px;margin:14px 0}
+.md-body .codehilite pre{border:0;margin:0;background:none}
+.md-footer{margin-top:42px;padding-top:18px;border-top:1px solid var(--line);color:var(--dim);font-size:.82rem}
+.md-footer code{font-size:11.5px}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="docbar">
+    <a class="home" href="../../workstation-workflow-backup-high-level-doc.html">⌂ workstation-workflow-backup overview</a>
+    <span class="crumb">/ <b>docs/architecture/c4-diagrams.md</b></span>
+  </div>
+  <article class="md-body">
+<h1 id="workstation1-workflow-backup-architecture-c4-diagrams">WORKSTATION1 Workflow Backup Architecture C4 Diagrams</h1>
+<blockquote>
+<p>Single-file generated C4 diagram atlas. Canonical model: <a href="workspace.dsl"><code>workspace.dsl</code></a>.</p>
+</blockquote>
+<!-- Generated from Structurizr exports; refresh from docs/architecture/workspace.dsl. -->
+
+<h2 id="reading-notes">Reading notes</h2>
+<ul>
+<li>This file intentionally includes every generated C4 view in one Markdown document.</li>
+<li>Diagrams prefer clean rendered artifacts first, usually Graphviz SVG with white-backed relationship labels.</li>
+<li>Mermaid source is retained under each diagram for text review and diffability.</li>
+<li>Generated per-view wrappers remain available at <a href="diagrams/markdown"><code>diagrams/markdown/</code></a>; generated artifact index: <a href="diagrams/README.html"><code>diagrams/README.md</code></a>.</li>
+</ul>
+<h2 id="diagram-index">Diagram index</h2>
+<table>
+<thead>
+<tr>
+<th>View</th>
+<th>Section</th>
+<th>Preferred render</th>
+<th>Per-view page</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BackupRuntimeContainers</code></td>
+<td><a href="#backup-runtime-containers"><code>BackupRuntimeContainers</code></a></td>
+<td><a href="diagrams/dot-rendered/structurizr-BackupRuntimeContainers.svg"><code>Graphviz SVG</code></a></td>
+<td><a href="diagrams/markdown/BackupRuntimeContainers.html"><code>BackupRuntimeContainers.md</code></a></td>
+</tr>
+<tr>
+<td><code>FailureAlertFlow</code></td>
+<td><a href="#failure-alert-flow"><code>FailureAlertFlow</code></a></td>
+<td><a href="diagrams/dot-rendered/structurizr-FailureAlertFlow.svg"><code>Graphviz SVG</code></a></td>
+<td><a href="diagrams/markdown/FailureAlertFlow.html"><code>FailureAlertFlow.md</code></a></td>
+</tr>
+<tr>
+<td><code>HourlyMirrorPublishFlow</code></td>
+<td><a href="#hourly-mirror-publish-flow"><code>HourlyMirrorPublishFlow</code></a></td>
+<td><a href="diagrams/dot-rendered/structurizr-HourlyMirrorPublishFlow.svg"><code>Graphviz SVG</code></a></td>
+<td><a href="diagrams/markdown/HourlyMirrorPublishFlow.html"><code>HourlyMirrorPublishFlow.md</code></a></td>
+</tr>
+<tr>
+<td><code>HourlyPreflightSnapshotFlow</code></td>
+<td><a href="#hourly-preflight-snapshot-flow"><code>HourlyPreflightSnapshotFlow</code></a></td>
+<td><a href="diagrams/dot-rendered/structurizr-HourlyPreflightSnapshotFlow.svg"><code>Graphviz SVG</code></a></td>
+<td><a href="diagrams/markdown/HourlyPreflightSnapshotFlow.html"><code>HourlyPreflightSnapshotFlow.md</code></a></td>
+</tr>
+<tr>
+<td><code>LocalDeployment</code></td>
+<td><a href="#local-deployment"><code>LocalDeployment</code></a></td>
+<td><a href="diagrams/dot-rendered/structurizr-LocalDeployment.svg"><code>Graphviz SVG</code></a></td>
+<td><a href="diagrams/markdown/LocalDeployment.html"><code>LocalDeployment.md</code></a></td>
+</tr>
+<tr>
+<td><code>OpsProvisioningContainers</code></td>
+<td><a href="#ops-provisioning-containers"><code>OpsProvisioningContainers</code></a></td>
+<td><a href="diagrams/dot-rendered/structurizr-OpsProvisioningContainers.svg"><code>Graphviz SVG</code></a></td>
+<td><a href="diagrams/markdown/OpsProvisioningContainers.html"><code>OpsProvisioningContainers.md</code></a></td>
+</tr>
+<tr>
+<td><code>OrchestratorControlComponents</code></td>
+<td><a href="#orchestrator-control-components"><code>OrchestratorControlComponents</code></a></td>
+<td><a href="diagrams/dot-rendered/structurizr-OrchestratorControlComponents.svg"><code>Graphviz SVG</code></a></td>
+<td><a href="diagrams/markdown/OrchestratorControlComponents.html"><code>OrchestratorControlComponents.md</code></a></td>
+</tr>
+<tr>
+<td><code>OrchestratorSyncComponents</code></td>
+<td><a href="#orchestrator-sync-components"><code>OrchestratorSyncComponents</code></a></td>
+<td><a href="diagrams/dot-rendered/structurizr-OrchestratorSyncComponents.svg"><code>Graphviz SVG</code></a></td>
+<td><a href="diagrams/markdown/OrchestratorSyncComponents.html"><code>OrchestratorSyncComponents.md</code></a></td>
+</tr>
+<tr>
+<td><code>SystemContext</code></td>
+<td><a href="#system-context"><code>SystemContext</code></a></td>
+<td><a href="diagrams/dot-rendered/structurizr-SystemContext.svg"><code>Graphviz SVG</code></a></td>
+<td><a href="diagrams/markdown/SystemContext.html"><code>SystemContext.md</code></a></td>
+</tr>
+<tr>
+<td><code>TargetedRestoreFlow</code></td>
+<td><a href="#targeted-restore-flow"><code>TargetedRestoreFlow</code></a></td>
+<td><a href="diagrams/dot-rendered/structurizr-TargetedRestoreFlow.svg"><code>Graphviz SVG</code></a></td>
+<td><a href="diagrams/markdown/TargetedRestoreFlow.html"><code>TargetedRestoreFlow.md</code></a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="backup-runtime-containers">Backup Runtime Containers</h2>
+<blockquote>
+<p>C4 view <code>BackupRuntimeContainers</code>.</p>
+</blockquote>
+<h3 id="diagram">Diagram</h3>
+<p><img alt="Backup Runtime Containers" src="diagrams/dot-rendered/structurizr-BackupRuntimeContainers.svg" /></p>
+<p><em>Preferred Markdown display: Graphviz SVG. Mermaid source is retained below for text review.</em></p>
+<details>
+<summary>Mermaid source</summary>
+
+
+
+<pre class="mmd-fallback">graph LR
+  linkStyle default fill:#ffffff
+
+  subgraph diagram [&quot;Container View: WORKSTATION1 Workflow Backup&quot;]
+    style diagram fill:#ffffff,stroke:#ffffff
+
+    26[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;WSL Workflow Sources&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Workflow-critical WSL paths:&lt;br /&gt;~/repos, ~/.hermes, ~/.ssh,&lt;br /&gt;systemd user config,&lt;br /&gt;lifelog/browser-memory data,&lt;br /&gt;and optional brain-code tree.&lt;/div&gt;&quot;)]
+    style 26 fill:#fef3c7,stroke:#d97706,color:#111827
+    27[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Windows Workflow Sources&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Selected Windows user-profile&lt;br /&gt;artifacts: Desktop,&lt;br /&gt;Documents, Downloads, Windows&lt;br /&gt;.ssh/.wslconfig, Terminal/VS&lt;br /&gt;Code/PowerShell config,&lt;br /&gt;Chrome profile metadata, and&lt;br /&gt;Startup entries.&lt;/div&gt;&quot;)]
+    style 27 fill:#fef3c7,stroke:#d97706,color:#111827
+    28[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS Backup Dataset&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Configured encrypted TrueNAS&lt;br /&gt;dataset with current mirror&lt;br /&gt;tree, manifests, SMB share,&lt;br /&gt;restore checksum manifest,&lt;br /&gt;refquota, and ZFS snapshot&lt;br /&gt;history.&lt;/div&gt;&quot;)]
+    style 28 fill:#fef3c7,stroke:#d97706,color:#111827
+    29[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS Middleware and ZFS Control Plane&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Configured admin SSH and&lt;br /&gt;middleware surface used for&lt;br /&gt;ZFS properties, runtime-user&lt;br /&gt;setup, snapshot tasks, SMB&lt;br /&gt;share configuration, and&lt;br /&gt;verification.&lt;/div&gt;&quot;]
+    style 29 fill:#f3e8ff,stroke:#9333ea,color:#111827
+    30[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Hermes Bot Environment File&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Local ~/.hermes/.env values&lt;br /&gt;that supply Telegram bot&lt;br /&gt;token/chat settings to the&lt;br /&gt;failure notifier; contents&lt;br /&gt;are not stored in this repo.&lt;/div&gt;&quot;)]
+    style 30 fill:#fef3c7,stroke:#d97706,color:#111827
+    31[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Telegram Bot API&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;External API used only for&lt;br /&gt;backup failure notifications.&lt;/div&gt;&quot;]
+    style 31 fill:#f3e8ff,stroke:#9333ea,color:#111827
+
+    subgraph 2 [&quot;WORKSTATION1 Workflow Backup&quot;]
+      style 2 fill:#ffffff,stroke:#16a34a,color:#16a34a
+
+      16[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;SQLite Snapshotter&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Python 3, sqlite3]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Creates&lt;br /&gt;application-consistent copies&lt;br /&gt;of Hermes, lifelog,&lt;br /&gt;browser-memory, and related&lt;br /&gt;SQLite databases using&lt;br /&gt;sqlite3 backup API; can&lt;br /&gt;quick_check copies.&lt;/div&gt;&quot;]
+      style 16 fill:#ecfeff,stroke:#0891b2,color:#111827
+      17[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Windows Critical Sync Helper&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: PowerShell + robocopy.exe]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;PowerShell script launched&lt;br /&gt;from WSL that uses&lt;br /&gt;robocopy.exe to mirror&lt;br /&gt;selected Windows profile&lt;br /&gt;directories/files to the SMB&lt;br /&gt;share and writes a Windows&lt;br /&gt;sync manifest.&lt;/div&gt;&quot;]
+      style 17 fill:#ecfeff,stroke:#0891b2,color:#111827
+      18[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;NAS Growth Guard&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash + NAS sudo helper + zfs CLI]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Read-only NAS-side ZFS budget&lt;br /&gt;check that enforces&lt;br /&gt;dataset-used, snapshot-held,&lt;br /&gt;availability-dataset&lt;br /&gt;free-space, and&lt;br /&gt;snapshot-count limits&lt;br /&gt;before/after writes.&lt;/div&gt;&quot;]
+      style 18 fill:#ecfeff,stroke:#0891b2,color:#111827
+      19[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;NAS Integrity Manifest Builder&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Python + SHA-256]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;NAS-side helper that hashes&lt;br /&gt;restore-critical current-tree&lt;br /&gt;artifacts and writes&lt;br /&gt;_manifests/integrity-manifest.json&lt;br /&gt;for snapshot-preserved&lt;br /&gt;restore verification.&lt;/div&gt;&quot;]
+      style 19 fill:#ecfeff,stroke:#0891b2,color:#111827
+      20[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Restricted NAS Runtime SSH Boundary&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: OpenSSH forced command + sudoers + ZFS refquota]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Dedicated runtime NAS&lt;br /&gt;user/key, pinned host-key&lt;br /&gt;verification, forced-command&lt;br /&gt;dispatcher, sudo allowlist,&lt;br /&gt;and refquota-backed&lt;br /&gt;current-tree write boundary.&lt;/div&gt;&quot;]
+      style 20 fill:#ecfeff,stroke:#0891b2,color:#111827
+      24[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Failure Notifier&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash + Python urllib]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Best-effort Telegram failure&lt;br /&gt;alert unit that reads last&lt;br /&gt;status/log tail and Hermes&lt;br /&gt;bot environment variables;&lt;br /&gt;success runs stay silent.&lt;/div&gt;&quot;]
+      style 24 fill:#ecfeff,stroke:#0891b2,color:#111827
+      25[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Run Ledger and Local State&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: SQLite + JSON + logs on WSL filesystem]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Local status, pruned logs,&lt;br /&gt;SQLite run ledger, exported&lt;br /&gt;run-history JSON, SQLite&lt;br /&gt;snapshot cache, and Windows&lt;br /&gt;manifest cache under&lt;br /&gt;~/.local/state/workstation-workflow-backup.&lt;/div&gt;&quot;)]
+      style 25 fill:#fef3c7,stroke:#d97706,color:#111827
+      3(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;systemd User Timer and Service&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: systemd --user units]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Hourly user-level scheduler&lt;br /&gt;and oneshot service that run&lt;br /&gt;the backup at minute 45 and&lt;br /&gt;route failures to the&lt;br /&gt;notifier.&lt;/div&gt;&quot;)
+      style 3 fill:#e0e7ff,stroke:#4f46e5,color:#111827
+      4[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Backup Orchestrator&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;scripts/workflow-backup.sh&lt;br /&gt;coordinates one backup run:&lt;br /&gt;locking, log pruning,&lt;br /&gt;pre/post guard checks, WSL&lt;br /&gt;rsync, SQLite snapshots,&lt;br /&gt;Windows sync, strict final&lt;br /&gt;ledger updates, NAS manifest&lt;br /&gt;publication, and&lt;br /&gt;restore-checksum generation.&lt;/div&gt;&quot;]
+      style 4 fill:#e0f2fe,stroke:#0284c7,color:#111827
+    end
+
+    3-. &quot;&lt;div&gt;Starts hourly at :45 and&lt;br /&gt;tracks service exit&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[systemd --user]&lt;/div&gt;&quot; .-&gt;4
+    3-. &quot;&lt;div&gt;Triggers on nonzero service&lt;br /&gt;result&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[OnFailure]&lt;/div&gt;&quot; .-&gt;24
+    4-. &quot;&lt;div&gt;Writes logs, last-run.json,&lt;br /&gt;run events, and exported&lt;br /&gt;history in&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem + sqlite3]&lt;/div&gt;&quot; .-&gt;25
+    4-. &quot;&lt;div&gt;Runs pre/post budget checks&lt;br /&gt;through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[subprocess]&lt;/div&gt;&quot; .-&gt;18
+    18-. &quot;&lt;div&gt;Reads ZFS used, availability,&lt;br /&gt;usedbysnapshots, and snapshot&lt;br /&gt;count from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[NAS-side helper + zfs]&lt;/div&gt;&quot; .-&gt;29
+    4-. &quot;&lt;div&gt;Creates consistent SQLite&lt;br /&gt;backup copies with&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[subprocess]&lt;/div&gt;&quot; .-&gt;16
+    16-. &quot;&lt;div&gt;Reads live SQLite databases&lt;br /&gt;from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[sqlite3 backup API]&lt;/div&gt;&quot; .-&gt;26
+    16-. &quot;&lt;div&gt;Writes local SQLite snapshot&lt;br /&gt;cache and manifest under&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem]&lt;/div&gt;&quot; .-&gt;25
+    4-. &quot;&lt;div&gt;Mirrors configured WSL source&lt;br /&gt;trees from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[sudo rsync]&lt;/div&gt;&quot; .-&gt;26
+    4-. &quot;&lt;div&gt;Connects with dedicated&lt;br /&gt;runtime key and pinned&lt;br /&gt;host-key verification through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[SSH]&lt;/div&gt;&quot; .-&gt;20
+    20-. &quot;&lt;div&gt;Allows receiver-mode rsync&lt;br /&gt;and mkdir only under current&lt;br /&gt;tree&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[forced command + rsync]&lt;/div&gt;&quot; .-&gt;28
+    20-. &quot;&lt;div&gt;Allows sudo execution of&lt;br /&gt;guard helper only&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[forced command + sudo]&lt;/div&gt;&quot; .-&gt;18
+    20-. &quot;&lt;div&gt;Allows sudo execution of&lt;br /&gt;integrity helper only&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[forced command + sudo]&lt;/div&gt;&quot; .-&gt;19
+    4-. &quot;&lt;div&gt;Writes current/wsl,&lt;br /&gt;wsl-sqlite-snapshots, and&lt;br /&gt;_manifests to&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[restricted SSH rsync]&lt;/div&gt;&quot; .-&gt;28
+    4-. &quot;&lt;div&gt;Launches Windows sync through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[PowerShell via WSL interop]&lt;/div&gt;&quot; .-&gt;17
+    17-. &quot;&lt;div&gt;Mirrors selected Windows&lt;br /&gt;artifacts from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[robocopy.exe]&lt;/div&gt;&quot; .-&gt;27
+    17-. &quot;&lt;div&gt;Writes current/windows and&lt;br /&gt;Windows manifests to&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[SMB share]&lt;/div&gt;&quot; .-&gt;28
+    17-. &quot;&lt;div&gt;Leaves manifest cache for&lt;br /&gt;ledger summaries&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;25
+    4-. &quot;&lt;div&gt;Runs restore-critical&lt;br /&gt;checksum manifest generation&lt;br /&gt;through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[restricted SSH]&lt;/div&gt;&quot; .-&gt;19
+    19-. &quot;&lt;div&gt;Hashes NAS current-tree&lt;br /&gt;critical artifacts and writes&lt;br /&gt;integrity-manifest.json to&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[SHA-256 + filesystem]&lt;/div&gt;&quot; .-&gt;28
+    4-. &quot;&lt;div&gt;Exits nonzero so systemd can&lt;br /&gt;alert through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;24
+    24-. &quot;&lt;div&gt;Reads last status and log&lt;br /&gt;tail from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem]&lt;/div&gt;&quot; .-&gt;25
+    24-. &quot;&lt;div&gt;Reads Telegram bot token/chat&lt;br /&gt;values from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem]&lt;/div&gt;&quot; .-&gt;30
+    24-. &quot;&lt;div&gt;Sends failure-only&lt;br /&gt;notification to&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[HTTPS]&lt;/div&gt;&quot; .-&gt;31
+
+  end</pre>
+
+
+
+</details>
+
+<h3 id="derived-artifacts">Derived artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mermaid source</td>
+<td><a href="diagrams/structurizr-BackupRuntimeContainers.mmd"><code>structurizr-BackupRuntimeContainers.mmd</code></a></td>
+</tr>
+<tr>
+<td>Mermaid SVG</td>
+<td><a href="diagrams/structurizr-BackupRuntimeContainers.svg"><code>structurizr-BackupRuntimeContainers.svg</code></a></td>
+</tr>
+<tr>
+<td>Mermaid PNG</td>
+<td><a href="diagrams/structurizr-BackupRuntimeContainers.png"><code>structurizr-BackupRuntimeContainers.png</code></a></td>
+</tr>
+<tr>
+<td>DOT source</td>
+<td><a href="diagrams/dot/structurizr-BackupRuntimeContainers.dot"><code>structurizr-BackupRuntimeContainers.dot</code></a></td>
+</tr>
+<tr>
+<td>Graphviz SVG</td>
+<td><a href="diagrams/dot-rendered/structurizr-BackupRuntimeContainers.svg"><code>structurizr-BackupRuntimeContainers.svg</code></a></td>
+</tr>
+<tr>
+<td>Graphviz PNG</td>
+<td><a href="diagrams/dot-rendered/structurizr-BackupRuntimeContainers.png"><code>structurizr-BackupRuntimeContainers.png</code></a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="failure-alert-flow">Failure Alert Flow</h2>
+<blockquote>
+<p>C4 view <code>FailureAlertFlow</code>.</p>
+</blockquote>
+<h3 id="diagram_1">Diagram</h3>
+<p><img alt="Failure Alert Flow" src="diagrams/dot-rendered/structurizr-FailureAlertFlow.svg" /></p>
+<p><em>Preferred Markdown display: Graphviz SVG. Mermaid source is retained below for text review.</em></p>
+<details>
+<summary>Mermaid source</summary>
+
+
+
+<pre class="mmd-fallback">graph LR
+  linkStyle default fill:#ffffff
+
+  subgraph diagram [&quot;Dynamic View: WORKSTATION1 Workflow Backup&quot;]
+    style diagram fill:#ffffff,stroke:#ffffff
+
+    subgraph 2 [&quot;WORKSTATION1 Workflow Backup&quot;]
+      style 2 fill:#ffffff,stroke:#16a34a,color:#16a34a
+
+      24[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Failure Notifier&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash + Python urllib]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Best-effort Telegram failure&lt;br /&gt;alert unit that reads last&lt;br /&gt;status/log tail and Hermes&lt;br /&gt;bot environment variables;&lt;br /&gt;success runs stay silent.&lt;/div&gt;&quot;]
+      style 24 fill:#ecfeff,stroke:#0891b2,color:#111827
+      25[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Run Ledger and Local State&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: SQLite + JSON + logs on WSL filesystem]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Local status, pruned logs,&lt;br /&gt;SQLite run ledger, exported&lt;br /&gt;run-history JSON, SQLite&lt;br /&gt;snapshot cache, and Windows&lt;br /&gt;manifest cache under&lt;br /&gt;~/.local/state/workstation-workflow-backup.&lt;/div&gt;&quot;)]
+      style 25 fill:#fef3c7,stroke:#d97706,color:#111827
+      3(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;systemd User Timer and Service&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: systemd --user units]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Hourly user-level scheduler&lt;br /&gt;and oneshot service that run&lt;br /&gt;the backup at minute 45 and&lt;br /&gt;route failures to the&lt;br /&gt;notifier.&lt;/div&gt;&quot;)
+      style 3 fill:#e0e7ff,stroke:#4f46e5,color:#111827
+      4[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Backup Orchestrator&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;scripts/workflow-backup.sh&lt;br /&gt;coordinates one backup run:&lt;br /&gt;locking, log pruning,&lt;br /&gt;pre/post guard checks, WSL&lt;br /&gt;rsync, SQLite snapshots,&lt;br /&gt;Windows sync, strict final&lt;br /&gt;ledger updates, NAS manifest&lt;br /&gt;publication, and&lt;br /&gt;restore-checksum generation.&lt;/div&gt;&quot;]
+      style 4 fill:#e0f2fe,stroke:#0284c7,color:#111827
+    end
+
+    28[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS Backup Dataset&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Configured encrypted TrueNAS&lt;br /&gt;dataset with current mirror&lt;br /&gt;tree, manifests, SMB share,&lt;br /&gt;restore checksum manifest,&lt;br /&gt;refquota, and ZFS snapshot&lt;br /&gt;history.&lt;/div&gt;&quot;)]
+    style 28 fill:#fef3c7,stroke:#d97706,color:#111827
+    30[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Hermes Bot Environment File&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Local ~/.hermes/.env values&lt;br /&gt;that supply Telegram bot&lt;br /&gt;token/chat settings to the&lt;br /&gt;failure notifier; contents&lt;br /&gt;are not stored in this repo.&lt;/div&gt;&quot;)]
+    style 30 fill:#fef3c7,stroke:#d97706,color:#111827
+    31[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Telegram Bot API&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;External API used only for&lt;br /&gt;backup failure notifications.&lt;/div&gt;&quot;]
+    style 31 fill:#f3e8ff,stroke:#9333ea,color:#111827
+
+    4-. &quot;&lt;div&gt;1. Write failed&lt;br /&gt;last-run/log/ledger event&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem + sqlite3]&lt;/div&gt;&quot; .-&gt;25
+    4-. &quot;&lt;div&gt;2. Best-effort publish&lt;br /&gt;failure manifests&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[restricted SSH rsync]&lt;/div&gt;&quot; .-&gt;28
+    4-. &quot;&lt;div&gt;3. Exit nonzero&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[systemd --user]&lt;/div&gt;&quot; .-&gt;3
+    3-. &quot;&lt;div&gt;4. Invoke OnFailure notifier&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[OnFailure]&lt;/div&gt;&quot; .-&gt;24
+    24-. &quot;&lt;div&gt;5. Read last-run.json and log&lt;br /&gt;tail&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem]&lt;/div&gt;&quot; .-&gt;25
+    24-. &quot;&lt;div&gt;6. Load bot token/chat&lt;br /&gt;settings&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem]&lt;/div&gt;&quot; .-&gt;30
+    24-. &quot;&lt;div&gt;7. sendMessage backup failure&lt;br /&gt;alert&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[HTTPS]&lt;/div&gt;&quot; .-&gt;31
+
+  end</pre>
+
+
+
+</details>
+
+<h3 id="derived-artifacts_1">Derived artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mermaid source</td>
+<td><a href="diagrams/structurizr-FailureAlertFlow.mmd"><code>structurizr-FailureAlertFlow.mmd</code></a></td>
+</tr>
+<tr>
+<td>Mermaid SVG</td>
+<td><a href="diagrams/structurizr-FailureAlertFlow.svg"><code>structurizr-FailureAlertFlow.svg</code></a></td>
+</tr>
+<tr>
+<td>Mermaid PNG</td>
+<td><a href="diagrams/structurizr-FailureAlertFlow.png"><code>structurizr-FailureAlertFlow.png</code></a></td>
+</tr>
+<tr>
+<td>DOT source</td>
+<td><a href="diagrams/dot/structurizr-FailureAlertFlow.dot"><code>structurizr-FailureAlertFlow.dot</code></a></td>
+</tr>
+<tr>
+<td>Graphviz SVG</td>
+<td><a href="diagrams/dot-rendered/structurizr-FailureAlertFlow.svg"><code>structurizr-FailureAlertFlow.svg</code></a></td>
+</tr>
+<tr>
+<td>Graphviz PNG</td>
+<td><a href="diagrams/dot-rendered/structurizr-FailureAlertFlow.png"><code>structurizr-FailureAlertFlow.png</code></a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="hourly-mirror-publish-flow">Hourly Mirror Publish Flow</h2>
+<blockquote>
+<p>C4 view <code>HourlyMirrorPublishFlow</code>.</p>
+</blockquote>
+<h3 id="diagram_2">Diagram</h3>
+<p><img alt="Hourly Mirror Publish Flow" src="diagrams/dot-rendered/structurizr-HourlyMirrorPublishFlow.svg" /></p>
+<p><em>Preferred Markdown display: Graphviz SVG. Mermaid source is retained below for text review.</em></p>
+<details>
+<summary>Mermaid source</summary>
+
+
+
+<pre class="mmd-fallback">graph LR
+  linkStyle default fill:#ffffff
+
+  subgraph diagram [&quot;Dynamic View: WORKSTATION1 Workflow Backup&quot;]
+    style diagram fill:#ffffff,stroke:#ffffff
+
+    subgraph 2 [&quot;WORKSTATION1 Workflow Backup&quot;]
+      style 2 fill:#ffffff,stroke:#16a34a,color:#16a34a
+
+      17[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Windows Critical Sync Helper&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: PowerShell + robocopy.exe]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;PowerShell script launched&lt;br /&gt;from WSL that uses&lt;br /&gt;robocopy.exe to mirror&lt;br /&gt;selected Windows profile&lt;br /&gt;directories/files to the SMB&lt;br /&gt;share and writes a Windows&lt;br /&gt;sync manifest.&lt;/div&gt;&quot;]
+      style 17 fill:#ecfeff,stroke:#0891b2,color:#111827
+      18[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;NAS Growth Guard&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash + NAS sudo helper + zfs CLI]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Read-only NAS-side ZFS budget&lt;br /&gt;check that enforces&lt;br /&gt;dataset-used, snapshot-held,&lt;br /&gt;availability-dataset&lt;br /&gt;free-space, and&lt;br /&gt;snapshot-count limits&lt;br /&gt;before/after writes.&lt;/div&gt;&quot;]
+      style 18 fill:#ecfeff,stroke:#0891b2,color:#111827
+      19[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;NAS Integrity Manifest Builder&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Python + SHA-256]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;NAS-side helper that hashes&lt;br /&gt;restore-critical current-tree&lt;br /&gt;artifacts and writes&lt;br /&gt;_manifests/integrity-manifest.json&lt;br /&gt;for snapshot-preserved&lt;br /&gt;restore verification.&lt;/div&gt;&quot;]
+      style 19 fill:#ecfeff,stroke:#0891b2,color:#111827
+      25[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Run Ledger and Local State&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: SQLite + JSON + logs on WSL filesystem]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Local status, pruned logs,&lt;br /&gt;SQLite run ledger, exported&lt;br /&gt;run-history JSON, SQLite&lt;br /&gt;snapshot cache, and Windows&lt;br /&gt;manifest cache under&lt;br /&gt;~/.local/state/workstation-workflow-backup.&lt;/div&gt;&quot;)]
+      style 25 fill:#fef3c7,stroke:#d97706,color:#111827
+      4[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Backup Orchestrator&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;scripts/workflow-backup.sh&lt;br /&gt;coordinates one backup run:&lt;br /&gt;locking, log pruning,&lt;br /&gt;pre/post guard checks, WSL&lt;br /&gt;rsync, SQLite snapshots,&lt;br /&gt;Windows sync, strict final&lt;br /&gt;ledger updates, NAS manifest&lt;br /&gt;publication, and&lt;br /&gt;restore-checksum generation.&lt;/div&gt;&quot;]
+      style 4 fill:#e0f2fe,stroke:#0284c7,color:#111827
+    end
+
+    26[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;WSL Workflow Sources&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Workflow-critical WSL paths:&lt;br /&gt;~/repos, ~/.hermes, ~/.ssh,&lt;br /&gt;systemd user config,&lt;br /&gt;lifelog/browser-memory data,&lt;br /&gt;and optional brain-code tree.&lt;/div&gt;&quot;)]
+    style 26 fill:#fef3c7,stroke:#d97706,color:#111827
+    27[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Windows Workflow Sources&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Selected Windows user-profile&lt;br /&gt;artifacts: Desktop,&lt;br /&gt;Documents, Downloads, Windows&lt;br /&gt;.ssh/.wslconfig, Terminal/VS&lt;br /&gt;Code/PowerShell config,&lt;br /&gt;Chrome profile metadata, and&lt;br /&gt;Startup entries.&lt;/div&gt;&quot;)]
+    style 27 fill:#fef3c7,stroke:#d97706,color:#111827
+    28[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS Backup Dataset&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Configured encrypted TrueNAS&lt;br /&gt;dataset with current mirror&lt;br /&gt;tree, manifests, SMB share,&lt;br /&gt;restore checksum manifest,&lt;br /&gt;refquota, and ZFS snapshot&lt;br /&gt;history.&lt;/div&gt;&quot;)]
+    style 28 fill:#fef3c7,stroke:#d97706,color:#111827
+    29[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS Middleware and ZFS Control Plane&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Configured admin SSH and&lt;br /&gt;middleware surface used for&lt;br /&gt;ZFS properties, runtime-user&lt;br /&gt;setup, snapshot tasks, SMB&lt;br /&gt;share configuration, and&lt;br /&gt;verification.&lt;/div&gt;&quot;]
+    style 29 fill:#f3e8ff,stroke:#9333ea,color:#111827
+
+    4-. &quot;&lt;div&gt;1. Read WSL source trees&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[sudo rsync]&lt;/div&gt;&quot; .-&gt;26
+    4-. &quot;&lt;div&gt;2. Mirror WSL current tree&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[restricted SSH rsync]&lt;/div&gt;&quot; .-&gt;28
+    4-. &quot;&lt;div&gt;3. Launch PowerShell robocopy&lt;br /&gt;helper&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[PowerShell via WSL interop]&lt;/div&gt;&quot; .-&gt;17
+    17-. &quot;&lt;div&gt;4. Read selected Windows&lt;br /&gt;artifacts&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[robocopy.exe]&lt;/div&gt;&quot; .-&gt;27
+    17-. &quot;&lt;div&gt;5. Mirror Windows current&lt;br /&gt;tree and manifest&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[SMB share]&lt;/div&gt;&quot; .-&gt;28
+    4-. &quot;&lt;div&gt;6. Run post-write guard&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[subprocess]&lt;/div&gt;&quot; .-&gt;18
+    18-. &quot;&lt;div&gt;7. Read ZFS budget values&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[NAS-side helper + zfs]&lt;/div&gt;&quot; .-&gt;29
+    4-. &quot;&lt;div&gt;8. Record completed event and&lt;br /&gt;export history&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem + sqlite3]&lt;/div&gt;&quot; .-&gt;25
+    4-. &quot;&lt;div&gt;9. Publish _manifests status&lt;br /&gt;files&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[restricted SSH rsync]&lt;/div&gt;&quot; .-&gt;28
+    4-. &quot;&lt;div&gt;10. Build restore checksum&lt;br /&gt;manifest&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[restricted SSH]&lt;/div&gt;&quot; .-&gt;19
+    19-. &quot;&lt;div&gt;11. Write&lt;br /&gt;integrity-manifest.json&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[SHA-256 + filesystem]&lt;/div&gt;&quot; .-&gt;28
+
+  end</pre>
+
+
+
+</details>
+
+<h3 id="derived-artifacts_2">Derived artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mermaid source</td>
+<td><a href="diagrams/structurizr-HourlyMirrorPublishFlow.mmd"><code>structurizr-HourlyMirrorPublishFlow.mmd</code></a></td>
+</tr>
+<tr>
+<td>Mermaid SVG</td>
+<td><a href="diagrams/structurizr-HourlyMirrorPublishFlow.svg"><code>structurizr-HourlyMirrorPublishFlow.svg</code></a></td>
+</tr>
+<tr>
+<td>Mermaid PNG</td>
+<td><a href="diagrams/structurizr-HourlyMirrorPublishFlow.png"><code>structurizr-HourlyMirrorPublishFlow.png</code></a></td>
+</tr>
+<tr>
+<td>DOT source</td>
+<td><a href="diagrams/dot/structurizr-HourlyMirrorPublishFlow.dot"><code>structurizr-HourlyMirrorPublishFlow.dot</code></a></td>
+</tr>
+<tr>
+<td>Graphviz SVG</td>
+<td><a href="diagrams/dot-rendered/structurizr-HourlyMirrorPublishFlow.svg"><code>structurizr-HourlyMirrorPublishFlow.svg</code></a></td>
+</tr>
+<tr>
+<td>Graphviz PNG</td>
+<td><a href="diagrams/dot-rendered/structurizr-HourlyMirrorPublishFlow.png"><code>structurizr-HourlyMirrorPublishFlow.png</code></a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="hourly-preflight-snapshot-flow">Hourly Preflight Snapshot Flow</h2>
+<blockquote>
+<p>C4 view <code>HourlyPreflightSnapshotFlow</code>.</p>
+</blockquote>
+<h3 id="diagram_3">Diagram</h3>
+<p><img alt="Hourly Preflight Snapshot Flow" src="diagrams/dot-rendered/structurizr-HourlyPreflightSnapshotFlow.svg" /></p>
+<p><em>Preferred Markdown display: Graphviz SVG. Mermaid source is retained below for text review.</em></p>
+<details>
+<summary>Mermaid source</summary>
+
+
+
+<pre class="mmd-fallback">graph LR
+  linkStyle default fill:#ffffff
+
+  subgraph diagram [&quot;Dynamic View: WORKSTATION1 Workflow Backup&quot;]
+    style diagram fill:#ffffff,stroke:#ffffff
+
+    subgraph 2 [&quot;WORKSTATION1 Workflow Backup&quot;]
+      style 2 fill:#ffffff,stroke:#16a34a,color:#16a34a
+
+      16[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;SQLite Snapshotter&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Python 3, sqlite3]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Creates&lt;br /&gt;application-consistent copies&lt;br /&gt;of Hermes, lifelog,&lt;br /&gt;browser-memory, and related&lt;br /&gt;SQLite databases using&lt;br /&gt;sqlite3 backup API; can&lt;br /&gt;quick_check copies.&lt;/div&gt;&quot;]
+      style 16 fill:#ecfeff,stroke:#0891b2,color:#111827
+      18[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;NAS Growth Guard&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash + NAS sudo helper + zfs CLI]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Read-only NAS-side ZFS budget&lt;br /&gt;check that enforces&lt;br /&gt;dataset-used, snapshot-held,&lt;br /&gt;availability-dataset&lt;br /&gt;free-space, and&lt;br /&gt;snapshot-count limits&lt;br /&gt;before/after writes.&lt;/div&gt;&quot;]
+      style 18 fill:#ecfeff,stroke:#0891b2,color:#111827
+      20[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Restricted NAS Runtime SSH Boundary&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: OpenSSH forced command + sudoers + ZFS refquota]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Dedicated runtime NAS&lt;br /&gt;user/key, pinned host-key&lt;br /&gt;verification, forced-command&lt;br /&gt;dispatcher, sudo allowlist,&lt;br /&gt;and refquota-backed&lt;br /&gt;current-tree write boundary.&lt;/div&gt;&quot;]
+      style 20 fill:#ecfeff,stroke:#0891b2,color:#111827
+      25[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Run Ledger and Local State&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: SQLite + JSON + logs on WSL filesystem]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Local status, pruned logs,&lt;br /&gt;SQLite run ledger, exported&lt;br /&gt;run-history JSON, SQLite&lt;br /&gt;snapshot cache, and Windows&lt;br /&gt;manifest cache under&lt;br /&gt;~/.local/state/workstation-workflow-backup.&lt;/div&gt;&quot;)]
+      style 25 fill:#fef3c7,stroke:#d97706,color:#111827
+      3(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;systemd User Timer and Service&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: systemd --user units]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Hourly user-level scheduler&lt;br /&gt;and oneshot service that run&lt;br /&gt;the backup at minute 45 and&lt;br /&gt;route failures to the&lt;br /&gt;notifier.&lt;/div&gt;&quot;)
+      style 3 fill:#e0e7ff,stroke:#4f46e5,color:#111827
+      4[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Backup Orchestrator&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;scripts/workflow-backup.sh&lt;br /&gt;coordinates one backup run:&lt;br /&gt;locking, log pruning,&lt;br /&gt;pre/post guard checks, WSL&lt;br /&gt;rsync, SQLite snapshots,&lt;br /&gt;Windows sync, strict final&lt;br /&gt;ledger updates, NAS manifest&lt;br /&gt;publication, and&lt;br /&gt;restore-checksum generation.&lt;/div&gt;&quot;]
+      style 4 fill:#e0f2fe,stroke:#0284c7,color:#111827
+    end
+
+    26[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;WSL Workflow Sources&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Workflow-critical WSL paths:&lt;br /&gt;~/repos, ~/.hermes, ~/.ssh,&lt;br /&gt;systemd user config,&lt;br /&gt;lifelog/browser-memory data,&lt;br /&gt;and optional brain-code tree.&lt;/div&gt;&quot;)]
+    style 26 fill:#fef3c7,stroke:#d97706,color:#111827
+    28[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS Backup Dataset&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Configured encrypted TrueNAS&lt;br /&gt;dataset with current mirror&lt;br /&gt;tree, manifests, SMB share,&lt;br /&gt;restore checksum manifest,&lt;br /&gt;refquota, and ZFS snapshot&lt;br /&gt;history.&lt;/div&gt;&quot;)]
+    style 28 fill:#fef3c7,stroke:#d97706,color:#111827
+    29[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS Middleware and ZFS Control Plane&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Configured admin SSH and&lt;br /&gt;middleware surface used for&lt;br /&gt;ZFS properties, runtime-user&lt;br /&gt;setup, snapshot tasks, SMB&lt;br /&gt;share configuration, and&lt;br /&gt;verification.&lt;/div&gt;&quot;]
+    style 29 fill:#f3e8ff,stroke:#9333ea,color:#111827
+
+    3-. &quot;&lt;div&gt;1. Start oneshot backup&lt;br /&gt;service&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[systemd --user]&lt;/div&gt;&quot; .-&gt;4
+    4-. &quot;&lt;div&gt;2. Record started event and&lt;br /&gt;open log&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem + sqlite3]&lt;/div&gt;&quot; .-&gt;25
+    4-. &quot;&lt;div&gt;3. Run pre-write guard&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[subprocess]&lt;/div&gt;&quot; .-&gt;18
+    18-. &quot;&lt;div&gt;4. Read ZFS budget values&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[NAS-side helper + zfs]&lt;/div&gt;&quot; .-&gt;29
+    4-. &quot;&lt;div&gt;5. Snapshot live SQLite DBs&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[subprocess]&lt;/div&gt;&quot; .-&gt;16
+    16-. &quot;&lt;div&gt;6. Read live SQLite databases&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[sqlite3 backup API]&lt;/div&gt;&quot; .-&gt;26
+    16-. &quot;&lt;div&gt;7. Write snapshot&lt;br /&gt;manifest/cache&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem]&lt;/div&gt;&quot; .-&gt;25
+    4-. &quot;&lt;div&gt;8. Open restricted runtime&lt;br /&gt;SSH session&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[SSH]&lt;/div&gt;&quot; .-&gt;20
+    4-. &quot;&lt;div&gt;9. Mirror SQLite snapshot&lt;br /&gt;tree&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[restricted SSH rsync]&lt;/div&gt;&quot; .-&gt;28
+
+  end</pre>
+
+
+
+</details>
+
+<h3 id="derived-artifacts_3">Derived artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mermaid source</td>
+<td><a href="diagrams/structurizr-HourlyPreflightSnapshotFlow.mmd"><code>structurizr-HourlyPreflightSnapshotFlow.mmd</code></a></td>
+</tr>
+<tr>
+<td>Mermaid SVG</td>
+<td><a href="diagrams/structurizr-HourlyPreflightSnapshotFlow.svg"><code>structurizr-HourlyPreflightSnapshotFlow.svg</code></a></td>
+</tr>
+<tr>
+<td>Mermaid PNG</td>
+<td><a href="diagrams/structurizr-HourlyPreflightSnapshotFlow.png"><code>structurizr-HourlyPreflightSnapshotFlow.png</code></a></td>
+</tr>
+<tr>
+<td>DOT source</td>
+<td><a href="diagrams/dot/structurizr-HourlyPreflightSnapshotFlow.dot"><code>structurizr-HourlyPreflightSnapshotFlow.dot</code></a></td>
+</tr>
+<tr>
+<td>Graphviz SVG</td>
+<td><a href="diagrams/dot-rendered/structurizr-HourlyPreflightSnapshotFlow.svg"><code>structurizr-HourlyPreflightSnapshotFlow.svg</code></a></td>
+</tr>
+<tr>
+<td>Graphviz PNG</td>
+<td><a href="diagrams/dot-rendered/structurizr-HourlyPreflightSnapshotFlow.png"><code>structurizr-HourlyPreflightSnapshotFlow.png</code></a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="local-deployment">Local Deployment</h2>
+<blockquote>
+<p>C4 view <code>LocalDeployment</code>.</p>
+</blockquote>
+<h3 id="diagram_4">Diagram</h3>
+<p><img alt="Local Deployment" src="diagrams/dot-rendered/structurizr-LocalDeployment.svg" /></p>
+<p><em>Preferred Markdown display: Graphviz SVG. Mermaid source is retained below for text review.</em></p>
+<details>
+<summary>Mermaid source</summary>
+
+
+
+<pre class="mmd-fallback">graph TB
+  linkStyle default fill:#ffffff
+
+  subgraph diagram [&quot;Deployment View: WORKSTATION1 Workflow Backup - WORKSTATION1 local plus TrueNAS&quot;]
+    style diagram fill:#ffffff,stroke:#ffffff
+
+    subgraph 134 [&quot;Configured TrueNAS host&quot;]
+      style 134 fill:#ffffff,stroke:#444444,color:#444444
+
+      135[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Encrypted ZFS backup dataset&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Infrastructure Node: ZFS dataset]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Backup current tree,&lt;br /&gt;manifests, integrity&lt;br /&gt;manifest, refquota, and&lt;br /&gt;snapshot history under the&lt;br /&gt;configured NAS path.&lt;/div&gt;&quot;]
+      style 135 fill:#f8fafc,stroke:#64748b,color:#111827
+      136[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Restricted runtime SSH user/key&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Infrastructure Node: OpenSSH authorized_keys]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Forced-command receiver for&lt;br /&gt;rsync writes, guard helper,&lt;br /&gt;and integrity helper; no&lt;br /&gt;interactive shell path.&lt;/div&gt;&quot;]
+      style 136 fill:#f8fafc,stroke:#64748b,color:#111827
+      137[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;SMB backup share&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Infrastructure Node: Samba SMB]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Windows helper destination&lt;br /&gt;with shadow-copy support and&lt;br /&gt;mangled names disabled.&lt;/div&gt;&quot;]
+      style 137 fill:#f8fafc,stroke:#64748b,color:#111827
+      138[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS periodic snapshot tasks&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Infrastructure Node: TrueNAS middleware]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;wf-h/wf-d/wf-w/wf-m snapshot&lt;br /&gt;tasks with 2d/2w/8w/1y&lt;br /&gt;lifetimes.&lt;/div&gt;&quot;]
+      style 138 fill:#f8fafc,stroke:#64748b,color:#111827
+    end
+
+    subgraph 139 [&quot;Telegram&quot;]
+      style 139 fill:#ffffff,stroke:#444444,color:#444444
+
+      140[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Telegram Bot API&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Infrastructure Node: HTTPS]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;HTTPS sendMessage endpoint&lt;br /&gt;reached by the failure&lt;br /&gt;notifier.&lt;/div&gt;&quot;]
+      style 140 fill:#f8fafc,stroke:#64748b,color:#111827
+    end
+
+    subgraph 98 [&quot;WORKSTATION1&quot;]
+      style 98 fill:#ffffff,stroke:#444444,color:#444444
+
+      subgraph 129 [&quot;Windows user profile&quot;]
+        style 129 fill:#ffffff,stroke:#444444,color:#444444
+
+        130[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Windows Critical Sync Helper&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: PowerShell + robocopy.exe]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;PowerShell script launched&lt;br /&gt;from WSL that uses&lt;br /&gt;robocopy.exe to mirror&lt;br /&gt;selected Windows profile&lt;br /&gt;directories/files to the SMB&lt;br /&gt;share and writes a Windows&lt;br /&gt;sync manifest.&lt;/div&gt;&quot;]
+        style 130 fill:#ecfeff,stroke:#0891b2,color:#111827
+        133[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Selected Windows source artifacts&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Infrastructure Node: NTFS]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Desktop, Documents,&lt;br /&gt;Downloads, .ssh, .wslconfig,&lt;br /&gt;Windows Terminal, VS Code,&lt;br /&gt;PowerShell, Chrome profile&lt;br /&gt;metadata, and Startup&lt;br /&gt;entries.&lt;/div&gt;&quot;]
+        style 133 fill:#f8fafc,stroke:#64748b,color:#111827
+      end
+
+      subgraph 99 [&quot;WSL2 Ubuntu-22.04&quot;]
+        style 99 fill:#ffffff,stroke:#444444,color:#444444
+
+        subgraph 100 [&quot;systemd --user&quot;]
+          style 100 fill:#ffffff,stroke:#444444,color:#444444
+
+          101(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;systemd User Timer and Service&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: systemd --user units]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Hourly user-level scheduler&lt;br /&gt;and oneshot service that run&lt;br /&gt;the backup at minute 45 and&lt;br /&gt;route failures to the&lt;br /&gt;notifier.&lt;/div&gt;&quot;)
+          style 101 fill:#e0e7ff,stroke:#4f46e5,color:#111827
+          102[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Backup Orchestrator&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;scripts/workflow-backup.sh&lt;br /&gt;coordinates one backup run:&lt;br /&gt;locking, log pruning,&lt;br /&gt;pre/post guard checks, WSL&lt;br /&gt;rsync, SQLite snapshots,&lt;br /&gt;Windows sync, strict final&lt;br /&gt;ledger updates, NAS manifest&lt;br /&gt;publication, and&lt;br /&gt;restore-checksum generation.&lt;/div&gt;&quot;]
+          style 102 fill:#e0f2fe,stroke:#0284c7,color:#111827
+          104[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Failure Notifier&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash + Python urllib]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Best-effort Telegram failure&lt;br /&gt;alert unit that reads last&lt;br /&gt;status/log tail and Hermes&lt;br /&gt;bot environment variables;&lt;br /&gt;success runs stay silent.&lt;/div&gt;&quot;]
+          style 104 fill:#ecfeff,stroke:#0891b2,color:#111827
+        end
+
+        subgraph 107 [&quot;Repo scripts&quot;]
+          style 107 fill:#ffffff,stroke:#444444,color:#444444
+
+          108[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;SQLite Snapshotter&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Python 3, sqlite3]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Creates&lt;br /&gt;application-consistent copies&lt;br /&gt;of Hermes, lifelog,&lt;br /&gt;browser-memory, and related&lt;br /&gt;SQLite databases using&lt;br /&gt;sqlite3 backup API; can&lt;br /&gt;quick_check copies.&lt;/div&gt;&quot;]
+          style 108 fill:#ecfeff,stroke:#0891b2,color:#111827
+          110[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;NAS Growth Guard&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash + NAS sudo helper + zfs CLI]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Read-only NAS-side ZFS budget&lt;br /&gt;check that enforces&lt;br /&gt;dataset-used, snapshot-held,&lt;br /&gt;availability-dataset&lt;br /&gt;free-space, and&lt;br /&gt;snapshot-count limits&lt;br /&gt;before/after writes.&lt;/div&gt;&quot;]
+          style 110 fill:#ecfeff,stroke:#0891b2,color:#111827
+          112[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;NAS Integrity Manifest Builder&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Python + SHA-256]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;NAS-side helper that hashes&lt;br /&gt;restore-critical current-tree&lt;br /&gt;artifacts and writes&lt;br /&gt;_manifests/integrity-manifest.json&lt;br /&gt;for snapshot-preserved&lt;br /&gt;restore verification.&lt;/div&gt;&quot;]
+          style 112 fill:#ecfeff,stroke:#0891b2,color:#111827
+          114[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Restricted NAS Runtime SSH Boundary&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: OpenSSH forced command + sudoers + ZFS refquota]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Dedicated runtime NAS&lt;br /&gt;user/key, pinned host-key&lt;br /&gt;verification, forced-command&lt;br /&gt;dispatcher, sudo allowlist,&lt;br /&gt;and refquota-backed&lt;br /&gt;current-tree write boundary.&lt;/div&gt;&quot;]
+          style 114 fill:#ecfeff,stroke:#0891b2,color:#111827
+          118[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;NAS Provisioner&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash + admin SSH + remote Python + midclt/zfs]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Idempotent provisioning&lt;br /&gt;script for the TrueNAS&lt;br /&gt;dataset, SMB share, periodic&lt;br /&gt;snapshot tasks, refquota, and&lt;br /&gt;retired legacy snapshot cron&lt;br /&gt;jobs.&lt;/div&gt;&quot;]
+          style 118 fill:#ecfeff,stroke:#0891b2,color:#111827
+          119[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;NAS Runtime Hardening Installer&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash + admin SSH + TrueNAS middleware]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Installs or updates the&lt;br /&gt;dedicated runtime user/key,&lt;br /&gt;forced-command dispatcher,&lt;br /&gt;NAS-side guard/integrity&lt;br /&gt;helpers, sudo allowlist,&lt;br /&gt;runtime-writable subtrees,&lt;br /&gt;host-key pinning config, and&lt;br /&gt;dataset refquota.&lt;/div&gt;&quot;]
+          style 119 fill:#ecfeff,stroke:#0891b2,color:#111827
+          120[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Backup Verifier&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash + systemctl + SSH]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Operational verification&lt;br /&gt;script that checks the local&lt;br /&gt;timer, last status, run&lt;br /&gt;ledger, growth guard, NAS&lt;br /&gt;dataset, snapshots,&lt;br /&gt;manifests, integrity summary,&lt;br /&gt;snapshot tasks, and retired&lt;br /&gt;cron jobs.&lt;/div&gt;&quot;]
+          style 120 fill:#ecfeff,stroke:#0891b2,color:#111827
+        end
+
+        subgraph 123 [&quot;Local backup state&quot;]
+          style 123 fill:#ffffff,stroke:#444444,color:#444444
+
+          124[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Run Ledger and Local State&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: SQLite + JSON + logs on WSL filesystem]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Local status, pruned logs,&lt;br /&gt;SQLite run ledger, exported&lt;br /&gt;run-history JSON, SQLite&lt;br /&gt;snapshot cache, and Windows&lt;br /&gt;manifest cache under&lt;br /&gt;~/.local/state/workstation-workflow-backup.&lt;/div&gt;&quot;)]
+          style 124 fill:#fef3c7,stroke:#d97706,color:#111827
+        end
+
+      end
+
+    end
+
+    101-. &quot;&lt;div&gt;Starts hourly at :45 and&lt;br /&gt;tracks service exit&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[systemd --user]&lt;/div&gt;&quot; .-&gt;102
+    101-. &quot;&lt;div&gt;Triggers on nonzero service&lt;br /&gt;result&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[OnFailure]&lt;/div&gt;&quot; .-&gt;104
+    102-. &quot;&lt;div&gt;Exits nonzero so systemd can&lt;br /&gt;alert through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;104
+    102-. &quot;&lt;div&gt;Creates consistent SQLite&lt;br /&gt;backup copies with&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[subprocess]&lt;/div&gt;&quot; .-&gt;108
+    102-. &quot;&lt;div&gt;Runs pre/post budget checks&lt;br /&gt;through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[subprocess]&lt;/div&gt;&quot; .-&gt;110
+    102-. &quot;&lt;div&gt;Runs restore-critical&lt;br /&gt;checksum manifest generation&lt;br /&gt;through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[restricted SSH]&lt;/div&gt;&quot; .-&gt;112
+    102-. &quot;&lt;div&gt;Connects with dedicated&lt;br /&gt;runtime key and pinned&lt;br /&gt;host-key verification through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[SSH]&lt;/div&gt;&quot; .-&gt;114
+    114-. &quot;&lt;div&gt;Allows sudo execution of&lt;br /&gt;guard helper only&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[forced command + sudo]&lt;/div&gt;&quot; .-&gt;110
+    114-. &quot;&lt;div&gt;Allows sudo execution of&lt;br /&gt;integrity helper only&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[forced command + sudo]&lt;/div&gt;&quot; .-&gt;112
+    120-. &quot;&lt;div&gt;Checks enabled/active timer&lt;br /&gt;state through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[systemctl --user]&lt;/div&gt;&quot; .-&gt;101
+    120-. &quot;&lt;div&gt;Runs read-only guard&lt;br /&gt;verification through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[subprocess]&lt;/div&gt;&quot; .-&gt;110
+    102-. &quot;&lt;div&gt;Writes logs, last-run.json,&lt;br /&gt;run events, and exported&lt;br /&gt;history in&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem + sqlite3]&lt;/div&gt;&quot; .-&gt;124
+    104-. &quot;&lt;div&gt;Reads last status and log&lt;br /&gt;tail from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem]&lt;/div&gt;&quot; .-&gt;124
+    108-. &quot;&lt;div&gt;Writes local SQLite snapshot&lt;br /&gt;cache and manifest under&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem]&lt;/div&gt;&quot; .-&gt;124
+    120-. &quot;&lt;div&gt;Reads local last status and&lt;br /&gt;recent run ledger from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem + sqlite3]&lt;/div&gt;&quot; .-&gt;124
+    102-. &quot;&lt;div&gt;Launches Windows sync through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[PowerShell via WSL interop]&lt;/div&gt;&quot; .-&gt;130
+    130-. &quot;&lt;div&gt;Leaves manifest cache for&lt;br /&gt;ledger summaries&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;124
+
+  end</pre>
+
+
+
+</details>
+
+<h3 id="derived-artifacts_4">Derived artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mermaid source</td>
+<td><a href="diagrams/structurizr-LocalDeployment.mmd"><code>structurizr-LocalDeployment.mmd</code></a></td>
+</tr>
+<tr>
+<td>Mermaid SVG</td>
+<td><a href="diagrams/structurizr-LocalDeployment.svg"><code>structurizr-LocalDeployment.svg</code></a></td>
+</tr>
+<tr>
+<td>Mermaid PNG</td>
+<td><a href="diagrams/structurizr-LocalDeployment.png"><code>structurizr-LocalDeployment.png</code></a></td>
+</tr>
+<tr>
+<td>DOT source</td>
+<td><a href="diagrams/dot/structurizr-LocalDeployment.dot"><code>structurizr-LocalDeployment.dot</code></a></td>
+</tr>
+<tr>
+<td>Graphviz SVG</td>
+<td><a href="diagrams/dot-rendered/structurizr-LocalDeployment.svg"><code>structurizr-LocalDeployment.svg</code></a></td>
+</tr>
+<tr>
+<td>Graphviz PNG</td>
+<td><a href="diagrams/dot-rendered/structurizr-LocalDeployment.png"><code>structurizr-LocalDeployment.png</code></a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="ops-provisioning-containers">Ops Provisioning Containers</h2>
+<blockquote>
+<p>C4 view <code>OpsProvisioningContainers</code>.</p>
+</blockquote>
+<h3 id="diagram_5">Diagram</h3>
+<p><img alt="Ops Provisioning Containers" src="diagrams/dot-rendered/structurizr-OpsProvisioningContainers.svg" /></p>
+<p><em>Preferred Markdown display: Graphviz SVG. Mermaid source is retained below for text review.</em></p>
+<details>
+<summary>Mermaid source</summary>
+
+
+
+<pre class="mmd-fallback">graph LR
+  linkStyle default fill:#ffffff
+
+  subgraph diagram [&quot;Container View: WORKSTATION1 Workflow Backup&quot;]
+    style diagram fill:#ffffff,stroke:#ffffff
+
+    1[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Michael&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Person]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Sole operator who installs,&lt;br /&gt;verifies, and restores&lt;br /&gt;WORKSTATION1 workflow&lt;br /&gt;backups.&lt;/div&gt;&quot;]
+    style 1 fill:#dbeafe,stroke:#2563eb,color:#111827
+    28[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS Backup Dataset&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Configured encrypted TrueNAS&lt;br /&gt;dataset with current mirror&lt;br /&gt;tree, manifests, SMB share,&lt;br /&gt;restore checksum manifest,&lt;br /&gt;refquota, and ZFS snapshot&lt;br /&gt;history.&lt;/div&gt;&quot;)]
+    style 28 fill:#fef3c7,stroke:#d97706,color:#111827
+    29[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS Middleware and ZFS Control Plane&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Configured admin SSH and&lt;br /&gt;middleware surface used for&lt;br /&gt;ZFS properties, runtime-user&lt;br /&gt;setup, snapshot tasks, SMB&lt;br /&gt;share configuration, and&lt;br /&gt;verification.&lt;/div&gt;&quot;]
+    style 29 fill:#f3e8ff,stroke:#9333ea,color:#111827
+    32[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Operator Shell and Restore Tools&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Local shell, rsync, SSH,&lt;br /&gt;Windows Previous Versions,&lt;br /&gt;and README/runbook commands&lt;br /&gt;used for verification and&lt;br /&gt;targeted restores.&lt;/div&gt;&quot;]
+    style 32 fill:#f3e8ff,stroke:#9333ea,color:#111827
+
+    subgraph 2 [&quot;WORKSTATION1 Workflow Backup&quot;]
+      style 2 fill:#ffffff,stroke:#16a34a,color:#16a34a
+
+      18[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;NAS Growth Guard&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash + NAS sudo helper + zfs CLI]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Read-only NAS-side ZFS budget&lt;br /&gt;check that enforces&lt;br /&gt;dataset-used, snapshot-held,&lt;br /&gt;availability-dataset&lt;br /&gt;free-space, and&lt;br /&gt;snapshot-count limits&lt;br /&gt;before/after writes.&lt;/div&gt;&quot;]
+      style 18 fill:#ecfeff,stroke:#0891b2,color:#111827
+      19[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;NAS Integrity Manifest Builder&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Python + SHA-256]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;NAS-side helper that hashes&lt;br /&gt;restore-critical current-tree&lt;br /&gt;artifacts and writes&lt;br /&gt;_manifests/integrity-manifest.json&lt;br /&gt;for snapshot-preserved&lt;br /&gt;restore verification.&lt;/div&gt;&quot;]
+      style 19 fill:#ecfeff,stroke:#0891b2,color:#111827
+      20[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Restricted NAS Runtime SSH Boundary&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: OpenSSH forced command + sudoers + ZFS refquota]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Dedicated runtime NAS&lt;br /&gt;user/key, pinned host-key&lt;br /&gt;verification, forced-command&lt;br /&gt;dispatcher, sudo allowlist,&lt;br /&gt;and refquota-backed&lt;br /&gt;current-tree write boundary.&lt;/div&gt;&quot;]
+      style 20 fill:#ecfeff,stroke:#0891b2,color:#111827
+      21[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;NAS Provisioner&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash + admin SSH + remote Python + midclt/zfs]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Idempotent provisioning&lt;br /&gt;script for the TrueNAS&lt;br /&gt;dataset, SMB share, periodic&lt;br /&gt;snapshot tasks, refquota, and&lt;br /&gt;retired legacy snapshot cron&lt;br /&gt;jobs.&lt;/div&gt;&quot;]
+      style 21 fill:#ecfeff,stroke:#0891b2,color:#111827
+      22[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;NAS Runtime Hardening Installer&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash + admin SSH + TrueNAS middleware]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Installs or updates the&lt;br /&gt;dedicated runtime user/key,&lt;br /&gt;forced-command dispatcher,&lt;br /&gt;NAS-side guard/integrity&lt;br /&gt;helpers, sudo allowlist,&lt;br /&gt;runtime-writable subtrees,&lt;br /&gt;host-key pinning config, and&lt;br /&gt;dataset refquota.&lt;/div&gt;&quot;]
+      style 22 fill:#ecfeff,stroke:#0891b2,color:#111827
+      23[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Backup Verifier&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash + systemctl + SSH]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Operational verification&lt;br /&gt;script that checks the local&lt;br /&gt;timer, last status, run&lt;br /&gt;ledger, growth guard, NAS&lt;br /&gt;dataset, snapshots,&lt;br /&gt;manifests, integrity summary,&lt;br /&gt;snapshot tasks, and retired&lt;br /&gt;cron jobs.&lt;/div&gt;&quot;]
+      style 23 fill:#ecfeff,stroke:#0891b2,color:#111827
+      25[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Run Ledger and Local State&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: SQLite + JSON + logs on WSL filesystem]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Local status, pruned logs,&lt;br /&gt;SQLite run ledger, exported&lt;br /&gt;run-history JSON, SQLite&lt;br /&gt;snapshot cache, and Windows&lt;br /&gt;manifest cache under&lt;br /&gt;~/.local/state/workstation-workflow-backup.&lt;/div&gt;&quot;)]
+      style 25 fill:#fef3c7,stroke:#d97706,color:#111827
+    end
+
+    1-. &quot;&lt;div&gt;Runs backup, verification,&lt;br /&gt;provisioning, and restore&lt;br /&gt;commands from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;32
+    32-. &quot;&lt;div&gt;Runs backup health checks&lt;br /&gt;through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[shell]&lt;/div&gt;&quot; .-&gt;23
+    32-. &quot;&lt;div&gt;Lists snapshots and inspects&lt;br /&gt;NAS state through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[admin SSH + zfs/midclt]&lt;/div&gt;&quot; .-&gt;29
+    32-. &quot;&lt;div&gt;Restores selected files from&lt;br /&gt;.zfs/snapshot/current paths&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[SSH rsync or SMB Previous Versions]&lt;/div&gt;&quot; .-&gt;28
+    18-. &quot;&lt;div&gt;Reads ZFS used, availability,&lt;br /&gt;usedbysnapshots, and snapshot&lt;br /&gt;count from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[NAS-side helper + zfs]&lt;/div&gt;&quot; .-&gt;29
+    20-. &quot;&lt;div&gt;Allows receiver-mode rsync&lt;br /&gt;and mkdir only under current&lt;br /&gt;tree&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[forced command + rsync]&lt;/div&gt;&quot; .-&gt;28
+    20-. &quot;&lt;div&gt;Allows sudo execution of&lt;br /&gt;guard helper only&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[forced command + sudo]&lt;/div&gt;&quot; .-&gt;18
+    20-. &quot;&lt;div&gt;Allows sudo execution of&lt;br /&gt;integrity helper only&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[forced command + sudo]&lt;/div&gt;&quot; .-&gt;19
+    19-. &quot;&lt;div&gt;Hashes NAS current-tree&lt;br /&gt;critical artifacts and writes&lt;br /&gt;integrity-manifest.json to&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[SHA-256 + filesystem]&lt;/div&gt;&quot; .-&gt;28
+    21-. &quot;&lt;div&gt;Creates/updates dataset, SMB&lt;br /&gt;share, snapshot tasks,&lt;br /&gt;refquota, and disabled&lt;br /&gt;retired cron jobs through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[admin SSH + zfs + midclt]&lt;/div&gt;&quot; .-&gt;29
+    21-. &quot;&lt;div&gt;Configures mountpoint, SMB&lt;br /&gt;share, refquota, and snapshot&lt;br /&gt;naming/retention for&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;28
+    22-. &quot;&lt;div&gt;Creates runtime user/key,&lt;br /&gt;forced command, sudo&lt;br /&gt;allowlist, helper scripts,&lt;br /&gt;and pinned host-key boundary&lt;br /&gt;through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[admin SSH + middleware]&lt;/div&gt;&quot; .-&gt;29
+    22-. &quot;&lt;div&gt;Owns runtime-writable current&lt;br /&gt;subtrees and applies refquota&lt;br /&gt;for&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;28
+    23-. &quot;&lt;div&gt;Reads local last status and&lt;br /&gt;recent run ledger from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem + sqlite3]&lt;/div&gt;&quot; .-&gt;25
+    23-. &quot;&lt;div&gt;Runs read-only guard&lt;br /&gt;verification through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[subprocess]&lt;/div&gt;&quot; .-&gt;18
+    23-. &quot;&lt;div&gt;Reads dataset, snapshot&lt;br /&gt;tasks, and retired cron job&lt;br /&gt;state from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[SSH + midclt + zfs]&lt;/div&gt;&quot; .-&gt;29
+    23-. &quot;&lt;div&gt;Checks required backup paths,&lt;br /&gt;status manifests, and&lt;br /&gt;integrity manifest in&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;28
+
+  end</pre>
+
+
+
+</details>
+
+<h3 id="derived-artifacts_5">Derived artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mermaid source</td>
+<td><a href="diagrams/structurizr-OpsProvisioningContainers.mmd"><code>structurizr-OpsProvisioningContainers.mmd</code></a></td>
+</tr>
+<tr>
+<td>Mermaid SVG</td>
+<td><a href="diagrams/structurizr-OpsProvisioningContainers.svg"><code>structurizr-OpsProvisioningContainers.svg</code></a></td>
+</tr>
+<tr>
+<td>Mermaid PNG</td>
+<td><a href="diagrams/structurizr-OpsProvisioningContainers.png"><code>structurizr-OpsProvisioningContainers.png</code></a></td>
+</tr>
+<tr>
+<td>DOT source</td>
+<td><a href="diagrams/dot/structurizr-OpsProvisioningContainers.dot"><code>structurizr-OpsProvisioningContainers.dot</code></a></td>
+</tr>
+<tr>
+<td>Graphviz SVG</td>
+<td><a href="diagrams/dot-rendered/structurizr-OpsProvisioningContainers.svg"><code>structurizr-OpsProvisioningContainers.svg</code></a></td>
+</tr>
+<tr>
+<td>Graphviz PNG</td>
+<td><a href="diagrams/dot-rendered/structurizr-OpsProvisioningContainers.png"><code>structurizr-OpsProvisioningContainers.png</code></a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="orchestrator-control-components">Orchestrator Control Components</h2>
+<blockquote>
+<p>C4 view <code>OrchestratorControlComponents</code>.</p>
+</blockquote>
+<h3 id="diagram_6">Diagram</h3>
+<p><img alt="Orchestrator Control Components" src="diagrams/dot-rendered/structurizr-OrchestratorControlComponents.svg" /></p>
+<p><em>Preferred Markdown display: Graphviz SVG. Mermaid source is retained below for text review.</em></p>
+<details>
+<summary>Mermaid source</summary>
+
+
+
+<pre class="mmd-fallback">graph LR
+  linkStyle default fill:#ffffff
+
+  subgraph diagram [&quot;Component View: WORKSTATION1 Workflow Backup - Backup Orchestrator&quot;]
+    style diagram fill:#ffffff,stroke:#ffffff
+
+    28[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS Backup Dataset&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Configured encrypted TrueNAS&lt;br /&gt;dataset with current mirror&lt;br /&gt;tree, manifests, SMB share,&lt;br /&gt;restore checksum manifest,&lt;br /&gt;refquota, and ZFS snapshot&lt;br /&gt;history.&lt;/div&gt;&quot;)]
+    style 28 fill:#fef3c7,stroke:#d97706,color:#111827
+    29[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS Middleware and ZFS Control Plane&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Configured admin SSH and&lt;br /&gt;middleware surface used for&lt;br /&gt;ZFS properties, runtime-user&lt;br /&gt;setup, snapshot tasks, SMB&lt;br /&gt;share configuration, and&lt;br /&gt;verification.&lt;/div&gt;&quot;]
+    style 29 fill:#f3e8ff,stroke:#9333ea,color:#111827
+
+    subgraph 2 [&quot;WORKSTATION1 Workflow Backup&quot;]
+      style 2 fill:#ffffff,stroke:#16a34a,color:#16a34a
+
+      subgraph 4 [&quot;Backup Orchestrator&quot;]
+        style 4 fill:#ffffff,stroke:#0284c7,color:#0284c7
+
+        13[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;NAS Status Publisher&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Component: Python + rsync over restricted SSH]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Exports the run ledger to&lt;br /&gt;JSON/SQLite snapshots and&lt;br /&gt;rsyncs last-run/run-history&lt;br /&gt;manifests to NAS through the&lt;br /&gt;restricted runtime SSH&lt;br /&gt;boundary.&lt;/div&gt;&quot;]
+        style 13 fill:#f0fdf4,stroke:#22c55e,color:#111827
+        14[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Integrity Manifest Phase&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Component: Bash + restricted SSH]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Runs the NAS-side checksum&lt;br /&gt;helper after successful&lt;br /&gt;status publication to write&lt;br /&gt;restore-critical SHA-256&lt;br /&gt;evidence.&lt;/div&gt;&quot;]
+        style 14 fill:#f0fdf4,stroke:#22c55e,color:#111827
+        15[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Error Trap&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Component: Bash ERR trap]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Converts command failures&lt;br /&gt;into failed status, ledger&lt;br /&gt;event, best-effort NAS status&lt;br /&gt;sync, and nonzero service&lt;br /&gt;exit.&lt;/div&gt;&quot;]
+        style 15 fill:#f0fdf4,stroke:#22c55e,color:#111827
+        5[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Argument Parser&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Component: Bash case parser]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Handles --dry-run, --verbose,&lt;br /&gt;--skip-windows, --skip-wsl,&lt;br /&gt;and --quick-check-sqlite&lt;br /&gt;flags.&lt;/div&gt;&quot;]
+        style 5 fill:#f0fdf4,stroke:#22c55e,color:#111827
+        6[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Lock and Run Identity&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Component: Bash + flock]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Creates the local state/log&lt;br /&gt;directories, acquires a flock&lt;br /&gt;lock, generates run_id, and&lt;br /&gt;skips concurrent runs&lt;br /&gt;silently.&lt;/div&gt;&quot;]
+        style 6 fill:#f0fdf4,stroke:#22c55e,color:#111827
+        7[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Log and Last-Status Writer&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Component: Bash + Python JSON helper]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Prunes old local logs and&lt;br /&gt;writes per-run logs plus&lt;br /&gt;last-run.json with host,&lt;br /&gt;status, duration, dry-run,&lt;br /&gt;error, and log path.&lt;/div&gt;&quot;]
+        style 7 fill:#f0fdf4,stroke:#22c55e,color:#111827
+        8[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Run Ledger Adapter&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Component: record-run-ledger.py CLI]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Appends&lt;br /&gt;started/completed/failed/skipped&lt;br /&gt;events with SQLite and&lt;br /&gt;Windows manifest summaries.&lt;/div&gt;&quot;]
+        style 8 fill:#f0fdf4,stroke:#22c55e,color:#111827
+        9[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Growth Guard Runner&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Component: Bash subprocess]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Invokes&lt;br /&gt;check-nas-growth-guard.sh&lt;br /&gt;before and after writes and&lt;br /&gt;fails closed on budget&lt;br /&gt;violations.&lt;/div&gt;&quot;]
+        style 9 fill:#f0fdf4,stroke:#22c55e,color:#111827
+      end
+
+      18[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;NAS Growth Guard&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash + NAS sudo helper + zfs CLI]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Read-only NAS-side ZFS budget&lt;br /&gt;check that enforces&lt;br /&gt;dataset-used, snapshot-held,&lt;br /&gt;availability-dataset&lt;br /&gt;free-space, and&lt;br /&gt;snapshot-count limits&lt;br /&gt;before/after writes.&lt;/div&gt;&quot;]
+      style 18 fill:#ecfeff,stroke:#0891b2,color:#111827
+      19[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;NAS Integrity Manifest Builder&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Python + SHA-256]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;NAS-side helper that hashes&lt;br /&gt;restore-critical current-tree&lt;br /&gt;artifacts and writes&lt;br /&gt;_manifests/integrity-manifest.json&lt;br /&gt;for snapshot-preserved&lt;br /&gt;restore verification.&lt;/div&gt;&quot;]
+      style 19 fill:#ecfeff,stroke:#0891b2,color:#111827
+      20[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Restricted NAS Runtime SSH Boundary&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: OpenSSH forced command + sudoers + ZFS refquota]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Dedicated runtime NAS&lt;br /&gt;user/key, pinned host-key&lt;br /&gt;verification, forced-command&lt;br /&gt;dispatcher, sudo allowlist,&lt;br /&gt;and refquota-backed&lt;br /&gt;current-tree write boundary.&lt;/div&gt;&quot;]
+      style 20 fill:#ecfeff,stroke:#0891b2,color:#111827
+      25[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Run Ledger and Local State&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: SQLite + JSON + logs on WSL filesystem]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Local status, pruned logs,&lt;br /&gt;SQLite run ledger, exported&lt;br /&gt;run-history JSON, SQLite&lt;br /&gt;snapshot cache, and Windows&lt;br /&gt;manifest cache under&lt;br /&gt;~/.local/state/workstation-workflow-backup.&lt;/div&gt;&quot;)]
+      style 25 fill:#fef3c7,stroke:#d97706,color:#111827
+    end
+
+    18-. &quot;&lt;div&gt;Reads ZFS used, availability,&lt;br /&gt;usedbysnapshots, and snapshot&lt;br /&gt;count from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[NAS-side helper + zfs]&lt;/div&gt;&quot; .-&gt;29
+    20-. &quot;&lt;div&gt;Allows receiver-mode rsync&lt;br /&gt;and mkdir only under current&lt;br /&gt;tree&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[forced command + rsync]&lt;/div&gt;&quot; .-&gt;28
+    20-. &quot;&lt;div&gt;Allows sudo execution of&lt;br /&gt;guard helper only&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[forced command + sudo]&lt;/div&gt;&quot; .-&gt;18
+    20-. &quot;&lt;div&gt;Allows sudo execution of&lt;br /&gt;integrity helper only&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[forced command + sudo]&lt;/div&gt;&quot; .-&gt;19
+    19-. &quot;&lt;div&gt;Hashes NAS current-tree&lt;br /&gt;critical artifacts and writes&lt;br /&gt;integrity-manifest.json to&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[SHA-256 + filesystem]&lt;/div&gt;&quot; .-&gt;28
+    5-. &quot;&lt;div&gt;Passes selected run mode to&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;6
+    6-. &quot;&lt;div&gt;Initializes log and status&lt;br /&gt;paths for&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;7
+    6-. &quot;&lt;div&gt;Records skipped_lock when&lt;br /&gt;another run is active&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;8
+    8-. &quot;&lt;div&gt;Writes run events to&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[sqlite3]&lt;/div&gt;&quot; .-&gt;25
+    7-. &quot;&lt;div&gt;Writes last-run.json and logs&lt;br /&gt;to&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem]&lt;/div&gt;&quot; .-&gt;25
+    9-. &quot;&lt;div&gt;Executes guard stages through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;18
+    9-. &quot;&lt;div&gt;Stores guard failure message&lt;br /&gt;through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;7
+    13-. &quot;&lt;div&gt;Snapshots ledger DB and&lt;br /&gt;exports run history from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[sqlite3]&lt;/div&gt;&quot; .-&gt;25
+    13-. &quot;&lt;div&gt;Publishes&lt;br /&gt;_manifests/last-run.json,&lt;br /&gt;runs.sqlite3, and&lt;br /&gt;run-history.json to&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[restricted SSH rsync]&lt;/div&gt;&quot; .-&gt;28
+    14-. &quot;&lt;div&gt;Requests restore checksum&lt;br /&gt;manifest from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;19
+    14-. &quot;&lt;div&gt;Publishes&lt;br /&gt;integrity-manifest.json&lt;br /&gt;through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[NAS-side helper]&lt;/div&gt;&quot; .-&gt;28
+    15-. &quot;&lt;div&gt;Marks failed status through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;7
+    15-. &quot;&lt;div&gt;Records failed event through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;8
+    15-. &quot;&lt;div&gt;Best-effort syncs failure&lt;br /&gt;status through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;13
+
+  end</pre>
+
+
+
+</details>
+
+<h3 id="derived-artifacts_6">Derived artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mermaid source</td>
+<td><a href="diagrams/structurizr-OrchestratorControlComponents.mmd"><code>structurizr-OrchestratorControlComponents.mmd</code></a></td>
+</tr>
+<tr>
+<td>Mermaid SVG</td>
+<td><a href="diagrams/structurizr-OrchestratorControlComponents.svg"><code>structurizr-OrchestratorControlComponents.svg</code></a></td>
+</tr>
+<tr>
+<td>Mermaid PNG</td>
+<td><a href="diagrams/structurizr-OrchestratorControlComponents.png"><code>structurizr-OrchestratorControlComponents.png</code></a></td>
+</tr>
+<tr>
+<td>DOT source</td>
+<td><a href="diagrams/dot/structurizr-OrchestratorControlComponents.dot"><code>structurizr-OrchestratorControlComponents.dot</code></a></td>
+</tr>
+<tr>
+<td>Graphviz SVG</td>
+<td><a href="diagrams/dot-rendered/structurizr-OrchestratorControlComponents.svg"><code>structurizr-OrchestratorControlComponents.svg</code></a></td>
+</tr>
+<tr>
+<td>Graphviz PNG</td>
+<td><a href="diagrams/dot-rendered/structurizr-OrchestratorControlComponents.png"><code>structurizr-OrchestratorControlComponents.png</code></a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="orchestrator-sync-components">Orchestrator Sync Components</h2>
+<blockquote>
+<p>C4 view <code>OrchestratorSyncComponents</code>.</p>
+</blockquote>
+<h3 id="diagram_7">Diagram</h3>
+<p><img alt="Orchestrator Sync Components" src="diagrams/dot-rendered/structurizr-OrchestratorSyncComponents.svg" /></p>
+<p><em>Preferred Markdown display: Graphviz SVG. Mermaid source is retained below for text review.</em></p>
+<details>
+<summary>Mermaid source</summary>
+
+
+
+<pre class="mmd-fallback">graph LR
+  linkStyle default fill:#ffffff
+
+  subgraph diagram [&quot;Component View: WORKSTATION1 Workflow Backup - Backup Orchestrator&quot;]
+    style diagram fill:#ffffff,stroke:#ffffff
+
+    26[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;WSL Workflow Sources&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Workflow-critical WSL paths:&lt;br /&gt;~/repos, ~/.hermes, ~/.ssh,&lt;br /&gt;systemd user config,&lt;br /&gt;lifelog/browser-memory data,&lt;br /&gt;and optional brain-code tree.&lt;/div&gt;&quot;)]
+    style 26 fill:#fef3c7,stroke:#d97706,color:#111827
+    27[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Windows Workflow Sources&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Selected Windows user-profile&lt;br /&gt;artifacts: Desktop,&lt;br /&gt;Documents, Downloads, Windows&lt;br /&gt;.ssh/.wslconfig, Terminal/VS&lt;br /&gt;Code/PowerShell config,&lt;br /&gt;Chrome profile metadata, and&lt;br /&gt;Startup entries.&lt;/div&gt;&quot;)]
+    style 27 fill:#fef3c7,stroke:#d97706,color:#111827
+    28[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS Backup Dataset&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Configured encrypted TrueNAS&lt;br /&gt;dataset with current mirror&lt;br /&gt;tree, manifests, SMB share,&lt;br /&gt;restore checksum manifest,&lt;br /&gt;refquota, and ZFS snapshot&lt;br /&gt;history.&lt;/div&gt;&quot;)]
+    style 28 fill:#fef3c7,stroke:#d97706,color:#111827
+
+    subgraph 2 [&quot;WORKSTATION1 Workflow Backup&quot;]
+      style 2 fill:#ffffff,stroke:#16a34a,color:#16a34a
+
+      subgraph 4 [&quot;Backup Orchestrator&quot;]
+        style 4 fill:#ffffff,stroke:#0284c7,color:#0284c7
+
+        10[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;SQLite Snapshot Phase&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Component: Python subprocess + rsync]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Runs the SQLite backup API&lt;br /&gt;snapshotter and mirrors the&lt;br /&gt;consistent DB snapshot tree&lt;br /&gt;to NAS.&lt;/div&gt;&quot;]
+        style 10 fill:#f0fdf4,stroke:#22c55e,color:#111827
+        11[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;WSL Rsync Phase&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Component: rsync over SSH]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Mirrors configured WSL&lt;br /&gt;directories to current/wsl&lt;br /&gt;using sudo rsync over SSH&lt;br /&gt;with payload exclusions.&lt;/div&gt;&quot;]
+        style 11 fill:#f0fdf4,stroke:#22c55e,color:#111827
+        12[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Windows Phase Launcher&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Component: Bash + WSL interop]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Copies the PowerShell helper&lt;br /&gt;to Windows temp and launches&lt;br /&gt;it through direct WSL interop&lt;br /&gt;or /init fallback.&lt;/div&gt;&quot;]
+        style 12 fill:#f0fdf4,stroke:#22c55e,color:#111827
+      end
+
+      16[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;SQLite Snapshotter&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Python 3, sqlite3]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Creates&lt;br /&gt;application-consistent copies&lt;br /&gt;of Hermes, lifelog,&lt;br /&gt;browser-memory, and related&lt;br /&gt;SQLite databases using&lt;br /&gt;sqlite3 backup API; can&lt;br /&gt;quick_check copies.&lt;/div&gt;&quot;]
+      style 16 fill:#ecfeff,stroke:#0891b2,color:#111827
+      17[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Windows Critical Sync Helper&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: PowerShell + robocopy.exe]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;PowerShell script launched&lt;br /&gt;from WSL that uses&lt;br /&gt;robocopy.exe to mirror&lt;br /&gt;selected Windows profile&lt;br /&gt;directories/files to the SMB&lt;br /&gt;share and writes a Windows&lt;br /&gt;sync manifest.&lt;/div&gt;&quot;]
+      style 17 fill:#ecfeff,stroke:#0891b2,color:#111827
+      20[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Restricted NAS Runtime SSH Boundary&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: OpenSSH forced command + sudoers + ZFS refquota]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Dedicated runtime NAS&lt;br /&gt;user/key, pinned host-key&lt;br /&gt;verification, forced-command&lt;br /&gt;dispatcher, sudo allowlist,&lt;br /&gt;and refquota-backed&lt;br /&gt;current-tree write boundary.&lt;/div&gt;&quot;]
+      style 20 fill:#ecfeff,stroke:#0891b2,color:#111827
+      25[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Run Ledger and Local State&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: SQLite + JSON + logs on WSL filesystem]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Local status, pruned logs,&lt;br /&gt;SQLite run ledger, exported&lt;br /&gt;run-history JSON, SQLite&lt;br /&gt;snapshot cache, and Windows&lt;br /&gt;manifest cache under&lt;br /&gt;~/.local/state/workstation-workflow-backup.&lt;/div&gt;&quot;)]
+      style 25 fill:#fef3c7,stroke:#d97706,color:#111827
+    end
+
+    16-. &quot;&lt;div&gt;Reads live SQLite databases&lt;br /&gt;from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[sqlite3 backup API]&lt;/div&gt;&quot; .-&gt;26
+    16-. &quot;&lt;div&gt;Writes local SQLite snapshot&lt;br /&gt;cache and manifest under&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem]&lt;/div&gt;&quot; .-&gt;25
+    20-. &quot;&lt;div&gt;Allows receiver-mode rsync&lt;br /&gt;and mkdir only under current&lt;br /&gt;tree&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[forced command + rsync]&lt;/div&gt;&quot; .-&gt;28
+    17-. &quot;&lt;div&gt;Mirrors selected Windows&lt;br /&gt;artifacts from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[robocopy.exe]&lt;/div&gt;&quot; .-&gt;27
+    17-. &quot;&lt;div&gt;Writes current/windows and&lt;br /&gt;Windows manifests to&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[SMB share]&lt;/div&gt;&quot; .-&gt;28
+    17-. &quot;&lt;div&gt;Leaves manifest cache for&lt;br /&gt;ledger summaries&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;25
+    10-. &quot;&lt;div&gt;Creates consistent DB&lt;br /&gt;snapshot tree through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;16
+    10-. &quot;&lt;div&gt;Mirrors DB snapshot tree to&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[rsync]&lt;/div&gt;&quot; .-&gt;28
+    11-. &quot;&lt;div&gt;Reads configured WSL paths&lt;br /&gt;from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[filesystem]&lt;/div&gt;&quot; .-&gt;26
+    11-. &quot;&lt;div&gt;Mirrors WSL trees to&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[rsync over SSH]&lt;/div&gt;&quot; .-&gt;28
+    12-. &quot;&lt;div&gt;Launches and monitors&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[PowerShell]&lt;/div&gt;&quot; .-&gt;17
+    12-. &quot;&lt;div&gt;Uses SMB root for Windows&lt;br /&gt;helper destination&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;28
+
+  end</pre>
+
+
+
+</details>
+
+<h3 id="derived-artifacts_7">Derived artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mermaid source</td>
+<td><a href="diagrams/structurizr-OrchestratorSyncComponents.mmd"><code>structurizr-OrchestratorSyncComponents.mmd</code></a></td>
+</tr>
+<tr>
+<td>Mermaid SVG</td>
+<td><a href="diagrams/structurizr-OrchestratorSyncComponents.svg"><code>structurizr-OrchestratorSyncComponents.svg</code></a></td>
+</tr>
+<tr>
+<td>Mermaid PNG</td>
+<td><a href="diagrams/structurizr-OrchestratorSyncComponents.png"><code>structurizr-OrchestratorSyncComponents.png</code></a></td>
+</tr>
+<tr>
+<td>DOT source</td>
+<td><a href="diagrams/dot/structurizr-OrchestratorSyncComponents.dot"><code>structurizr-OrchestratorSyncComponents.dot</code></a></td>
+</tr>
+<tr>
+<td>Graphviz SVG</td>
+<td><a href="diagrams/dot-rendered/structurizr-OrchestratorSyncComponents.svg"><code>structurizr-OrchestratorSyncComponents.svg</code></a></td>
+</tr>
+<tr>
+<td>Graphviz PNG</td>
+<td><a href="diagrams/dot-rendered/structurizr-OrchestratorSyncComponents.png"><code>structurizr-OrchestratorSyncComponents.png</code></a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="system-context">System Context</h2>
+<blockquote>
+<p>C4 view <code>SystemContext</code>.</p>
+</blockquote>
+<h3 id="diagram_8">Diagram</h3>
+<p><img alt="System Context" src="diagrams/dot-rendered/structurizr-SystemContext.svg" /></p>
+<p><em>Preferred Markdown display: Graphviz SVG. Mermaid source is retained below for text review.</em></p>
+<details>
+<summary>Mermaid source</summary>
+
+
+
+<pre class="mmd-fallback">graph LR
+  linkStyle default fill:#ffffff
+
+  subgraph diagram [&quot;System Context View: WORKSTATION1 Workflow Backup&quot;]
+    style diagram fill:#ffffff,stroke:#ffffff
+
+    1[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Michael&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Person]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Sole operator who installs,&lt;br /&gt;verifies, and restores&lt;br /&gt;WORKSTATION1 workflow&lt;br /&gt;backups.&lt;/div&gt;&quot;]
+    style 1 fill:#dbeafe,stroke:#2563eb,color:#111827
+    2[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;WORKSTATION1 Workflow Backup&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Repo-owned backup automation&lt;br /&gt;that mirrors&lt;br /&gt;workflow-critical WSL and&lt;br /&gt;Windows artifacts to TrueNAS&lt;br /&gt;through a restricted runtime&lt;br /&gt;identity, preserves rollback&lt;br /&gt;points with ZFS snapshots,&lt;br /&gt;records run history, writes&lt;br /&gt;restore checksums, and alerts&lt;br /&gt;only on failure.&lt;/div&gt;&quot;]
+    style 2 fill:#dcfce7,stroke:#16a34a,color:#111827
+    26[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;WSL Workflow Sources&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Workflow-critical WSL paths:&lt;br /&gt;~/repos, ~/.hermes, ~/.ssh,&lt;br /&gt;systemd user config,&lt;br /&gt;lifelog/browser-memory data,&lt;br /&gt;and optional brain-code tree.&lt;/div&gt;&quot;)]
+    style 26 fill:#fef3c7,stroke:#d97706,color:#111827
+    27[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Windows Workflow Sources&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Selected Windows user-profile&lt;br /&gt;artifacts: Desktop,&lt;br /&gt;Documents, Downloads, Windows&lt;br /&gt;.ssh/.wslconfig, Terminal/VS&lt;br /&gt;Code/PowerShell config,&lt;br /&gt;Chrome profile metadata, and&lt;br /&gt;Startup entries.&lt;/div&gt;&quot;)]
+    style 27 fill:#fef3c7,stroke:#d97706,color:#111827
+    28[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS Backup Dataset&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Configured encrypted TrueNAS&lt;br /&gt;dataset with current mirror&lt;br /&gt;tree, manifests, SMB share,&lt;br /&gt;restore checksum manifest,&lt;br /&gt;refquota, and ZFS snapshot&lt;br /&gt;history.&lt;/div&gt;&quot;)]
+    style 28 fill:#fef3c7,stroke:#d97706,color:#111827
+    29[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS Middleware and ZFS Control Plane&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Configured admin SSH and&lt;br /&gt;middleware surface used for&lt;br /&gt;ZFS properties, runtime-user&lt;br /&gt;setup, snapshot tasks, SMB&lt;br /&gt;share configuration, and&lt;br /&gt;verification.&lt;/div&gt;&quot;]
+    style 29 fill:#f3e8ff,stroke:#9333ea,color:#111827
+    31[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Telegram Bot API&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;External API used only for&lt;br /&gt;backup failure notifications.&lt;/div&gt;&quot;]
+    style 31 fill:#f3e8ff,stroke:#9333ea,color:#111827
+    32[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Operator Shell and Restore Tools&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Local shell, rsync, SSH,&lt;br /&gt;Windows Previous Versions,&lt;br /&gt;and README/runbook commands&lt;br /&gt;used for verification and&lt;br /&gt;targeted restores.&lt;/div&gt;&quot;]
+    style 32 fill:#f3e8ff,stroke:#9333ea,color:#111827
+
+    1-. &quot;&lt;div&gt;Installs, verifies, and&lt;br /&gt;restores through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;2
+    1-. &quot;&lt;div&gt;Runs backup, verification,&lt;br /&gt;provisioning, and restore&lt;br /&gt;commands from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;32
+    32-. &quot;&lt;div&gt;Executes scripts and reads&lt;br /&gt;documentation in&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[shell]&lt;/div&gt;&quot; .-&gt;2
+    32-. &quot;&lt;div&gt;Lists snapshots and inspects&lt;br /&gt;NAS state through&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[admin SSH + zfs/midclt]&lt;/div&gt;&quot; .-&gt;29
+    32-. &quot;&lt;div&gt;Restores selected files from&lt;br /&gt;.zfs/snapshot/current paths&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[SSH rsync or SMB Previous Versions]&lt;/div&gt;&quot; .-&gt;28
+    2-. &quot;&lt;div&gt;Reads ZFS used, availability,&lt;br /&gt;usedbysnapshots, and snapshot&lt;br /&gt;count from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[NAS-side helper + zfs]&lt;/div&gt;&quot; .-&gt;29
+    2-. &quot;&lt;div&gt;Reads live SQLite databases&lt;br /&gt;from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[sqlite3 backup API]&lt;/div&gt;&quot; .-&gt;26
+    2-. &quot;&lt;div&gt;Allows receiver-mode rsync&lt;br /&gt;and mkdir only under current&lt;br /&gt;tree&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[forced command + rsync]&lt;/div&gt;&quot; .-&gt;28
+    2-. &quot;&lt;div&gt;Mirrors selected Windows&lt;br /&gt;artifacts from&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[robocopy.exe]&lt;/div&gt;&quot; .-&gt;27
+    2-. &quot;&lt;div&gt;Sends failure-only&lt;br /&gt;notification to&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[HTTPS]&lt;/div&gt;&quot; .-&gt;31
+
+  end</pre>
+
+
+
+</details>
+
+<h3 id="derived-artifacts_8">Derived artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mermaid source</td>
+<td><a href="diagrams/structurizr-SystemContext.mmd"><code>structurizr-SystemContext.mmd</code></a></td>
+</tr>
+<tr>
+<td>Mermaid SVG</td>
+<td><a href="diagrams/structurizr-SystemContext.svg"><code>structurizr-SystemContext.svg</code></a></td>
+</tr>
+<tr>
+<td>Mermaid PNG</td>
+<td><a href="diagrams/structurizr-SystemContext.png"><code>structurizr-SystemContext.png</code></a></td>
+</tr>
+<tr>
+<td>DOT source</td>
+<td><a href="diagrams/dot/structurizr-SystemContext.dot"><code>structurizr-SystemContext.dot</code></a></td>
+</tr>
+<tr>
+<td>Graphviz SVG</td>
+<td><a href="diagrams/dot-rendered/structurizr-SystemContext.svg"><code>structurizr-SystemContext.svg</code></a></td>
+</tr>
+<tr>
+<td>Graphviz PNG</td>
+<td><a href="diagrams/dot-rendered/structurizr-SystemContext.png"><code>structurizr-SystemContext.png</code></a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="targeted-restore-flow">Targeted Restore Flow</h2>
+<blockquote>
+<p>C4 view <code>TargetedRestoreFlow</code>.</p>
+</blockquote>
+<h3 id="diagram_9">Diagram</h3>
+<p><img alt="Targeted Restore Flow" src="diagrams/dot-rendered/structurizr-TargetedRestoreFlow.svg" /></p>
+<p><em>Preferred Markdown display: Graphviz SVG. Mermaid source is retained below for text review.</em></p>
+<details>
+<summary>Mermaid source</summary>
+
+
+
+<pre class="mmd-fallback">graph LR
+  linkStyle default fill:#ffffff
+
+  subgraph diagram [&quot;Dynamic View: WORKSTATION1 Workflow Backup&quot;]
+    style diagram fill:#ffffff,stroke:#ffffff
+
+    subgraph 2 [&quot;WORKSTATION1 Workflow Backup&quot;]
+      style 2 fill:#ffffff,stroke:#16a34a,color:#16a34a
+
+      23[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Backup Verifier&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Container: Bash + systemctl + SSH]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Operational verification&lt;br /&gt;script that checks the local&lt;br /&gt;timer, last status, run&lt;br /&gt;ledger, growth guard, NAS&lt;br /&gt;dataset, snapshots,&lt;br /&gt;manifests, integrity summary,&lt;br /&gt;snapshot tasks, and retired&lt;br /&gt;cron jobs.&lt;/div&gt;&quot;]
+      style 23 fill:#ecfeff,stroke:#0891b2,color:#111827
+    end
+
+    1[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Michael&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Person]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Sole operator who installs,&lt;br /&gt;verifies, and restores&lt;br /&gt;WORKSTATION1 workflow&lt;br /&gt;backups.&lt;/div&gt;&quot;]
+    style 1 fill:#dbeafe,stroke:#2563eb,color:#111827
+    28[(&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS Backup Dataset&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Configured encrypted TrueNAS&lt;br /&gt;dataset with current mirror&lt;br /&gt;tree, manifests, SMB share,&lt;br /&gt;restore checksum manifest,&lt;br /&gt;refquota, and ZFS snapshot&lt;br /&gt;history.&lt;/div&gt;&quot;)]
+    style 28 fill:#fef3c7,stroke:#d97706,color:#111827
+    29[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;TrueNAS Middleware and ZFS Control Plane&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Configured admin SSH and&lt;br /&gt;middleware surface used for&lt;br /&gt;ZFS properties, runtime-user&lt;br /&gt;setup, snapshot tasks, SMB&lt;br /&gt;share configuration, and&lt;br /&gt;verification.&lt;/div&gt;&quot;]
+    style 29 fill:#f3e8ff,stroke:#9333ea,color:#111827
+    32[&quot;&lt;div style=&#x27;font-weight: bold&#x27;&gt;Operator Shell and Restore Tools&lt;/div&gt;&lt;div style=&#x27;font-size: 70%; margin-top: 0px&#x27;&gt;[Software System]&lt;/div&gt;&lt;div style=&#x27;font-size: 80%; margin-top:10px&#x27;&gt;Local shell, rsync, SSH,&lt;br /&gt;Windows Previous Versions,&lt;br /&gt;and README/runbook commands&lt;br /&gt;used for verification and&lt;br /&gt;targeted restores.&lt;/div&gt;&quot;]
+    style 32 fill:#f3e8ff,stroke:#9333ea,color:#111827
+
+    1-. &quot;&lt;div&gt;1. Select snapshot before&lt;br /&gt;loss/corruption&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;&lt;/div&gt;&quot; .-&gt;32
+    32-. &quot;&lt;div&gt;2. List snapshots under&lt;br /&gt;configured backup dataset&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[admin SSH + zfs/midclt]&lt;/div&gt;&quot; .-&gt;29
+    32-. &quot;&lt;div&gt;3. Copy selected&lt;br /&gt;.zfs/snapshot/.../current&lt;br /&gt;path to restore candidate&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[SSH rsync or SMB Previous Versions]&lt;/div&gt;&quot; .-&gt;28
+    32-. &quot;&lt;div&gt;4. Read snapshot&lt;br /&gt;integrity-manifest.json for&lt;br /&gt;checksum comparison&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[SSH rsync or SMB Previous Versions]&lt;/div&gt;&quot; .-&gt;28
+    32-. &quot;&lt;div&gt;5. Run verify-backup.sh after&lt;br /&gt;timer resumes&lt;/div&gt;&lt;div style=&#x27;font-size: 70%&#x27;&gt;[shell]&lt;/div&gt;&quot; .-&gt;23
+
+  end</pre>
+
+
+
+</details>
+
+<h3 id="derived-artifacts_9">Derived artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mermaid source</td>
+<td><a href="diagrams/structurizr-TargetedRestoreFlow.mmd"><code>structurizr-TargetedRestoreFlow.mmd</code></a></td>
+</tr>
+<tr>
+<td>Mermaid SVG</td>
+<td><a href="diagrams/structurizr-TargetedRestoreFlow.svg"><code>structurizr-TargetedRestoreFlow.svg</code></a></td>
+</tr>
+<tr>
+<td>Mermaid PNG</td>
+<td><a href="diagrams/structurizr-TargetedRestoreFlow.png"><code>structurizr-TargetedRestoreFlow.png</code></a></td>
+</tr>
+<tr>
+<td>DOT source</td>
+<td><a href="diagrams/dot/structurizr-TargetedRestoreFlow.dot"><code>structurizr-TargetedRestoreFlow.dot</code></a></td>
+</tr>
+<tr>
+<td>Graphviz SVG</td>
+<td><a href="diagrams/dot-rendered/structurizr-TargetedRestoreFlow.svg"><code>structurizr-TargetedRestoreFlow.svg</code></a></td>
+</tr>
+<tr>
+<td>Graphviz PNG</td>
+<td><a href="diagrams/dot-rendered/structurizr-TargetedRestoreFlow.png"><code>structurizr-TargetedRestoreFlow.png</code></a></td>
+</tr>
+</tbody>
+</table>
+  </article>
+  <div class="md-footer">
+    Rendered from <code>docs/architecture/c4-diagrams.md</code> — the Markdown file is the canonical,
+    version-controlled source. This HTML is generated (regenerate with
+    <code>scripts/render_docs.py</code>); do not hand-edit.
+  </div>
+</div>
+</body>
+</html>

@@ -65,6 +65,11 @@ class StaticBackupRepoTests(unittest.TestCase):
         self.assertIn("usedbysnapshots", guard)
         self.assertIn("snapshot count", guard)
 
+    def test_smb_share_disables_name_mangling(self) -> None:
+        provision = (ROOT / "scripts/nas-provision.sh").read_text()
+        self.assertIn("'auxsmbconf': 'mangled names = no'", provision)
+        self.assertIn("8.3/mangled alias", provision)
+
     def test_windows_sync_excludes_vcs_metadata(self) -> None:
         ps1 = (ROOT / "scripts/sync-windows-critical.ps1").read_text()
         self.assertIn("'.git'", ps1)

@@ -121,6 +121,9 @@ share_payload = {
     'guestok': False,
     'shadowcopy': True,
     'acl': True,
+    # Robocopy over SMB can repeatedly copy/delete large trees when Samba exposes
+    # an 8.3/mangled alias for a long directory name. Keep backup paths literal.
+    'auxsmbconf': 'mangled names = no',
 }
 if share:
     print(f'SMB share exists: id={share["id"]} name={share["name"]}')

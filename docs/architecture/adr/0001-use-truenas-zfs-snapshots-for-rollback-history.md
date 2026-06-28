@@ -17,13 +17,13 @@ verification:
 
 ## Context
 
-The workflow backup must keep Michael's WSL/Hermes/workflow state recoverable with a practical last-day RPO of ≤1 hour plus bounded daily, weekly, and monthly rollback points. The mutable mirror under `v1/ws1/wf/current` protects against workstation loss but does not protect against accidental local deletes or corruption that are mirrored into `current`.
+The workflow backup must keep Michael's WSL/Hermes/workflow state recoverable with a practical last-day RPO of ≤1 hour plus bounded daily, weekly, and monthly rollback points. The mutable mirror under the configured `$NAS_PATH/current` tree protects against workstation loss but does not protect against accidental local deletes or corruption that are mirrored into `current`.
 
-The repo previously had legacy retained-snapshot cron-helper behavior. The current operating model in `README.md`, `AGENTS.md`, `config/backup.env`, and `scripts/nas-provision.sh` places retention under TrueNAS periodic snapshot tasks.
+The repo previously had legacy retained-snapshot cron-helper behavior. The current operating model in `README.md`, `AGENTS.md`, local `config/backup.env` values shaped by `config/backup.env.example`, and `scripts/nas-provision.sh` places retention under TrueNAS periodic snapshot tasks.
 
 ## Decision
 
-Use TrueNAS-managed recursive periodic ZFS snapshot tasks on `v1/ws1/wf` for rollback history:
+Use TrueNAS-managed recursive periodic ZFS snapshot tasks on the configured `$NAS_DATASET` for rollback history:
 
 | Class | Naming schema | Schedule | Lifetime |
 |---|---|---:|---|
@@ -73,7 +73,7 @@ The local backup job writes only the latest `current/...` mirror and manifests. 
 ## References
 
 - `README.md` — mission, snapshot schedule, restore quick reference.
-- `config/backup.env` — snapshot lifetime values.
+- `config/backup.env.example` — public template for snapshot lifetime values; local `config/backup.env` is ignored.
 - `scripts/nas-provision.sh` — periodic snapshot task creation/update and retired cron handling.
 - `scripts/verify-backup.sh` — live verification surface.
 - `docs/restore-runbook.md` — restore procedure.

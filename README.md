@@ -1,17 +1,19 @@
 # WORKSTATION1 Workflow Backup
 
-High-frequency, ZFS-backed backup for the local workflow state that would hurt if WORKSTATION1/WSL damaged or deleted it.
+High-frequency, ZFS-backed backup for local workflow state that would hurt if WORKSTATION1/WSL damaged or deleted it.
 
 ## Mission
 
-Keep Michael's WSL/Hermes/workflow state recoverable from the TrueNAS host at `root@10.99.98.221`, with a practical recovery point objective of **≤ 1 hour for the last day** plus bounded daily/weekly/monthly rollback points. Local sync runs hourly; ZFS snapshots protect against accidental local deletes or corruptions that are mirrored into the current backup. A fail-closed growth guard stops backup writes before this dataset can silently run away.
+Keep Michael's WSL/Hermes/workflow state recoverable on the configured TrueNAS dataset with a practical recovery point objective of **≤ 1 hour for the last day** plus bounded daily/weekly/monthly rollback points. Local sync runs hourly; ZFS snapshots protect against accidental local deletes or corruptions that are mirrored into the current backup. A fail-closed growth guard and dataset `refquota` stop backup writes before this dataset can silently run away.
 
 ## Operating concept
 
 ```text
 WORKSTATION1 WSL + selected Windows artifacts
   ├─ hourly at :45: rsync / robocopy to NAS current tree
+  ├─ runtime SSH: dedicated restricted NAS user/key, pinned host key, no root automation
   ├─ before/after sync: fail-closed NAS dataset growth guard
+  ├─ restore checksums: NAS-side integrity manifest for critical restore artifacts
   ├─ hourly: TrueNAS periodic ZFS snapshot retained 2 days
   ├─ daily: TrueNAS periodic ZFS snapshot retained 2 weeks
   ├─ weekly: TrueNAS periodic ZFS snapshot retained 8 weeks
@@ -19,28 +21,41 @@ WORKSTATION1 WSL + selected Windows artifacts
   └─ on backup failure only: Telegram alert through existing Hermes bot env
 ```
 
-- NAS dataset: `v1/ws1/wf`
-- NAS mountpoint: `/mnt/v1/ws1/wf`
-- SMB share: `\\10.99.98.221\ws1-wf`
+Local machine/NAS values live in ignored `config/backup.env`; the public template is [`config/backup.env.example`](config/backup.env.example).
+
+Key configured surfaces:
+
+- NAS dataset: `$NAS_DATASET`
+- NAS mountpoint: `$NAS_PATH`
+- SMB share: `$NAS_UNC`
+- Runtime SSH user: `$NAS_USER` (dedicated backup user, not root)
+- Admin SSH user: `$NAS_ADMIN_USER` (manual provisioning/restore only)
+- Pinned host key file: `$NAS_KNOWN_HOSTS` with `$NAS_HOST_KEY_ALIAS`
 - Systemd timer: `workstation-workflow-backup.timer`
 - Hourly snapshots: `wf-h-%Y%m%d-%H%M`, retained `2 DAYS`
 - Daily snapshots: `wf-d-%Y%m%d-%H%M`, retained `2 WEEKS`
 - Weekly snapshots: `wf-w-%Y%m%d-%H%M`, retained `8 WEEKS`
 - Monthly snapshots: `wf-m-%Y%m%d-%H%M`, retained `1 YEAR`
-- Growth guard: fails backup when dataset exceeds 2 TiB used, 1 TiB snapshot-held blocks, 5000 snapshots, or leaves less than 2 TiB free on `v1`
+- Growth guard: fails backup when dataset exceeds 2 TiB used, 1 TiB snapshot-held blocks, 5000 snapshots, or leaves less than 2 TiB free on the configured availability dataset
+- Live current-tree hard cap: ZFS `refquota` from `$NAS_DATASET_REFQUOTA_BYTES`
+
+## Security model
+
+The hourly path does **not** SSH to the NAS as root. Runtime NAS access is installed by [`scripts/install-nas-runtime-hardening.sh`](scripts/install-nas-runtime-hardening.sh):
+
+- creates/updates a dedicated runtime user (default `ws1backup`);
+- installs a dedicated runtime SSH public key;
+- pins the NAS host key through `StrictHostKeyChecking=yes`, `UserKnownHostsFile`, and `HostKeyAlias`;
+- forces the runtime key through `scripts/nas-runtime-ssh-dispatch.py` on the NAS;
+- permits only restricted `rsync --server` writes under `$NAS_PATH/current`, `mkdir -p` under that tree, and sudo execution of the NAS-side guard/integrity helpers;
+- rejects interactive shell, arbitrary commands, port forwarding, agent forwarding, X11 forwarding, PTY, and rsync sender mode;
+- applies a ZFS `refquota` so direct SMB/robocopy growth is interrupted by ZFS rather than only detected after the run.
+
+Root/admin SSH remains necessary for explicit provisioning, snapshot inspection, and restore operations. It is not used by the hourly systemd timer.
 
 ## NAS encryption/key state
 
-The workflow backup dataset lives under encrypted pool root `v1`. Post-rename verification checked both ZFS and TrueNAS middleware state:
-
-| Check | Verified result |
-|---|---|
-| ZFS root | `v1` reports `encryption=aes-256-gcm`, `encryptionroot=v1`, `keystatus=available`, `mounted=yes`. |
-| Middleware lock state | `midclt call zfs.dataset.locked_datasets` returned `[]`. |
-| Middleware encrypted metadata | encrypted-dataset metadata references `v1`/`v2`; stale `volume1%` / `volume2%` encrypted rows were verified absent. |
-| Backup smoke | A real workflow backup completed successfully to `/mnt/v1/ws1/wf/current/...` after the cutover. |
-
-This repo must never store TrueNAS encryption keys, config DB exports, SMB credentials, or backed-up payload contents. This verifies the live unlocked state; it does not replace a separate cold reboot/import/unlock drill.
+The workflow backup dataset lives under encrypted pool root `v1` on the live WORKSTATION1 NAS. This repo must never store TrueNAS encryption keys, config DB exports, SMB credentials, private SSH keys, or backed-up payload contents. Live unlock/import status should be checked with `scripts/verify-backup.sh`; this does not replace a separate cold reboot/import/unlock drill.
 
 ## Snapshot schedule / pruning
 
@@ -70,14 +85,15 @@ Manual snapshots, such as `post-cleanup-*`, are outside configured pruning and m
 | REQ-001: Back up `~/repos/` frequently. | `scripts/workflow-backup.sh` rsyncs `/home/mnicks/repos/`. | `scripts/verify-backup.sh`; NAS `current/wsl/home/mnicks/repos/`. |
 | REQ-002: Back up Hermes DB/config/session/profile state. | `~/.hermes/` rsync plus consistent SQLite snapshots. | `current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db`. |
 | REQ-003: Back up relevant local WSL DBs. | SQLite backup API snapshots for Hermes, lifelog, and browser-memory DBs. | SQLite snapshot manifest on NAS. |
-| REQ-004: Back up critical Windows workflow artifacts. | Windows PowerShell helper uses `robocopy.exe` to SMB. | `current/windows/...` plus Windows manifest. |
-| REQ-005: Recover accidental deletes within 2 days with ≤1h loss. | TrueNAS hourly periodic snapshot task, 2-day retention. | `zfs list -t snapshot -r v1/ws1/wf`. |
-| REQ-006: Run silently hourly. | User systemd timer `OnCalendar=*:45`; logs to local state. | `systemctl --user list-timers workstation-workflow-backup.timer`. |
+| REQ-004: Back up critical Windows workflow artifacts. | Windows PowerShell helper uses `robocopy.exe` to SMB and leaves a local manifest copy for the WSL ledger. | `current/windows/...` plus Windows manifest. |
+| REQ-005: Recover accidental deletes within 2 days with ≤1h loss. | TrueNAS hourly periodic snapshot task, 2-day retention. | `zfs list -t snapshot -r "$NAS_DATASET"`. |
+| REQ-006: Run silently hourly. | User systemd timer `OnCalendar=*:45`; logs to local state with local retention. | `systemctl --user list-timers workstation-workflow-backup.timer`. |
 | REQ-007: Telegram only on failure. | `OnFailure=...failure-notify@%n.service`; notifier reads `~/.hermes/.env`. | No success message; failure unit logs / Telegram Bot API on nonzero backup. |
 | REQ-008: Keep daily snapshots for 2 weeks. | TrueNAS daily periodic snapshot task with `lifetime_value=2`, `lifetime_unit=WEEK`. | `scripts/verify-backup.sh` snapshot task dump. |
 | REQ-009: Keep weekly/monthly rollback points without repo-owned pruning helpers. | TrueNAS weekly/monthly periodic snapshot tasks retain 8 weeks and 1 year respectively; retired cron helpers are disabled. | `scripts/verify-backup.sh` snapshot task and retired cron dump. |
-| REQ-010: Keep queryable backup-run history. | `scripts/workflow-backup.sh` records start/completion/failure events in `~/.local/state/workstation-workflow-backup/runs.sqlite3` and mirrors a DB snapshot plus JSON export to NAS manifests. | `scripts/record-run-ledger.py status`; `scripts/verify-backup.sh`. |
-| REQ-011: Prevent silent infinite dataset growth. | `scripts/check-nas-growth-guard.sh` checks ZFS `used`, `available`, `usedbysnapshots`, and snapshot count before and after backup writes; violations fail the backup and trigger the existing failure alert path. | `scripts/check-nas-growth-guard.sh --stage verify`; `scripts/verify-backup.sh`. |
+| REQ-010: Keep queryable backup-run history. | `scripts/workflow-backup.sh` records start/completion/failure events in `~/.local/state/workstation-workflow-backup/runs.sqlite3`; final ledger write is strict. | `scripts/record-run-ledger.py status`; `scripts/verify-backup.sh`. |
+| REQ-011: Prevent silent infinite dataset growth. | NAS-side helper checks ZFS `used`, availability dataset free space, `usedbysnapshots`, and snapshot count before/after writes; `refquota` caps live current-tree growth. | `scripts/check-nas-growth-guard.sh --stage verify`; `scripts/verify-backup.sh`. |
+| REQ-012: Preserve restore integrity evidence. | NAS-side helper writes `_manifests/integrity-manifest.json` with SHA-256 checksums for critical restore artifacts every successful live run. | `scripts/verify-backup.sh` integrity summary; restore runbook checksum commands. |
 
 ## Backup scope
 
@@ -93,7 +109,7 @@ Primary mirrors:
 - `/home/mnicks/.local/share/browser-memory-daemon/` (SQLite excluded from mirror, backed consistently)
 - `/home/mnicks/brain-code/` when present
 
-The WSL rsync phase runs through `sudo -n rsync` so root-owned files inside local artifact/quarantine trees are included instead of silently skipped. It uses `/home/mnicks/.ssh/id_ed25519` for NAS SSH.
+The WSL rsync phase runs through `sudo -n rsync` locally so root-owned files inside local artifact/quarantine trees are included instead of silently skipped. The remote receiving side is the restricted NAS runtime user, not root; owner/group preservation is disabled by default because the restore source of truth is file content plus ZFS snapshots/checksums.
 
 Consistent SQLite snapshots include:
 
@@ -121,8 +137,17 @@ For a full profile or WSL distro export, use the older disaster-recovery repo: `
 
 ```bash
 cd ~/repos/workstation/workstation-workflow-backup
+cp config/backup.env.example config/backup.env
+$EDITOR config/backup.env
+
+# Create a dedicated runtime key if config points to a new key path.
+ssh-keygen -t ed25519 -N '' -C 'workstation-workflow-backup runtime' -f "$NAS_SSH_KEY"
+ssh-keyscan -t ed25519 "$NAS_HOST" | sed "s/^$NAS_HOST /$NAS_HOST_KEY_ALIAS /" > "$NAS_KNOWN_HOSTS"
+chmod 600 "$NAS_SSH_KEY" "$NAS_KNOWN_HOSTS"
+
 ./scripts/run-tests.sh
 ./scripts/nas-provision.sh
+./scripts/install-nas-runtime-hardening.sh
 ./scripts/install-systemd-user.sh
 ./scripts/workflow-backup.sh --verbose   # first live run / smoke
 ./scripts/verify-backup.sh
@@ -132,10 +157,10 @@ Successful timer runs are quiet. Logs and state live under:
 
 ```text
 ~/.local/state/workstation-workflow-backup/
-├── last-run.json              # compatibility latest-run status
-├── runs.sqlite3               # append-only run event ledger
+├── last-run.json               # compatibility latest-run status
+├── runs.sqlite3                # append-only run event ledger
 ├── nas-export/run-history.json # exported recent run summaries before NAS sync
-└── logs/workflow-backup-*.log # one log per run
+└── logs/workflow-backup-*.log  # one log per run, pruned by LOCAL_LOG_RETENTION_DAYS
 ```
 
 Query recent runs:
@@ -152,31 +177,35 @@ Check the live ZFS growth budget without mutating the NAS:
 ./scripts/check-nas-growth-guard.sh --stage manual
 ```
 
-Default fail-closed budget in `config/backup.env`:
+Default fail-closed budget in `config/backup.env.example`:
 
 | Guard | Limit |
 |---|---:|
 | Total dataset used | 2 TiB |
 | Snapshot-held blocks | 1 TiB |
-| Minimum free space on `v1` | 2 TiB |
+| Minimum free space on configured availability dataset | 2 TiB |
 | Snapshot count | 5000 |
+| Current-tree `refquota` | 2 TiB |
 
 The guard is intentionally non-destructive. It stops the backup and lets the normal failure alert fire; it does not destroy snapshots or payload files.
 
-The current NAS mirror keeps the latest status artifacts at:
+The current NAS mirror keeps the latest status/integrity artifacts at:
 
 ```text
-/mnt/v1/ws1/wf/current/_manifests/last-run.json
-/mnt/v1/ws1/wf/current/_manifests/runs.sqlite3
-/mnt/v1/ws1/wf/current/_manifests/run-history.json
+$NAS_PATH/current/_manifests/last-run.json
+$NAS_PATH/current/_manifests/runs.sqlite3
+$NAS_PATH/current/_manifests/run-history.json
+$NAS_PATH/current/_manifests/integrity-manifest.json
 ```
 
 ## Restore quick reference
 
-### List snapshots
+Use the admin SSH identity for restore/snapshot inspection, not the restricted runtime key:
 
 ```bash
-ssh root@10.99.98.221 'zfs list -t snapshot -r v1/ws1/wf'
+source config/backup.env
+source scripts/nas-ssh.sh
+ssh_nas_admin "zfs list -t snapshot -r '$NAS_DATASET'"
 ```
 
 Snapshot prefixes:
@@ -189,9 +218,10 @@ Snapshot prefixes:
 ### Restore a missing repo file
 
 ```bash
+source config/backup.env
 SNAP=wf-h-YYYYMMDD-HHMM
-REMOTE=/mnt/v1/ws1/wf/.zfs/snapshot/$SNAP/current/wsl/home/mnicks/repos/path/to/file
-rsync -a root@10.99.98.221:"$REMOTE" /home/mnicks/repos/path/to/file
+REMOTE=$NAS_PATH/.zfs/snapshot/$SNAP/current/wsl/home/mnicks/repos/path/to/file
+rsync -a "$NAS_ADMIN_USER@$NAS_HOST:$REMOTE" /home/mnicks/repos/path/to/file
 ```
 
 ### Restore Hermes `state.db` from a consistent snapshot
@@ -199,21 +229,31 @@ rsync -a root@10.99.98.221:"$REMOTE" /home/mnicks/repos/path/to/file
 Stop active Hermes processes first if replacing the live DB.
 
 ```bash
+source config/backup.env
 SNAP=wf-h-YYYYMMDD-HHMM
-ssh root@10.99.98.221 \
-  'ls -lh /mnt/v1/ws1/wf/.zfs/snapshot/'"$SNAP"'/current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db'
+REMOTE=$NAS_PATH/.zfs/snapshot/$SNAP/current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db
 
 # Copy to a staging file first; inspect before replacing live state.
-rsync -a root@10.99.98.221:/mnt/v1/ws1/wf/.zfs/snapshot/"$SNAP"/current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db \
-  /home/mnicks/.hermes/state.db.restore-candidate
+rsync -a "$NAS_ADMIN_USER@$NAS_HOST:$REMOTE" /home/mnicks/.hermes/state.db.restore-candidate
 ```
+
+### Verify a staged restore against the integrity manifest
+
+```bash
+source config/backup.env
+SNAP=wf-h-YYYYMMDD-HHMM
+MANIFEST=$NAS_PATH/.zfs/snapshot/$SNAP/current/_manifests/integrity-manifest.json
+ssh "$NAS_ADMIN_USER@$NAS_HOST" "python3 -m json.tool '$MANIFEST' | head"
+```
+
+For a restored file whose path is present in `integrity-manifest.json`, compare the local SHA-256 with the manifest entry before replacing live state.
 
 ### Restore Windows artifacts
 
-Browse `\\10.99.98.221\ws1-wf\current\windows` or use the NAS snapshot path:
+Browse `$NAS_UNC\current\windows` or use the NAS snapshot path:
 
 ```text
-/mnt/v1/ws1/wf/.zfs/snapshot/<snapshot>/current/windows/Users/mnicks/...
+$NAS_PATH/.zfs/snapshot/<snapshot>/current/windows/Users/<windows-user>/...
 ```
 
 The SMB share has shadow-copy support enabled, so Windows Previous Versions may also surface snapshots.
@@ -221,7 +261,8 @@ The SMB share has shadow-copy support enabled, so Windows Previous Versions may 
 ## Important caveats
 
 - This is not a substitute for the existing full WSL distro export / Windows profile dump. It is the high-frequency workflow safety net.
-- The NAS dataset contains secrets and credentials. Treat NAS root and SMB access accordingly.
+- The NAS dataset contains secrets and credentials. Treat NAS admin, SMB, and runtime SSH access accordingly.
 - Local corruption that exists for more than 2 weeks ages out of daily rollback; weekly/monthly rollback coverage is bounded by the configured TrueNAS lifetimes.
 - Hourly snapshots mean the protected historical restore point can be up to one hour behind current local state. The current mirror usually trails by ≤1 hour but is not delete-proof by itself.
 - A growth-guard failure means the dataset needs manual review before more payload writes; do not disable the guard just to silence the alert.
+- `config/backup.env` is intentionally ignored going forward; older public history may still mention local LAN topology and should only be rewritten with explicit history-rewrite approval.

@@ -5,20 +5,21 @@ digraph {
   edge [fontname="Arial"]
   label=<<br /><font point-size="34">Deployment View: WORKSTATION1 Workflow Backup - WORKSTATION1 local plus TrueNAS</font><br /><font point-size="24">Deployment topology for the local WORKSTATION1 WSL/Windows backup automation and TrueNAS target.</font>>
 
-  subgraph cluster_114 {
+  subgraph cluster_134 {
     margin=25
-    label=<<font point-size="24">TrueNAS 10.99.98.221</font><br /><font point-size="19">[Deployment Node: TrueNAS SCALE + ZFS + SMB]</font>>
+    label=<<font point-size="24">Configured TrueNAS host</font><br /><font point-size="19">[Deployment Node: TrueNAS + ZFS + SMB + OpenSSH]</font>>
     labelloc=b
     color="#444444"
     fontcolor="#444444"
     fillcolor="#ffffff"
 
-    115 [id=115,shape=rect, label=<<font point-size="34">Encrypted ZFS dataset<br />v1/ws1/wf</font><br /><font point-size="19">[Infrastructure Node: ZFS dataset]</font><br /><br /><font point-size="24">Backup current tree,<br />manifests, and snapshot<br />history under /mnt/v1/ws1/wf.</font>>, style=filled, color="#64748b", fillcolor="#f8fafc", fontcolor="#111827"]
-    116 [id=116,shape=rect, label=<<font point-size="34">SMB share ws1-wf</font><br /><font point-size="19">[Infrastructure Node: Samba SMB]</font><br /><br /><font point-size="24">Windows helper destination<br />with shadow-copy support and<br />mangled names disabled.</font>>, style=filled, color="#64748b", fillcolor="#f8fafc", fontcolor="#111827"]
-    117 [id=117,shape=rect, label=<<font point-size="34">TrueNAS periodic<br />snapshot tasks</font><br /><font point-size="19">[Infrastructure Node: TrueNAS middleware]</font><br /><br /><font point-size="24">wf-h/wf-d/wf-w/wf-m snapshot<br />tasks with 2d/2w/8w/1y<br />lifetimes.</font>>, style=filled, color="#64748b", fillcolor="#f8fafc", fontcolor="#111827"]
+    135 [id=135,shape=rect, label=<<font point-size="34">Encrypted ZFS backup<br />dataset</font><br /><font point-size="19">[Infrastructure Node: ZFS dataset]</font><br /><br /><font point-size="24">Backup current tree,<br />manifests, integrity manifest,<br />refquota, and snapshot history<br />under the configured NAS path.</font>>, style=filled, color="#64748b", fillcolor="#f8fafc", fontcolor="#111827"]
+    136 [id=136,shape=rect, label=<<font point-size="34">Restricted runtime<br />SSH user/key</font><br /><font point-size="19">[Infrastructure Node: OpenSSH authorized_keys]</font><br /><br /><font point-size="24">Forced-command receiver for<br />rsync writes, guard helper,<br />and integrity helper; no<br />interactive shell path.</font>>, style=filled, color="#64748b", fillcolor="#f8fafc", fontcolor="#111827"]
+    137 [id=137,shape=rect, label=<<font point-size="34">SMB backup share</font><br /><font point-size="19">[Infrastructure Node: Samba SMB]</font><br /><br /><font point-size="24">Windows helper destination<br />with shadow-copy support and<br />mangled names disabled.</font>>, style=filled, color="#64748b", fillcolor="#f8fafc", fontcolor="#111827"]
+    138 [id=138,shape=rect, label=<<font point-size="34">TrueNAS periodic<br />snapshot tasks</font><br /><font point-size="19">[Infrastructure Node: TrueNAS middleware]</font><br /><br /><font point-size="24">wf-h/wf-d/wf-w/wf-m snapshot<br />tasks with 2d/2w/8w/1y<br />lifetimes.</font>>, style=filled, color="#64748b", fillcolor="#f8fafc", fontcolor="#111827"]
   }
 
-  subgraph cluster_118 {
+  subgraph cluster_139 {
     margin=25
     label=<<font point-size="24">Telegram</font><br /><font point-size="19">[Deployment Node: SaaS API]</font>>
     labelloc=b
@@ -26,10 +27,10 @@ digraph {
     fontcolor="#444444"
     fillcolor="#ffffff"
 
-    119 [id=119,shape=rect, label=<<font point-size="34">Telegram Bot API</font><br /><font point-size="19">[Infrastructure Node: HTTPS]</font><br /><br /><font point-size="24">HTTPS sendMessage endpoint<br />reached by the failure<br />notifier.</font>>, style=filled, color="#64748b", fillcolor="#f8fafc", fontcolor="#111827"]
+    140 [id=140,shape=rect, label=<<font point-size="34">Telegram Bot API</font><br /><font point-size="19">[Infrastructure Node: HTTPS]</font><br /><br /><font point-size="24">HTTPS sendMessage endpoint<br />reached by the failure<br />notifier.</font>>, style=filled, color="#64748b", fillcolor="#f8fafc", fontcolor="#111827"]
   }
 
-  subgraph cluster_85 {
+  subgraph cluster_98 {
     margin=25
     label=<<font point-size="24">WORKSTATION1</font><br /><font point-size="19">[Deployment Node: Windows + WSL2]</font>>
     labelloc=b
@@ -37,7 +38,7 @@ digraph {
     fontcolor="#444444"
     fillcolor="#ffffff"
 
-    subgraph cluster_109 {
+    subgraph cluster_129 {
       margin=25
       label=<<font point-size="24">Windows user profile</font><br /><font point-size="19">[Deployment Node: Windows profile + PowerShell]</font>>
       labelloc=b
@@ -45,11 +46,11 @@ digraph {
       fontcolor="#444444"
       fillcolor="#ffffff"
 
-      110 [id=110,shape=hexagon, label=<<font point-size="34">Windows Critical Sync<br />Helper</font><br /><font point-size="19">[Container: PowerShell + robocopy.exe]</font><br /><br /><font point-size="24">PowerShell script launched<br />from WSL that uses<br />robocopy.exe to mirror<br />selected Windows profile<br />directories/files to the SMB<br />share and writes a Windows<br />sync manifest.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
-      113 [id=113,shape=rect, label=<<font point-size="34">Selected Windows<br />source artifacts</font><br /><font point-size="19">[Infrastructure Node: NTFS]</font><br /><br /><font point-size="24">Desktop, Documents, Downloads,<br />.ssh, .wslconfig, Windows<br />Terminal, VS Code, PowerShell,<br />Chrome profile metadata, and<br />Startup entries.</font>>, style=filled, color="#64748b", fillcolor="#f8fafc", fontcolor="#111827"]
+      130 [id=130,shape=hexagon, label=<<font point-size="34">Windows Critical Sync<br />Helper</font><br /><font point-size="19">[Container: PowerShell + robocopy.exe]</font><br /><br /><font point-size="24">PowerShell script launched<br />from WSL that uses<br />robocopy.exe to mirror<br />selected Windows profile<br />directories/files to the SMB<br />share and writes a Windows<br />sync manifest.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+      133 [id=133,shape=rect, label=<<font point-size="34">Selected Windows<br />source artifacts</font><br /><font point-size="19">[Infrastructure Node: NTFS]</font><br /><br /><font point-size="24">Desktop, Documents, Downloads,<br />.ssh, .wslconfig, Windows<br />Terminal, VS Code, PowerShell,<br />Chrome profile metadata, and<br />Startup entries.</font>>, style=filled, color="#64748b", fillcolor="#f8fafc", fontcolor="#111827"]
     }
 
-    subgraph cluster_86 {
+    subgraph cluster_99 {
       margin=25
       label=<<font point-size="24">WSL2 Ubuntu-22.04</font><br /><font point-size="19">[Deployment Node: Ubuntu + systemd --user]</font>>
       labelloc=b
@@ -57,18 +58,7 @@ digraph {
       fontcolor="#444444"
       fillcolor="#ffffff"
 
-      subgraph cluster_103 {
-        margin=25
-        label=<<font point-size="24">Local backup state</font><br /><font point-size="19">[Deployment Node: WSL filesystem]</font>>
-        labelloc=b
-        color="#444444"
-        fontcolor="#444444"
-        fillcolor="#ffffff"
-
-        104 [id=104,shape=cylinder, label=<<font point-size="34">Run Ledger and Local<br />State</font><br /><font point-size="19">[Container: SQLite + JSON + logs on WSL filesystem]</font><br /><br /><font point-size="24">Local status, logs, SQLite run<br />ledger, exported run-history<br />JSON, SQLite snapshot cache,<br />and Windows manifest cache<br />under<br />~/.local/state/workstation-workflow-backup.</font>>, style=filled, color="#d97706", fillcolor="#fef3c7", fontcolor="#111827"]
-      }
-
-      subgraph cluster_87 {
+      subgraph cluster_100 {
         margin=25
         label=<<font point-size="24">systemd --user</font><br /><font point-size="19">[Deployment Node: systemd]</font>>
         labelloc=b
@@ -76,12 +66,12 @@ digraph {
         fontcolor="#444444"
         fillcolor="#ffffff"
 
-        88 [id=88,shape=rect, label=<<font point-size="34">systemd User Timer<br />and Service</font><br /><font point-size="19">[Container: systemd --user units]</font><br /><br /><font point-size="24">Hourly user-level scheduler<br />and oneshot service that run<br />the backup at minute 45 and<br />route failures to the<br />notifier.</font>>, style=filled, color="#4f46e5", fillcolor="#e0e7ff", fontcolor="#111827"]
-        89 [id=89,shape=rect, label=<<font point-size="34">Backup Orchestrator</font><br /><font point-size="19">[Container: Bash]</font><br /><br /><font point-size="24">scripts/workflow-backup.sh<br />coordinates one backup run:<br />locking, logging, pre/post<br />guard checks, WSL rsync,<br />SQLite snapshots, Windows<br />sync, run-ledger updates, and<br />NAS manifest publication.</font>>, style=filled, color="#0284c7", fillcolor="#e0f2fe", fontcolor="#111827"]
-        91 [id=91,shape=hexagon, label=<<font point-size="34">Failure Notifier</font><br /><font point-size="19">[Container: Bash + Python urllib]</font><br /><br /><font point-size="24">Best-effort Telegram failure<br />alert unit that reads last<br />status/log tail and Hermes bot<br />environment variables; success<br />runs stay silent.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+        101 [id=101,shape=rect, label=<<font point-size="34">systemd User Timer<br />and Service</font><br /><font point-size="19">[Container: systemd --user units]</font><br /><br /><font point-size="24">Hourly user-level scheduler<br />and oneshot service that run<br />the backup at minute 45 and<br />route failures to the<br />notifier.</font>>, style=filled, color="#4f46e5", fillcolor="#e0e7ff", fontcolor="#111827"]
+        102 [id=102,shape=rect, label=<<font point-size="34">Backup Orchestrator</font><br /><font point-size="19">[Container: Bash]</font><br /><br /><font point-size="24">scripts/workflow-backup.sh<br />coordinates one backup run:<br />locking, log pruning, pre/post<br />guard checks, WSL rsync,<br />SQLite snapshots, Windows<br />sync, strict final ledger<br />updates, NAS manifest<br />publication, and<br />restore-checksum generation.</font>>, style=filled, color="#0284c7", fillcolor="#e0f2fe", fontcolor="#111827"]
+        104 [id=104,shape=hexagon, label=<<font point-size="34">Failure Notifier</font><br /><font point-size="19">[Container: Bash + Python urllib]</font><br /><br /><font point-size="24">Best-effort Telegram failure<br />alert unit that reads last<br />status/log tail and Hermes bot<br />environment variables; success<br />runs stay silent.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
       }
 
-      subgraph cluster_94 {
+      subgraph cluster_107 {
         margin=25
         label=<<font point-size="24">Repo scripts</font><br /><font point-size="19">[Deployment Node: Bash/Python/PowerShell source]</font>>
         labelloc=b
@@ -89,28 +79,46 @@ digraph {
         fontcolor="#444444"
         fillcolor="#ffffff"
 
-        100 [id=100,shape=hexagon, label=<<font point-size="34">Backup Verifier</font><br /><font point-size="19">[Container: Bash + systemctl + SSH]</font><br /><br /><font point-size="24">Operational verification<br />script that checks the local<br />timer, last status, run<br />ledger, growth guard, NAS<br />dataset, snapshots, manifests,<br />snapshot tasks, and retired<br />cron jobs.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
-        95 [id=95,shape=hexagon, label=<<font point-size="34">SQLite Snapshotter</font><br /><font point-size="19">[Container: Python 3, sqlite3]</font><br /><br /><font point-size="24">Creates application-consistent<br />copies of Hermes, lifelog,<br />browser-memory, and related<br />SQLite databases using sqlite3<br />backup API; can quick_check<br />copies.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
-        97 [id=97,shape=hexagon, label=<<font point-size="34">NAS Growth Guard</font><br /><font point-size="19">[Container: Bash + remote Python + zfs CLI]</font><br /><br /><font point-size="24">Read-only ZFS budget check<br />that enforces dataset-used,<br />snapshot-held, free-space, and<br />snapshot-count limits<br />before/after writes.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
-        99 [id=99,shape=hexagon, label=<<font point-size="34">NAS Provisioner</font><br /><font point-size="19">[Container: Bash + remote Python + midclt/zfs]</font><br /><br /><font point-size="24">Idempotent provisioning script<br />for the TrueNAS dataset, SMB<br />share, periodic snapshot<br />tasks, and retired legacy<br />snapshot cron jobs.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+        108 [id=108,shape=hexagon, label=<<font point-size="34">SQLite Snapshotter</font><br /><font point-size="19">[Container: Python 3, sqlite3]</font><br /><br /><font point-size="24">Creates application-consistent<br />copies of Hermes, lifelog,<br />browser-memory, and related<br />SQLite databases using sqlite3<br />backup API; can quick_check<br />copies.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+        110 [id=110,shape=hexagon, label=<<font point-size="34">NAS Growth Guard</font><br /><font point-size="19">[Container: Bash + NAS sudo helper + zfs CLI]</font><br /><br /><font point-size="24">Read-only NAS-side ZFS budget<br />check that enforces<br />dataset-used, snapshot-held,<br />availability-dataset<br />free-space, and snapshot-count<br />limits before/after writes.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+        112 [id=112,shape=hexagon, label=<<font point-size="34">NAS Integrity<br />Manifest Builder</font><br /><font point-size="19">[Container: Python + SHA-256]</font><br /><br /><font point-size="24">NAS-side helper that hashes<br />restore-critical current-tree<br />artifacts and writes<br />_manifests/integrity-manifest.json<br />for snapshot-preserved restore<br />verification.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+        114 [id=114,shape=hexagon, label=<<font point-size="34">Restricted NAS<br />Runtime SSH Boundary</font><br /><font point-size="19">[Container: OpenSSH forced command + sudoers + ZFS refquota]</font><br /><br /><font point-size="24">Dedicated runtime NAS<br />user/key, pinned host-key<br />verification, forced-command<br />dispatcher, sudo allowlist,<br />and refquota-backed<br />current-tree write boundary.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+        118 [id=118,shape=hexagon, label=<<font point-size="34">NAS Provisioner</font><br /><font point-size="19">[Container: Bash + admin SSH + remote Python + midclt/zfs]</font><br /><br /><font point-size="24">Idempotent provisioning script<br />for the TrueNAS dataset, SMB<br />share, periodic snapshot<br />tasks, refquota, and retired<br />legacy snapshot cron jobs.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+        119 [id=119,shape=hexagon, label=<<font point-size="34">NAS Runtime Hardening<br />Installer</font><br /><font point-size="19">[Container: Bash + admin SSH + TrueNAS middleware]</font><br /><br /><font point-size="24">Installs or updates the<br />dedicated runtime user/key,<br />forced-command dispatcher,<br />NAS-side guard/integrity<br />helpers, sudo allowlist,<br />runtime-writable subtrees,<br />host-key pinning config, and<br />dataset refquota.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+        120 [id=120,shape=hexagon, label=<<font point-size="34">Backup Verifier</font><br /><font point-size="19">[Container: Bash + systemctl + SSH]</font><br /><br /><font point-size="24">Operational verification<br />script that checks the local<br />timer, last status, run<br />ledger, growth guard, NAS<br />dataset, snapshots, manifests,<br />integrity summary, snapshot<br />tasks, and retired cron jobs.</font>>, style=filled, color="#0891b2", fillcolor="#ecfeff", fontcolor="#111827"]
+      }
+
+      subgraph cluster_123 {
+        margin=25
+        label=<<font point-size="24">Local backup state</font><br /><font point-size="19">[Deployment Node: WSL filesystem]</font>>
+        labelloc=b
+        color="#444444"
+        fontcolor="#444444"
+        fillcolor="#ffffff"
+
+        124 [id=124,shape=cylinder, label=<<font point-size="34">Run Ledger and Local<br />State</font><br /><font point-size="19">[Container: SQLite + JSON + logs on WSL filesystem]</font><br /><br /><font point-size="24">Local status, pruned logs,<br />SQLite run ledger, exported<br />run-history JSON, SQLite<br />snapshot cache, and Windows<br />manifest cache under<br />~/.local/state/workstation-workflow-backup.</font>>, style=filled, color="#d97706", fillcolor="#fef3c7", fontcolor="#111827"]
       }
 
     }
 
   }
 
-  100 -> 88 [id=101, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Checks enabled/active<br />timer state through</font><br /><font point-size="19">[systemctl --user]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
-  100 -> 97 [id=102, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Runs read-only guard<br />verification through</font><br /><font point-size="19">[subprocess]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
-  89 -> 104 [id=105, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Writes logs,<br />last-run.json, run events,<br />and exported history in</font><br /><font point-size="19">[filesystem + sqlite3]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
-  91 -> 104 [id=106, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Reads last status and log<br />tail from</font><br /><font point-size="19">[filesystem]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
-  95 -> 104 [id=107, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Writes local SQLite<br />snapshot cache and<br />manifest under</font><br /><font point-size="19">[filesystem]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
-  100 -> 104 [id=108, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Reads local last status<br />and recent run ledger from</font><br /><font point-size="19">[filesystem + sqlite3]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
-  89 -> 110 [id=111, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Launches Windows sync<br />through</font><br /><font point-size="19">[PowerShell via WSL interop]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
-  110 -> 104 [id=112, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Leaves manifest cache for<br />ledger summaries</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
-  88 -> 89 [id=90, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Starts hourly at :45 and<br />tracks service exit</font><br /><font point-size="19">[systemd --user]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
-  88 -> 91 [id=92, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Triggers on nonzero<br />service result</font><br /><font point-size="19">[OnFailure]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
-  89 -> 91 [id=93, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Exits nonzero so systemd<br />can alert through</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
-  89 -> 95 [id=96, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Creates consistent SQLite<br />backup copies with</font><br /><font point-size="19">[subprocess]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
-  89 -> 97 [id=98, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Runs pre/post budget<br />checks through</font><br /><font point-size="19">[subprocess]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  101 -> 102 [id=103, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Starts hourly at :45 and<br />tracks service exit</font><br /><font point-size="19">[systemd --user]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  101 -> 104 [id=105, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Triggers on nonzero<br />service result</font><br /><font point-size="19">[OnFailure]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  102 -> 104 [id=106, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Exits nonzero so systemd<br />can alert through</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  102 -> 108 [id=109, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Creates consistent SQLite<br />backup copies with</font><br /><font point-size="19">[subprocess]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  102 -> 110 [id=111, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Runs pre/post budget<br />checks through</font><br /><font point-size="19">[subprocess]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  102 -> 112 [id=113, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Runs restore-critical<br />checksum manifest<br />generation through</font><br /><font point-size="19">[restricted SSH]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  102 -> 114 [id=115, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Connects with dedicated<br />runtime key and pinned<br />host-key verification<br />through</font><br /><font point-size="19">[SSH]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  114 -> 110 [id=116, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Allows sudo execution of<br />guard helper only</font><br /><font point-size="19">[forced command + sudo]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  114 -> 112 [id=117, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Allows sudo execution of<br />integrity helper only</font><br /><font point-size="19">[forced command + sudo]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  120 -> 101 [id=121, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Checks enabled/active<br />timer state through</font><br /><font point-size="19">[systemctl --user]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  120 -> 110 [id=122, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Runs read-only guard<br />verification through</font><br /><font point-size="19">[subprocess]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  102 -> 124 [id=125, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Writes logs,<br />last-run.json, run events,<br />and exported history in</font><br /><font point-size="19">[filesystem + sqlite3]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  104 -> 124 [id=126, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Reads last status and log<br />tail from</font><br /><font point-size="19">[filesystem]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  108 -> 124 [id=127, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Writes local SQLite<br />snapshot cache and<br />manifest under</font><br /><font point-size="19">[filesystem]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  120 -> 124 [id=128, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Reads local last status<br />and recent run ledger from</font><br /><font point-size="19">[filesystem + sqlite3]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  102 -> 130 [id=131, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Launches Windows sync<br />through</font><br /><font point-size="19">[PowerShell via WSL interop]</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
+  130 -> 124 [id=132, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="white"><TR><TD><font point-size="24">Leaves manifest cache for<br />ledger summaries</font></TD></TR></TABLE>>, style="dashed", color="#475569", fontcolor="#475569"]
 
 }

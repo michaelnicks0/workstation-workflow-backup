@@ -14,6 +14,8 @@ param(
 
     [string]$DestinationSubdir = 'current\windows',
 
+    [string]$LocalManifestCopy,
+
     [switch]$DryRun,
 
     [switch]$VerboseLog
@@ -145,8 +147,15 @@ $manifest = [ordered]@{
     robocopy_log = $roboLog
     results = $results
 }
-Write-JsonFile -Path (Join-Path $manifestDir 'windows-sync-finish.json') -Value $manifest
+$nasManifest = Join-Path $manifestDir 'windows-sync-finish.json'
+Write-JsonFile -Path $nasManifest -Value $manifest
+if ($LocalManifestCopy) {
+    $localManifestDir = Split-Path -Parent $LocalManifestCopy
+    if ($localManifestDir) { New-Directory $localManifestDir }
+    Write-JsonFile -Path $LocalManifestCopy -Value $manifest
+}
 
 if ($VerboseLog) {
-    Write-Host "Windows critical sync completed. Manifest: $(Join-Path $manifestDir 'windows-sync-finish.json')"
+    Write-Host "Windows critical sync completed. Manifest: $nasManifest"
+    if ($LocalManifestCopy) { Write-Host "Local manifest copy: $LocalManifestCopy" }
 }

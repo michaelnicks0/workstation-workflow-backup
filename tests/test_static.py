@@ -27,15 +27,21 @@ class StaticBackupRepoTests(unittest.TestCase):
         for pattern in ("*.tar", "*.vhdx", "*.wim", "*.db-backup", "*.sqlite3", "*.db"):
             self.assertIn(pattern, gitignore)
 
-    def test_config_points_to_expected_dataset(self) -> None:
-        config = (ROOT / "config/backup.env").read_text()
-        self.assertIn("NAS_HOST=10.99.98.221", config)
-        self.assertIn("NAS_DATASET=v1/ws1/wf", config)
-        self.assertIn("SMB_SHARE_NAME=ws1-wf", config)
+    def test_config_template_has_runtime_hardening_shape(self) -> None:
+        config = (ROOT / "config/backup.env.example").read_text()
+        gitignore = (ROOT / ".gitignore").read_text()
+        self.assertIn("config/backup.env", gitignore)
+        self.assertIn("NAS_USER=ws1backup", config)
+        self.assertIn("NAS_ADMIN_USER=root", config)
+        self.assertIn("NAS_STRICT_HOST_KEY_CHECKING=yes", config)
+        self.assertIn("NAS_KNOWN_HOSTS=", config)
+        self.assertIn("NAS_HOST_KEY_ALIAS=", config)
+        self.assertIn("NAS_DATASET=pool/workstation/workflow", config)
+        self.assertIn("SMB_SHARE_NAME=workflow-backup", config)
 
     def test_snapshot_policy_is_managed_by_truenas_tasks(self) -> None:
         provision = (ROOT / "scripts/nas-provision.sh").read_text()
-        config = (ROOT / "config/backup.env").read_text()
+        config = (ROOT / "config/backup.env.example").read_text()
         self.assertIn("HOURLY_SCHEMA = 'wf-h-%Y%m%d-%H%M'", provision)
         self.assertIn("DAILY_SCHEMA = 'wf-d-%Y%m%d-%H%M'", provision)
         self.assertIn("WEEKLY_SCHEMA = 'wf-w-%Y%m%d-%H%M'", provision)
@@ -53,12 +59,15 @@ class StaticBackupRepoTests(unittest.TestCase):
         self.assertIn("NAS_DAILY_SNAPSHOT_LIFETIME_WEEKS=2", config)
         self.assertIn("NAS_WEEKLY_SNAPSHOT_LIFETIME_WEEKS=8", config)
         self.assertIn("NAS_MONTHLY_SNAPSHOT_LIFETIME_YEARS=1", config)
+        self.assertIn("refquota", provision)
+        self.assertIn("NAS_DATASET_REFQUOTA_BYTES=2199023255552", config)
 
     def test_growth_guard_is_configured_and_wired(self) -> None:
-        config = (ROOT / "config/backup.env").read_text()
+        config = (ROOT / "config/backup.env.example").read_text()
         workflow = (ROOT / "scripts/workflow-backup.sh").read_text()
         verify = (ROOT / "scripts/verify-backup.sh").read_text()
         guard = (ROOT / "scripts/check-nas-growth-guard.sh").read_text()
+        helper = (ROOT / "scripts/nas-growth-guard-helper.py").read_text()
         self.assertIn("NAS_GROWTH_GUARD_ENABLED=1", config)
         self.assertIn("NAS_DATASET_MAX_USED_BYTES=2199023255552", config)
         self.assertIn("NAS_DATASET_MAX_SNAPSHOT_BYTES=1099511627776", config)
@@ -66,9 +75,24 @@ class StaticBackupRepoTests(unittest.TestCase):
         self.assertIn("run_growth_guard pre", workflow)
         self.assertIn("run_growth_guard post", workflow)
         self.assertIn("check-nas-growth-guard.sh", verify)
-        self.assertIn("usedbysnapshots", guard)
-        self.assertIn("snapshot count", guard)
+        self.assertIn("NAS_GROWTH_GUARD_REMOTE_HELPER", guard)
+        self.assertIn("usedbysnapshots", helper)
+        self.assertIn("snapshot count", helper)
         self.assertIn("NAS_DATASET_MAX_SNAPSHOT_COUNT=5000", config)
+
+    def test_runtime_ssh_uses_pinned_host_key_and_restricted_dispatch(self) -> None:
+        config = (ROOT / "config/backup.env.example").read_text()
+        nas_ssh = (ROOT / "scripts/nas-ssh.sh").read_text()
+        installer = (ROOT / "scripts/install-nas-runtime-hardening.sh").read_text()
+        dispatch = (ROOT / "scripts/nas-runtime-ssh-dispatch.py").read_text()
+        combined_scripts = "\n".join(path.read_text() for path in (ROOT / "scripts").glob("*.sh"))
+        self.assertIn("NAS_STRICT_HOST_KEY_CHECKING=yes", config)
+        self.assertIn("UserKnownHostsFile=$NAS_KNOWN_HOSTS", nas_ssh)
+        self.assertIn("HostKeyAlias=$NAS_HOST_KEY_ALIAS", nas_ssh)
+        self.assertNotIn("StrictHostKeyChecking=accept-new", combined_scripts)
+        self.assertIn("restrict,command=", installer)
+        self.assertIn("--sender", dispatch)
+        self.assertIn("command not allowed", dispatch)
 
     def test_smb_share_disables_name_mangling(self) -> None:
         provision = (ROOT / "scripts/nas-provision.sh").read_text()
@@ -90,10 +114,26 @@ class StaticBackupRepoTests(unittest.TestCase):
     def test_workflow_records_and_syncs_run_ledger(self) -> None:
         workflow = (ROOT / "scripts/workflow-backup.sh").read_text()
         verify = (ROOT / "scripts/verify-backup.sh").read_text()
+        config = (ROOT / "config/backup.env.example").read_text()
         self.assertIn("record-run-ledger.py", workflow)
         self.assertIn("runs.sqlite3", workflow)
         self.assertIn("run-history.json", workflow)
         self.assertIn("runs.sqlite3", verify)
+        self.assertIn("LEDGER_STRICT_FINAL_EVENTS=1", config)
+        self.assertIn("event_type\" == \"completed", workflow)
+
+    def test_integrity_manifest_and_log_retention_are_wired(self) -> None:
+        config = (ROOT / "config/backup.env.example").read_text()
+        workflow = (ROOT / "scripts/workflow-backup.sh").read_text()
+        verify = (ROOT / "scripts/verify-backup.sh").read_text()
+        helper = (ROOT / "scripts/nas-integrity-manifest-helper.py").read_text()
+        self.assertIn("NAS_INTEGRITY_MANIFEST_ENABLED=1", config)
+        self.assertIn("NAS_INTEGRITY_SCOPE=critical", config)
+        self.assertIn("LOCAL_LOG_RETENTION_DAYS=90", config)
+        self.assertIn("run_integrity_manifest", workflow)
+        self.assertIn("prune_old_logs", workflow)
+        self.assertIn("integrity-manifest.json", verify)
+        self.assertIn("sha256", helper)
 
     def test_workflow_uses_windows_interop_fallback(self) -> None:
         workflow = (ROOT / "scripts/workflow-backup.sh").read_text()

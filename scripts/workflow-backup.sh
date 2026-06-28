@@ -4,8 +4,10 @@ umask 077
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd -- "$SCRIPT_DIR/.." && pwd)
-# shellcheck disable=SC1090
+# shellcheck disable=SC1091
 source "$REPO_ROOT/config/backup.env"
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/nas-ssh.sh"
 # shellcheck disable=SC1090
 source "$SCRIPT_DIR/windows-interop.sh"
 
@@ -43,8 +45,12 @@ LOCK_FILE="$LOCAL_STATE/backup.lock"
 LEDGER_DB="$LOCAL_STATE/runs.sqlite3"
 LEDGER_DB_SNAPSHOT="$LOCAL_STATE/nas-export/runs.sqlite3"
 LEDGER_HISTORY_JSON="$LOCAL_STATE/nas-export/run-history.json"
+STATUS_EXPORT_DIR="$LOCAL_STATE/nas-export/_manifests"
 SQLITE_MANIFEST_CACHE="$LOCAL_STATE/current-sqlite-snapshot-manifest.json"
 WINDOWS_MANIFEST_CACHE="$LOCAL_STATE/current-windows-sync-finish.json"
+WINDOWS_HELPER_TEMP_WSL="/mnt/c/Users/$WINDOWS_USER/AppData/Local/Temp/workstation-workflow-backup"
+WINDOWS_MANIFEST_LOCAL_COPY_WSL="$WINDOWS_HELPER_TEMP_WSL/windows-sync-finish.json"
+WINDOWS_MANIFEST_LOCAL_COPY_WIN="C:\\Users\\$WINDOWS_USER\\AppData\\Local\\Temp\\workstation-workflow-backup\\windows-sync-finish.json"
 RUN_ID="$(hostname)-$(date -u +%Y%m%dT%H%M%SZ)-$$"
 START_EPOCH=$(date +%s)
 STATUS="running"
@@ -68,6 +74,13 @@ log() {
   printf '%s %s\n' "$(date -Is)" "$msg" >> "$LOG_FILE"
   if [[ "$VERBOSE" == "1" ]]; then
     printf '%s\n' "$msg"
+  fi
+}
+
+prune_old_logs() {
+  local days=${LOCAL_LOG_RETENTION_DAYS:-90}
+  if [[ "$days" =~ ^[0-9]+$ && "$days" -gt 0 ]]; then
+    find "$LOCAL_STATE/logs" -type f -name 'workflow-backup-*.log' -mtime "+$days" -delete 2>/dev/null || true
   fi
 }
 
@@ -100,10 +113,6 @@ PY
 remote_quote() {
   local s=${1//\'/\'\\\'\'}
   printf "'%s'" "$s"
-}
-
-ssh_nas() {
-  ssh -i "$NAS_SSH_KEY" -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$NAS_USER@$NAS_HOST" "$@"
 }
 
 elapsed_seconds() {
@@ -145,6 +154,9 @@ record_ledger_event() {
   set -e
   if [[ "$rc" != "0" ]]; then
     log "ledger warning: failed to record $event_type event rc=$rc"
+    if [[ "$event_type" == "completed" && "${LEDGER_STRICT_FINAL_EVENTS:-1}" == "1" ]]; then
+      return "$rc"
+    fi
   fi
   return 0
 }
@@ -153,18 +165,10 @@ refresh_windows_manifest_cache() {
   if [[ "$DRY_RUN" == "1" || "$SKIP_WINDOWS" == "1" ]]; then
     return 0
   fi
-  local tmp="$WINDOWS_MANIFEST_CACHE.tmp-$$"
-  local remote_manifest="$NAS_PATH/current/windows/_manifests/windows-sync-finish.json"
-  local rc
-  set +e
-  ssh_nas "cat $(remote_quote "$remote_manifest")" > "$tmp"
-  rc=$?
-  set -e
-  if [[ "$rc" == "0" ]]; then
-    mv "$tmp" "$WINDOWS_MANIFEST_CACHE"
+  if [[ -r "$WINDOWS_MANIFEST_LOCAL_COPY_WSL" ]]; then
+    cp "$WINDOWS_MANIFEST_LOCAL_COPY_WSL" "$WINDOWS_MANIFEST_CACHE"
   else
-    rm -f "$tmp"
-    log "ledger warning: could not fetch Windows manifest rc=$rc"
+    log "ledger warning: could not read local Windows manifest copy at $WINDOWS_MANIFEST_LOCAL_COPY_WSL"
   fi
 }
 
@@ -179,10 +183,12 @@ sync_status_artifacts() {
     --db "$LEDGER_DB" \
     --output-json "$LEDGER_HISTORY_JSON" \
     --limit 100
-  ssh_nas "umask 077; mkdir -p $(remote_quote "$NAS_PATH/current/_manifests")"
-  ssh_nas "umask 077; cat > $(remote_quote "$NAS_PATH/current/_manifests/last-run.json")" < "$LAST_STATUS"
-  ssh_nas "umask 077; cat > $(remote_quote "$NAS_PATH/current/_manifests/runs.sqlite3")" < "$LEDGER_DB_SNAPSHOT"
-  ssh_nas "umask 077; cat > $(remote_quote "$NAS_PATH/current/_manifests/run-history.json")" < "$LEDGER_HISTORY_JSON"
+  rm -rf "$STATUS_EXPORT_DIR"
+  mkdir -p "$STATUS_EXPORT_DIR"
+  cp "$LAST_STATUS" "$STATUS_EXPORT_DIR/last-run.json"
+  cp "$LEDGER_DB_SNAPSHOT" "$STATUS_EXPORT_DIR/runs.sqlite3"
+  cp "$LEDGER_HISTORY_JSON" "$STATUS_EXPORT_DIR/run-history.json"
+  rsync_to_nas "$STATUS_EXPORT_DIR/" "_manifests" general
 }
 
 run_logged() {
@@ -211,6 +217,21 @@ run_growth_guard() {
     return 75
   fi
   log "growth guard check done: stage=$stage"
+}
+
+run_integrity_manifest() {
+  if [[ "$DRY_RUN" == "1" || "${NAS_INTEGRITY_MANIFEST_ENABLED:-1}" != "1" ]]; then
+    return 0
+  fi
+  local helper=${NAS_INTEGRITY_REMOTE_HELPER:-/usr/local/sbin/ws1-wf-integrity-manifest}
+  local output="$NAS_PATH/current/_manifests/integrity-manifest.json"
+  log "integrity manifest start: scope=${NAS_INTEGRITY_SCOPE:-critical}"
+  run_logged ssh_nas "$helper" \
+    --dataset-path "$NAS_PATH" \
+    --scope "${NAS_INTEGRITY_SCOPE:-critical}" \
+    --output "$output" \
+    --max-file-bytes "${NAS_INTEGRITY_MAX_FILE_BYTES:-0}"
+  log "integrity manifest done"
 }
 
 on_error() {
@@ -253,10 +274,15 @@ rsync_to_nas() {
   fi
 
   local -a args=(
-    -aH --numeric-ids --delete-delay --delete-excluded --partial --human-readable --stats
-    "--rsync-path=/usr/local/bin/rsync"
-    -e "ssh -i $NAS_SSH_KEY -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/home/mnicks/.ssh/known_hosts"
+    -aH --delete-delay --delete-excluded --partial --human-readable --stats
+    "--rsync-path=${NAS_REMOTE_RSYNC:-/usr/local/bin/rsync}"
+    -e "$(nas_rsync_rsh)"
   )
+  if [[ "${RSYNC_PRESERVE_OWNER_GROUP:-0}" == "1" ]]; then
+    args+=(--numeric-ids)
+  else
+    args+=(--no-owner --no-group)
+  fi
   if [[ "$DRY_RUN" == "1" ]]; then
     args+=(--dry-run --itemize-changes)
   fi
@@ -296,9 +322,9 @@ rsync_to_nas() {
 }
 
 copy_windows_helper_to_temp() {
-  local win_temp_dir="/mnt/c/Users/$WINDOWS_USER/AppData/Local/Temp/workstation-workflow-backup"
-  mkdir -p "$win_temp_dir"
-  cp "$SCRIPT_DIR/sync-windows-critical.ps1" "$win_temp_dir/sync-windows-critical.ps1"
+  mkdir -p "$WINDOWS_HELPER_TEMP_WSL"
+  cp "$SCRIPT_DIR/sync-windows-critical.ps1" "$WINDOWS_HELPER_TEMP_WSL/sync-windows-critical.ps1"
+  rm -f "$WINDOWS_MANIFEST_LOCAL_COPY_WSL"
   printf 'C:\\Users\\%s\\AppData\\Local\\Temp\\workstation-workflow-backup\\sync-windows-critical.ps1' "$WINDOWS_USER"
 }
 
@@ -333,7 +359,7 @@ run_windows_phase() {
 
   local ps_win_path
   ps_win_path=$(copy_windows_helper_to_temp)
-  local -a args=(-NoProfile -ExecutionPolicy Bypass -File "$ps_win_path" -NasRoot "$NAS_UNC")
+  local -a args=(-NoProfile -ExecutionPolicy Bypass -File "$ps_win_path" -NasRoot "$NAS_UNC" -LocalManifestCopy "$WINDOWS_MANIFEST_LOCAL_COPY_WIN")
   if [[ "$DRY_RUN" == "1" ]]; then
     args+=(-DryRun)
   fi
@@ -347,13 +373,11 @@ run_windows_phase() {
 }
 
 main() {
+  prune_old_logs
   rm -f "$SQLITE_MANIFEST_CACHE" "$WINDOWS_MANIFEST_CACHE"
   log "backup start run_id=$RUN_ID dry_run=$DRY_RUN skip_wsl=$SKIP_WSL skip_windows=$SKIP_WINDOWS"
   record_ledger_event started running
   run_growth_guard pre
-  if [[ "$DRY_RUN" != "1" ]]; then
-    ssh_nas "mkdir -p $(remote_quote "$NAS_PATH/current/_manifests")"
-  fi
 
   if [[ "$SKIP_WSL" != "1" ]]; then
     run_wsl_phase
@@ -369,6 +393,7 @@ main() {
   write_status
   record_ledger_event completed ok "$(elapsed_seconds)"
   sync_status_artifacts
+  run_integrity_manifest
   log "backup complete status=ok"
   if [[ "$VERBOSE" == "1" ]]; then
     cat "$LAST_STATUS"

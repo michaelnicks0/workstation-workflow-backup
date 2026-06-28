@@ -17,6 +17,7 @@
 | [ADR-0003](0003-create-application-consistent-sqlite-snapshots.md) | accepted | Snapshot live workflow SQLite databases with the SQLite backup API before mirroring. |
 | [ADR-0004](0004-fail-closed-with-non-destructive-nas-growth-guard.md) | accepted | Enforce read-only growth budgets before and after writes; never delete data automatically. |
 | [ADR-0005](0005-sync-windows-artifacts-through-smb-robocopy-with-name-mangling-disabled.md) | accepted | Sync Windows workflow artifacts through robocopy over the TrueNAS SMB share with Samba name mangling disabled. |
+| [ADR-0006](0006-use-restricted-nas-runtime-identity-with-pinned-host-keys-and-restore-checksums.md) | accepted | Use a restricted NAS runtime user/key, pinned host-key verification, ZFS refquota, and restore-critical checksum manifests. |
 
 ## Workflow
 

@@ -16,11 +16,13 @@
 The architecture covers the repo-owned automation for:
 
 - hourly WSL systemd user timer execution;
+- restricted, pinned-host-key NAS runtime SSH access;
 - guarded WSL and Windows workflow artifact sync to TrueNAS;
 - application-consistent SQLite backup snapshots;
 - run ledger/status/manifest publication;
+- restore-critical checksum manifest generation;
 - failure-only Telegram notification;
-- TrueNAS provisioning, periodic snapshot retention, verification, and targeted restore.
+- TrueNAS provisioning, runtime hardening, periodic snapshot retention, verification, and targeted restore.
 
 It does **not** model full bare-metal recovery, full WSL distro exports, Windows profile imaging, or NAS encryption-key custody. Those are adjacent recovery concerns outside this repo's high-frequency workflow-backup boundary.
 
@@ -30,9 +32,14 @@ It does **not** model full bare-metal recovery, full WSL distro exports, Windows
 |---|---|
 | Mission, RPO, snapshot schedule, backup scope, restore commands | [`../../README.md`](../../README.md) |
 | Repo safety rules and operating model | [`../../AGENTS.md`](../../AGENTS.md) |
+| Local config template | [`../../config/backup.env.example`](../../config/backup.env.example) |
+| Shared SSH/pinned-host-key helpers | [`../../scripts/nas-ssh.sh`](../../scripts/nas-ssh.sh) |
+| Runtime SSH hardening installer | [`../../scripts/install-nas-runtime-hardening.sh`](../../scripts/install-nas-runtime-hardening.sh) |
+| Forced-command runtime dispatcher | [`../../scripts/nas-runtime-ssh-dispatch.py`](../../scripts/nas-runtime-ssh-dispatch.py) |
 | Hourly orchestration, locking, ledger, guards, WSL/Windows phases | [`../../scripts/workflow-backup.sh`](../../scripts/workflow-backup.sh) |
 | TrueNAS dataset/share/snapshot-task provisioning | [`../../scripts/nas-provision.sh`](../../scripts/nas-provision.sh) |
-| Non-destructive growth guard | [`../../scripts/check-nas-growth-guard.sh`](../../scripts/check-nas-growth-guard.sh) |
+| Non-destructive growth guard | [`../../scripts/check-nas-growth-guard.sh`](../../scripts/check-nas-growth-guard.sh), [`../../scripts/nas-growth-guard-helper.py`](../../scripts/nas-growth-guard-helper.py) |
+| Restore checksum manifest | [`../../scripts/nas-integrity-manifest-helper.py`](../../scripts/nas-integrity-manifest-helper.py) |
 | Backup health verification | [`../../scripts/verify-backup.sh`](../../scripts/verify-backup.sh) |
 | SQLite consistent snapshots | [`../../scripts/snapshot-sqlite-dbs.py`](../../scripts/snapshot-sqlite-dbs.py) |
 | Run ledger schema/export behavior | [`../../scripts/record-run-ledger.py`](../../scripts/record-run-ledger.py) |
@@ -42,13 +49,13 @@ It does **not** model full bare-metal recovery, full WSL distro exports, Windows
 
 ## System boundary
 
-**WORKSTATION1 Workflow Backup** is the owned software system. It includes the versioned scripts/config/systemd units in this repo plus the local state they create under `~/.local/state/workstation-workflow-backup`.
+**WORKSTATION1 Workflow Backup** is the owned software system. It includes the versioned scripts/config template/systemd units in this repo plus the local state they create under `~/.local/state/workstation-workflow-backup`.
 
 External systems and stores:
 
 - WSL workflow source paths (`~/repos`, `~/.hermes`, `~/.ssh`, systemd user config, lifelog/browser-memory data, optional `~/brain-code`).
 - Windows workflow source paths (Desktop, Documents, Downloads, Windows SSH/WSL config, Terminal/VS Code/PowerShell config, Chrome profile metadata, Startup entries).
-- TrueNAS dataset/control plane at `10.99.98.221`, including `v1/ws1/wf`, SMB share `ws1-wf`, periodic snapshot tasks, ZFS properties, and middleware APIs.
+- Configured TrueNAS dataset/control plane, including the backup dataset, SMB share, periodic snapshot tasks, ZFS properties, middleware APIs, runtime user, and forced-command SSH boundary.
 - Hermes bot environment file for Telegram notification configuration.
 - Telegram Bot API for failure-only alerts.
 
@@ -57,14 +64,14 @@ External systems and stores:
 | View key | C4 level | Purpose |
 |---|---|---|
 | `SystemContext` | C1 System Context | Operator, backup system boundary, WSL/Windows sources, TrueNAS target/control plane, restore shell, and Telegram alert API. |
-| `BackupRuntimeContainers` | C2 Container | Hourly runtime path: scheduler, orchestrator, SQLite snapshotter, Windows helper, growth guard, run ledger, notifier, and external stores. |
-| `OpsProvisioningContainers` | C2 Container | Operator-facing provisioning, verification, guard, run-ledger, and restore/control-plane surfaces. |
-| `OrchestratorControlComponents` | C3 Component | Control responsibilities inside `scripts/workflow-backup.sh`: arguments, locking, status, ledger, guards, publication, and errors. |
+| `BackupRuntimeContainers` | C2 Container | Hourly runtime path: scheduler, orchestrator, restricted SSH, SQLite snapshotter, Windows helper, growth guard, integrity manifest, run ledger, notifier, and external stores. |
+| `OpsProvisioningContainers` | C2 Container | Operator-facing provisioning, runtime hardening, verification, guard, run-ledger, and restore/control-plane surfaces. |
+| `OrchestratorControlComponents` | C3 Component | Control responsibilities inside `scripts/workflow-backup.sh`: arguments, locking, status, ledger, guards, publication, integrity, and errors. |
 | `OrchestratorSyncComponents` | C3 Component | Data-movement responsibilities inside `scripts/workflow-backup.sh`: SQLite snapshots, WSL rsync, and Windows robocopy helper launch. |
 | `HourlyPreflightSnapshotFlow` | Dynamic | First half of a successful hourly run: service start, status, pre-write guard, and SQLite snapshot creation. |
-| `HourlyMirrorPublishFlow` | Dynamic | Second half of a successful hourly run: WSL/Windows mirroring, post-write guard, ledger completion, and NAS manifest publication. |
+| `HourlyMirrorPublishFlow` | Dynamic | Second half of a successful hourly run: WSL/Windows mirroring, post-write guard, ledger completion, NAS manifest publication, and integrity manifest generation. |
 | `FailureAlertFlow` | Dynamic | Nonzero backup service result to Telegram failure notification. |
-| `TargetedRestoreFlow` | Dynamic | Snapshot selection, staged restore, deliberate replacement, and post-restore verification. |
+| `TargetedRestoreFlow` | Dynamic | Snapshot selection, staged restore, deliberate replacement, checksum verification, and post-restore verification. |
 | `LocalDeployment` | Deployment | WORKSTATION1 WSL/Windows runtime plus TrueNAS target and Telegram API. |
 
 ## Diagram ownership
@@ -126,6 +133,7 @@ python3 "$C4_SKILL_DIR/scripts/structurizr-diagrams-to-markdown.py" \
 | Structurizr DSL parse | `STRUCTURIZR_CLI=/tmp/structurizr-cli/structurizr.sh "$STRUCTURIZR_CLI" validate -workspace docs/architecture/workspace.dsl` |
 | Generated artifact completeness | Count `.mmd`, Mermaid SVG/PNG, DOT, Graphviz SVG/PNG, per-view Markdown, diagram README, and atlas after regeneration. |
 | Repo static tests | `./scripts/run-tests.sh` |
+| Live runtime smoke | `./scripts/install-nas-runtime-hardening.sh`; restricted-command rejection; runtime rsync smoke; `./scripts/check-nas-growth-guard.sh --stage verify` |
 | Git whitespace | `git diff --check -- .` and `git diff --cached --check` before commit. |
 
 Use `scripts/verify-backup.sh` before declaring **live backup health**. Architecture docs/tests can prove documentation consistency, but they do not replace live NAS health verification.
@@ -136,3 +144,4 @@ Use `scripts/verify-backup.sh` before declaring **live backup health**. Architec
 - This model records path classes and control/data flow, not backed-up payload contents.
 - Hermes `.env` is modeled as an external local configuration source for failure notification only; its contents must not be committed or printed.
 - TrueNAS encryption-key custody and cold reboot/import/unlock drills are outside this repo's current automation boundary.
+- The default integrity scope is restore-critical artifacts, not a full-tree hourly checksum sweep.

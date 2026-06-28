@@ -21,16 +21,16 @@ The backup target can grow from both current mirror churn and snapshot-held hist
 
 ## Decision
 
-Run `scripts/check-nas-growth-guard.sh` before and after backup writes. The guard reads ZFS budget signals and exits nonzero when configured limits are violated:
+Run `scripts/check-nas-growth-guard.sh` before and after backup writes. The guard delegates to a NAS-side read-only helper over the restricted runtime SSH identity. The helper reads ZFS budget signals and exits nonzero when configured limits are violated:
 
 | Guard | Default limit |
 |---|---:|
-| Dataset used by `v1/ws1/wf` | 2 TiB |
+| Backup dataset used | 2 TiB |
 | Snapshot-held blocks | 1 TiB |
-| Minimum free space on `v1` | 2 TiB |
+| Minimum free space on configured availability dataset | 2 TiB |
 | Snapshot count | 5000 |
 
-The guard is read-only and non-destructive. Backup failure triggers the existing systemd OnFailure notifier. Operators must investigate and explicitly approve any destructive cleanup.
+The guard is read-only and non-destructive. ADR-0006 adds a ZFS `refquota` hard cap to interrupt direct SMB/robocopy growth in addition to these pre/post checks. Backup failure triggers the existing systemd OnFailure notifier. Operators must investigate and explicitly approve any destructive cleanup.
 
 ## Decision drivers
 
@@ -57,7 +57,7 @@ The guard is read-only and non-destructive. Backup failure triggers the existing
 
 ## Verification / validation
 
-- Static tests assert guard config values, workflow pre/post wiring, verify-script guard call, `usedbysnapshots`, and snapshot-count checks.
+- Static tests assert guard config values, workflow pre/post wiring, verify-script guard call, remote helper use, `usedbysnapshots`, and snapshot-count checks.
 - `./scripts/check-nas-growth-guard.sh --stage verify` performs the live read-only guard check.
 - `./scripts/verify-backup.sh` includes the guard result before reporting dataset/snapshot/manifests.
 
@@ -69,7 +69,8 @@ The guard is read-only and non-destructive. Backup failure triggers the existing
 
 ## References
 
-- `config/backup.env`
+- `config/backup.env.example` plus ignored local `config/backup.env`
+- `scripts/nas-growth-guard-helper.py`
 - `scripts/check-nas-growth-guard.sh`
 - `scripts/workflow-backup.sh`
 - `scripts/verify-backup.sh`

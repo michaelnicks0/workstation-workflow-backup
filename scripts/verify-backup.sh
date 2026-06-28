@@ -5,10 +5,8 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd -- "$SCRIPT_DIR/.." && pwd)
 # shellcheck disable=SC1091
 source "$REPO_ROOT/config/backup.env"
-
-ssh_nas() {
-  ssh -i "$NAS_SSH_KEY" -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$NAS_USER@$NAS_HOST" "$@"
-}
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/nas-ssh.sh"
 
 printf '== Local timer ==\n'
 systemctl --user is-enabled workstation-workflow-backup.timer 2>/dev/null || true
@@ -32,8 +30,8 @@ printf '\n== NAS growth guard ==\n'
 "$SCRIPT_DIR/check-nas-growth-guard.sh" --stage verify
 
 printf '\n== NAS dataset / snapshots / manifests ==\n'
-ssh_nas "set -e
-zfs list -H -o name,mountpoint,used,avail,refer '$NAS_DATASET'
+ssh_nas_admin "set -e
+zfs list -H -o name,mountpoint,used,avail,refer,refquota '$NAS_DATASET'
 echo '-- recent snapshots --'
 zfs list -H -t snapshot -o name,creation,used -r '$NAS_DATASET' | tail -12 || true
 echo '-- required paths --'
@@ -44,13 +42,29 @@ for p in \
   '$NAS_PATH/current/windows/_manifests/windows-sync-finish.json' \
   '$NAS_PATH/current/_manifests/last-run.json' \
   '$NAS_PATH/current/_manifests/runs.sqlite3' \
-  '$NAS_PATH/current/_manifests/run-history.json'; do
+  '$NAS_PATH/current/_manifests/run-history.json' \
+  '$NAS_PATH/current/_manifests/integrity-manifest.json'; do
   if [ -e \"\$p\" ]; then
     ls -ld \"\$p\"
   else
     echo \"MISSING \$p\"
   fi
 done
+echo '-- integrity manifest summary --'
+if [ -r '$NAS_PATH/current/_manifests/integrity-manifest.json' ]; then
+  python3 - '$NAS_PATH/current/_manifests/integrity-manifest.json' <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as handle:
+    data = json.load(handle)
+print(json.dumps({
+    'kind': data.get('kind'),
+    'scope': data.get('scope'),
+    'entry_count': data.get('entry_count'),
+    'skipped_count': data.get('skipped_count'),
+    'duration_seconds': data.get('duration_seconds'),
+}, indent=2, sort_keys=True))
+PY
+fi
 echo '-- snapshot task --'
 tmp=/tmp/workstation-workflow-backup-snapshots.json
 midclt call pool.snapshottask.query > \"\$tmp\"

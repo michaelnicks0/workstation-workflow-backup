@@ -21,7 +21,7 @@ The backup includes selected Windows workflow artifacts. Copying large Windows p
 
 ## Decision
 
-Launch `scripts/sync-windows-critical.ps1` from WSL and use `robocopy.exe` to mirror selected Windows profile directories/files to `\\10.99.98.221\ws1-wf\current\windows`. Configure the TrueNAS SMB share `ws1-wf` with:
+Launch `scripts/sync-windows-critical.ps1` from WSL and use `robocopy.exe` to mirror selected Windows profile directories/files to the configured `$NAS_UNC\current\windows` path. Configure the TrueNAS SMB share named by `$SMB_SHARE_NAME` with:
 
 ```text
 mangled names = no

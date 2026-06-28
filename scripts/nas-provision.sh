@@ -5,16 +5,15 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd -- "$SCRIPT_DIR/.." && pwd)
 # shellcheck disable=SC1091
 source "$REPO_ROOT/config/backup.env"
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/nas-ssh.sh"
 
-ssh_nas() {
-  ssh -i "$NAS_SSH_KEY" -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$NAS_USER@$NAS_HOST" "$@"
-}
-
-ssh_nas python3 - "$NAS_DATASET" "$SMB_SHARE_NAME" \
+ssh_nas_admin python3 - "$NAS_DATASET" "$SMB_SHARE_NAME" \
   "$NAS_HOURLY_SNAPSHOT_LIFETIME_DAYS" \
   "$NAS_DAILY_SNAPSHOT_LIFETIME_WEEKS" \
   "$NAS_WEEKLY_SNAPSHOT_LIFETIME_WEEKS" \
-  "$NAS_MONTHLY_SNAPSHOT_LIFETIME_YEARS" <<'PY'
+  "$NAS_MONTHLY_SNAPSHOT_LIFETIME_YEARS" \
+  "${NAS_DATASET_REFQUOTA_BYTES:-0}" <<'PY'
 import json
 import subprocess
 import sys
@@ -26,6 +25,7 @@ HOURLY_LIFETIME_DAYS = int(sys.argv[3])
 DAILY_LIFETIME_WEEKS = int(sys.argv[4])
 WEEKLY_LIFETIME_WEEKS = int(sys.argv[5])
 MONTHLY_LIFETIME_YEARS = int(sys.argv[6])
+REFQUOTA_BYTES = int(sys.argv[7] or 0)
 MOUNTPOINT = Path('/mnt') / DATASET
 HOURLY_SCHEMA = 'wf-h-%Y%m%d-%H%M'
 DAILY_SCHEMA = 'wf-d-%Y%m%d-%H%M'
@@ -102,6 +102,8 @@ for prop, value in {
     'snapdir': 'hidden',
 }.items():
     zfs_set(prop, value, DATASET)
+if REFQUOTA_BYTES:
+    zfs_set('refquota', str(REFQUOTA_BYTES), DATASET)
 
 MOUNTPOINT.mkdir(parents=True, exist_ok=True)
 run(['chown', 'mnicks:wheel', str(MOUNTPOINT)], check=False)
@@ -252,7 +254,7 @@ for task in (hourly_task, daily_task):
 
 
 print('--- dataset ---')
-print(capture(['zfs', 'list', '-o', 'name,mountpoint,used,avail', DATASET]).strip())
+print(capture(['zfs', 'list', '-o', 'name,mountpoint,used,avail,refquota', DATASET]).strip())
 print('--- recent snapshots ---')
 print(capture(['sh', '-c', f'zfs list -t snapshot -o name,creation -r {DATASET} | tail -10']).strip())
 print('--- snapshot tasks ---')

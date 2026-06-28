@@ -10,24 +10,33 @@ ssh_nas() {
   ssh -i "$NAS_SSH_KEY" -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$NAS_USER@$NAS_HOST" "$@"
 }
 
-ssh_nas python3 - "$NAS_DATASET" "$SMB_SHARE_NAME" "$NAS_WEEKLY_SNAPSHOT_RETAIN" "$NAS_MONTHLY_SNAPSHOT_RETAIN" <<'PY'
+ssh_nas python3 - "$NAS_DATASET" "$SMB_SHARE_NAME" \
+  "$NAS_HOURLY_SNAPSHOT_LIFETIME_DAYS" \
+  "$NAS_DAILY_SNAPSHOT_LIFETIME_WEEKS" \
+  "$NAS_WEEKLY_SNAPSHOT_LIFETIME_WEEKS" \
+  "$NAS_MONTHLY_SNAPSHOT_LIFETIME_YEARS" <<'PY'
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
 
 DATASET = sys.argv[1]
 SHARE_NAME = sys.argv[2]
-WEEKLY_RETAIN = int(sys.argv[3])
-MONTHLY_RETAIN = int(sys.argv[4])
+HOURLY_LIFETIME_DAYS = int(sys.argv[3])
+DAILY_LIFETIME_WEEKS = int(sys.argv[4])
+WEEKLY_LIFETIME_WEEKS = int(sys.argv[5])
+MONTHLY_LIFETIME_YEARS = int(sys.argv[6])
 MOUNTPOINT = Path('/mnt') / DATASET
 HOURLY_SCHEMA = 'wf-h-%Y%m%d-%H%M'
 DAILY_SCHEMA = 'wf-d-%Y%m%d-%H%M'
-WEEKLY_CRON_DESCRIPTION = 'WORKSTATION1 workflow backup weekly ZFS snapshot retained'
-MONTHLY_CRON_DESCRIPTION = 'WORKSTATION1 workflow backup monthly ZFS snapshot retained'
-OLD_WEEKLY_CRON_DESCRIPTIONS = ('WORKSTATION1 workflow backup weekly ZFS snapshot forever',)
-OLD_MONTHLY_CRON_DESCRIPTIONS = ('WORKSTATION1 workflow backup monthly ZFS snapshot forever',)
+WEEKLY_SCHEMA = 'wf-w-%Y%m%d-%H%M'
+MONTHLY_SCHEMA = 'wf-m-%Y%m%d-%H%M'
+RETIRED_CRON_DESCRIPTIONS = (
+    'WORKSTATION1 workflow backup weekly ZFS snapshot retained',
+    'WORKSTATION1 workflow backup monthly ZFS snapshot retained',
+    'WORKSTATION1 workflow backup weekly ZFS snapshot forever',
+    'WORKSTATION1 workflow backup monthly ZFS snapshot forever',
+)
 
 
 def run(cmd, check=True):
@@ -67,27 +76,17 @@ def ensure_snapshot_task(tasks, schema: str, payload: dict) -> dict:
     return created
 
 
-def ensure_cron_job(description: str, command: str, schedule: dict, old_descriptions=()) -> dict:
+def disable_retired_cron_jobs() -> None:
     jobs = midclt('cronjob.query')
-    descriptions = {description, *old_descriptions}
-    matching = [job for job in jobs if job.get('description') in descriptions]
-    payload = {
-        'enabled': True,
-        'stderr': True,
-        'stdout': False,
-        'schedule': schedule,
-        'command': command,
-        'description': description,
-        'user': 'root',
-    }
-    if matching:
-        job = matching[0]
-        print(f'cron job exists: id={job["id"]} description={description}')
-        updated = midclt('cronjob.update', job['id'], payload)
-        return updated if isinstance(updated, dict) else job
-    created = midclt('cronjob.create', payload)
-    print(f'created cron job: {created.get("id") if isinstance(created, dict) else created} description={description}')
-    return created
+    for job in jobs:
+        description = str(job.get('description', ''))
+        command = str(job.get('command', ''))
+        if description in RETIRED_CRON_DESCRIPTIONS or 'create-retained-snapshot.py' in command:
+            if job.get('enabled'):
+                print(f'disabling retired snapshot cron job id={job["id"]} description={description!r}')
+                midclt('cronjob.update', job['id'], {'enabled': False})
+            else:
+                print(f'retired snapshot cron job already disabled id={job["id"]} description={description!r}')
 
 
 if not zfs_exists(DATASET):
@@ -141,85 +140,26 @@ try:
 except Exception as exc:
     print(f'warning: CIFS reload failed or unsupported; share may still be active: {exc!r}')
 
-ops_dir = MOUNTPOINT / '_ops'
-ops_dir.mkdir(parents=True, exist_ok=True)
-retained_script = ops_dir / 'create-retained-snapshot.py'
-retained_script.write_text(f'''#!/usr/bin/env python3
-import re
-import subprocess
-import sys
-
-DATASET = {DATASET!r}
-
-
-def capture(cmd):
-    return subprocess.check_output(cmd, text=True, stderr=subprocess.STDOUT)
-
-
-def run(cmd):
-    print('+ ' + ' '.join(cmd))
-    subprocess.run(cmd, check=True)
-
-
-def snapshot_exists(name):
-    return subprocess.run(['zfs', 'list', '-H', '-t', 'snapshot', name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
-
-
-def main():
-    if len(sys.argv) != 3:
-        print('usage: create-retained-snapshot.py weekly|monthly RETAIN_COUNT', file=sys.stderr)
-        return 64
-    kind = sys.argv[1]
-    try:
-        retain = int(sys.argv[2])
-    except ValueError:
-        print('retain count must be an integer', file=sys.stderr)
-        return 64
-    if retain < 1:
-        print('retain count must be >= 1', file=sys.stderr)
-        return 64
-
-    if kind == 'weekly':
-        suffix = capture(['date', '+%G-W%V']).strip()
-        prefix = 'wf-w-'
-        pattern = re.compile(r'^' + re.escape(DATASET) + r'@wf-w-\d{{4}}-W\d{{2}}$')
-    elif kind == 'monthly':
-        suffix = capture(['date', '+%Y-%m']).strip()
-        prefix = 'wf-m-'
-        pattern = re.compile(r'^' + re.escape(DATASET) + r'@wf-m-\d{{4}}-\d{{2}}$')
+# Weekly/monthly retention is managed by TrueNAS periodic snapshot tasks below.
+# Do not create or run repo-owned zfs-destroy cron helpers here.
+legacy_retained_script = MOUNTPOINT / '_ops' / 'create-retained-snapshot.py'
+retired_retained_script = legacy_retained_script.with_name(legacy_retained_script.name + '.retired')
+if legacy_retained_script.exists():
+    if retired_retained_script.exists():
+        duplicate_retained_script = legacy_retained_script.with_name(legacy_retained_script.name + '.retired-duplicate')
+        legacy_retained_script.rename(duplicate_retained_script)
+        print(f'retired duplicate legacy retained snapshot helper: {duplicate_retained_script}')
     else:
-        print(f'unsupported snapshot kind: {{kind}}', file=sys.stderr)
-        return 64
-
-    snapshot = f'{{DATASET}}@{{prefix}}{{suffix}}'
-    if not snapshot_exists(snapshot):
-        run(['zfs', 'snapshot', '-r', snapshot])
-
-    snapshots = [
-        line.strip()
-        for line in capture(['zfs', 'list', '-H', '-t', 'snapshot', '-o', 'name', '-s', 'name', '-r', DATASET]).splitlines()
-        if pattern.match(line.strip())
-    ]
-    delete_count = max(0, len(snapshots) - retain)
-    for old_snapshot in snapshots[:delete_count]:
-        if not pattern.match(old_snapshot):
-            print(f'refusing to destroy unexpected snapshot name: {{old_snapshot}}', file=sys.stderr)
-            return 65
-        run(['zfs', 'destroy', old_snapshot])
-    print(f'{{kind}} retained snapshot count={{len(snapshots) - delete_count}} retain={{retain}} deleted={{delete_count}}')
-    return 0
-
-
-if __name__ == '__main__':
-    raise SystemExit(main())
-''')
-retained_script.chmod(0o755)
+        legacy_retained_script.rename(retired_retained_script)
+        print(f'retired legacy retained snapshot helper: {retired_retained_script}')
+elif retired_retained_script.exists():
+    print(f'legacy retained snapshot helper already retired: {retired_retained_script}')
 
 tasks = midclt('pool.snapshottask.query')
 hourly_task = ensure_snapshot_task(tasks, HOURLY_SCHEMA, {
     'dataset': DATASET,
     'recursive': True,
-    'lifetime_value': 1,
+    'lifetime_value': HOURLY_LIFETIME_DAYS,
     'lifetime_unit': 'DAY',
     'enabled': True,
     'exclude': [],
@@ -238,7 +178,7 @@ hourly_task = ensure_snapshot_task(tasks, HOURLY_SCHEMA, {
 daily_task = ensure_snapshot_task(tasks, DAILY_SCHEMA, {
     'dataset': DATASET,
     'recursive': True,
-    'lifetime_value': 1,
+    'lifetime_value': DAILY_LIFETIME_WEEKS,
     'lifetime_unit': 'WEEK',
     'enabled': True,
     'exclude': [],
@@ -254,19 +194,45 @@ daily_task = ensure_snapshot_task(tasks, DAILY_SCHEMA, {
         'end': '23:59',
     },
 })
-
-ensure_cron_job(
-    WEEKLY_CRON_DESCRIPTION,
-    f'{retained_script} weekly {WEEKLY_RETAIN}',
-    {'minute': '20', 'hour': '0', 'dom': '*', 'month': '*', 'dow': '7'},
-    OLD_WEEKLY_CRON_DESCRIPTIONS,
-)
-ensure_cron_job(
-    MONTHLY_CRON_DESCRIPTION,
-    f'{retained_script} monthly {MONTHLY_RETAIN}',
-    {'minute': '30', 'hour': '0', 'dom': '1', 'month': '*', 'dow': '*'},
-    OLD_MONTHLY_CRON_DESCRIPTIONS,
-)
+weekly_task = ensure_snapshot_task(tasks, WEEKLY_SCHEMA, {
+    'dataset': DATASET,
+    'recursive': True,
+    'lifetime_value': WEEKLY_LIFETIME_WEEKS,
+    'lifetime_unit': 'WEEK',
+    'enabled': True,
+    'exclude': [],
+    'naming_schema': WEEKLY_SCHEMA,
+    'allow_empty': True,
+    'schedule': {
+        'minute': '20',
+        'hour': '0',
+        'dom': '*',
+        'month': '*',
+        'dow': '7',
+        'begin': '00:00',
+        'end': '23:59',
+    },
+})
+monthly_task = ensure_snapshot_task(tasks, MONTHLY_SCHEMA, {
+    'dataset': DATASET,
+    'recursive': True,
+    'lifetime_value': MONTHLY_LIFETIME_YEARS,
+    'lifetime_unit': 'YEAR',
+    'enabled': True,
+    'exclude': [],
+    'naming_schema': MONTHLY_SCHEMA,
+    'allow_empty': True,
+    'schedule': {
+        'minute': '30',
+        'hour': '0',
+        'dom': '1',
+        'month': '*',
+        'dow': '*',
+        'begin': '00:00',
+        'end': '23:59',
+    },
+})
+disable_retired_cron_jobs()
 
 # Keep the legacy hourly task out of the way after migrating to the explicit
 # wf-h naming schema. Existing snapshots are preserved.
@@ -284,8 +250,6 @@ for task in (hourly_task, daily_task):
         except Exception as exc:
             print(f'warning: immediate snapshot run failed for task {task_id}: {exc!r}')
 
-for kind, retain in (('weekly', WEEKLY_RETAIN), ('monthly', MONTHLY_RETAIN)):
-    run([str(retained_script), kind, str(retain)], check=False)
 
 print('--- dataset ---')
 print(capture(['zfs', 'list', '-o', 'name,mountpoint,used,avail', DATASET]).strip())

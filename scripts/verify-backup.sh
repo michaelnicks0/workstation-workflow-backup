@@ -61,13 +61,15 @@ for task in json.load(open(sys.argv[1], encoding='utf-8')):
         print(json.dumps(task, indent=2, sort_keys=True))
 PY
 rm -f \"\$tmp\"
-echo '-- retained snapshot cron jobs --'
+echo '-- retired snapshot cron jobs (should be disabled) --'
 tmp=/tmp/workstation-workflow-backup-cron.json
 midclt call cronjob.query > \"\$tmp\"
 python3 - \"\$tmp\" <<'PY'
 import json, sys
 for job in json.load(open(sys.argv[1], encoding='utf-8')):
-    if str(job.get('description', '')).startswith('WORKSTATION1 workflow backup'):
+    description = str(job.get('description', ''))
+    command = str(job.get('command', ''))
+    if description.startswith('WORKSTATION1 workflow backup') or 'create-retained-snapshot.py' in command:
         print(json.dumps(job, indent=2, sort_keys=True))
 PY
 rm -f \"\$tmp\"

@@ -37,10 +37,10 @@ ssh root@10.99.98.221 'zfs list -t snapshot -r v1/ws1/wf -o name,creation,used,r
 
 Snapshot classes:
 
-- `wf-h-*` — retained for 1 day; use for ≤1 hour RPO.
-- `wf-d-*` — retained for 1 week.
-- `wf-w-*` — latest 8 weekly snapshots retained by NAS cron.
-- `wf-m-*` — latest 12 monthly snapshots retained by NAS cron.
+- `wf-h-*` — retained for 2 days; use for ≤1 hour RPO.
+- `wf-d-*` — retained for 2 weeks.
+- `wf-w-*` — retained for 8 weeks by TrueNAS periodic snapshot task.
+- `wf-m-*` — retained for 1 year by TrueNAS periodic snapshot task.
 
 Pick the newest snapshot before the loss/corruption.
 

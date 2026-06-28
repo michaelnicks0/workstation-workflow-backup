@@ -12,10 +12,10 @@ Keep Michael's WSL/Hermes/workflow state recoverable from the TrueNAS host at `r
 WORKSTATION1 WSL + selected Windows artifacts
   ├─ hourly at :45: rsync / robocopy to NAS current tree
   ├─ before/after sync: fail-closed NAS dataset growth guard
-  ├─ hourly: TrueNAS periodic ZFS snapshot retained 1 day
-  ├─ daily: TrueNAS periodic ZFS snapshot retained 1 week
-  ├─ weekly: NAS cron snapshot retained for latest 8 weekly points
-  ├─ monthly: NAS cron snapshot retained for latest 12 monthly points
+  ├─ hourly: TrueNAS periodic ZFS snapshot retained 2 days
+  ├─ daily: TrueNAS periodic ZFS snapshot retained 2 weeks
+  ├─ weekly: TrueNAS periodic ZFS snapshot retained 8 weeks
+  ├─ monthly: TrueNAS periodic ZFS snapshot retained 1 year
   └─ on backup failure only: Telegram alert through existing Hermes bot env
 ```
 
@@ -23,10 +23,10 @@ WORKSTATION1 WSL + selected Windows artifacts
 - NAS mountpoint: `/mnt/v1/ws1/wf`
 - SMB share: `\\10.99.98.221\ws1-wf`
 - Systemd timer: `workstation-workflow-backup.timer`
-- Hourly snapshots: `wf-h-%Y%m%d-%H%M`, retained `1 DAY`
-- Daily snapshots: `wf-d-%Y%m%d-%H%M`, retained `1 WEEK`
-- Weekly snapshots: `wf-w-YYYY-Www`, retained latest 8
-- Monthly snapshots: `wf-m-YYYY-MM`, retained latest 12
+- Hourly snapshots: `wf-h-%Y%m%d-%H%M`, retained `2 DAYS`
+- Daily snapshots: `wf-d-%Y%m%d-%H%M`, retained `2 WEEKS`
+- Weekly snapshots: `wf-w-%Y%m%d-%H%M`, retained `8 WEEKS`
+- Monthly snapshots: `wf-m-%Y%m%d-%H%M`, retained `1 YEAR`
 - Growth guard: fails backup when dataset exceeds 2 TiB used, 512 GiB snapshot-held blocks, 500 snapshots, or leaves less than 2 TiB free on `v1`
 
 ## NAS encryption/key state
@@ -47,10 +47,11 @@ This repo must never store TrueNAS encryption keys, config DB exports, SMB crede
 | Layer | Scheduler | Enabled | Schedule | Snapshot name | Pruning / retention |
 |---|---|---:|---|---|---|
 | Current mirror sync | WSL systemd user timer | Yes | `OnCalendar=*:45`, `OnBootSec=3min`, `AccuracySec=1min`, `RandomizedDelaySec=30s`, `Persistent=true` | Not a ZFS snapshot; writes `current/...` | No mirror history; delete/corruption recovery depends on ZFS snapshots below |
-| Hourly ZFS snapshots | TrueNAS periodic snapshot task | Yes | every hour at minute `0`, all day | `wf-h-%Y%m%d-%H%M` | TrueNAS lifetime `1 DAY`; `allow_empty=false`; recursive |
-| Daily ZFS snapshots | TrueNAS periodic snapshot task | Yes | every day at `00:10` | `wf-d-%Y%m%d-%H%M` | TrueNAS lifetime `1 WEEK`; `allow_empty=true`; recursive |
-| Weekly ZFS snapshots | TrueNAS root cron job | Yes | Sunday at `00:20` (`dow=7`) | `wf-w-YYYY-Www` from ISO `%G-W%V` | `_ops/create-retained-snapshot.py weekly 8`; exact-pattern oldest-first prune, latest 8 retained |
-| Monthly ZFS snapshots | TrueNAS root cron job | Yes | day `1` at `00:30` | `wf-m-YYYY-MM` | `_ops/create-retained-snapshot.py monthly 12`; exact-pattern oldest-first prune, latest 12 retained |
+| Hourly ZFS snapshots | TrueNAS periodic snapshot task | Yes | every hour at minute `0`, all day | `wf-h-%Y%m%d-%H%M` | TrueNAS lifetime `2 DAYS`; `allow_empty=false`; recursive |
+| Daily ZFS snapshots | TrueNAS periodic snapshot task | Yes | every day at `00:10` | `wf-d-%Y%m%d-%H%M` | TrueNAS lifetime `2 WEEKS`; `allow_empty=true`; recursive |
+| Weekly ZFS snapshots | TrueNAS periodic snapshot task | Yes | Sunday at `00:20` | `wf-w-%Y%m%d-%H%M` | TrueNAS lifetime `8 WEEKS`; `allow_empty=true`; recursive |
+| Monthly ZFS snapshots | TrueNAS periodic snapshot task | Yes | day `1` at `00:30` | `wf-m-%Y%m%d-%H%M` | TrueNAS lifetime `1 YEAR`; `allow_empty=true`; recursive |
+| Retired retained-snapshot cron jobs | TrueNAS root cron jobs | No | formerly Sunday `00:20` / day `1` at `00:30` | `wf-w-*` / `wf-m-*` | Disabled by `nas-provision.sh`; legacy helper is renamed to `.retired`; retention is managed by TrueNAS periodic snapshot tasks, not repo-owned `zfs destroy` helpers |
 | Legacy hourly task | TrueNAS periodic snapshot task | No | formerly every hour at minute `0` | `wf-%Y%m%d-%H%M` | Disabled by `nas-provision.sh`; existing snapshots are preserved if any remain |
 
 Manual snapshots, such as `post-cleanup-*`, are outside configured pruning and must be reviewed/deleted explicitly.
@@ -63,11 +64,11 @@ Manual snapshots, such as `post-cleanup-*`, are outside configured pruning and m
 | REQ-002: Back up Hermes DB/config/session/profile state. | `~/.hermes/` rsync plus consistent SQLite snapshots. | `current/wsl-sqlite-snapshots/home/mnicks/.hermes/state.db`. |
 | REQ-003: Back up relevant local WSL DBs. | SQLite backup API snapshots for Hermes, lifelog, and browser-memory DBs. | SQLite snapshot manifest on NAS. |
 | REQ-004: Back up critical Windows workflow artifacts. | Windows PowerShell helper uses `robocopy.exe` to SMB. | `current/windows/...` plus Windows manifest. |
-| REQ-005: Recover accidental deletes within 1 day with ≤1h loss. | TrueNAS hourly periodic snapshot task, 1-day retention. | `zfs list -t snapshot -r v1/ws1/wf`. |
+| REQ-005: Recover accidental deletes within 2 days with ≤1h loss. | TrueNAS hourly periodic snapshot task, 2-day retention. | `zfs list -t snapshot -r v1/ws1/wf`. |
 | REQ-006: Run silently hourly. | User systemd timer `OnCalendar=*:45`; logs to local state. | `systemctl --user list-timers workstation-workflow-backup.timer`. |
 | REQ-007: Telegram only on failure. | `OnFailure=...failure-notify@%n.service`; notifier reads `~/.hermes/.env`. | No success message; failure unit logs / Telegram Bot API on nonzero backup. |
-| REQ-008: Keep daily snapshots for 1 week. | TrueNAS daily periodic snapshot task with `lifetime_value=1`, `lifetime_unit=WEEK`. | `scripts/verify-backup.sh` snapshot task dump. |
-| REQ-009: Keep weekly/monthly rollback points without unbounded retention. | NAS cron jobs run `_ops/create-retained-snapshot.py`, retaining latest 8 weekly and 12 monthly snapshots by exact name pattern. | `scripts/verify-backup.sh` cron job dump and snapshot list. |
+| REQ-008: Keep daily snapshots for 2 weeks. | TrueNAS daily periodic snapshot task with `lifetime_value=2`, `lifetime_unit=WEEK`. | `scripts/verify-backup.sh` snapshot task dump. |
+| REQ-009: Keep weekly/monthly rollback points without repo-owned pruning helpers. | TrueNAS weekly/monthly periodic snapshot tasks retain 8 weeks and 1 year respectively; retired cron helpers are disabled. | `scripts/verify-backup.sh` snapshot task and retired cron dump. |
 | REQ-010: Keep queryable backup-run history. | `scripts/workflow-backup.sh` records start/completion/failure events in `~/.local/state/workstation-workflow-backup/runs.sqlite3` and mirrors a DB snapshot plus JSON export to NAS manifests. | `scripts/record-run-ledger.py status`; `scripts/verify-backup.sh`. |
 | REQ-011: Prevent silent infinite dataset growth. | `scripts/check-nas-growth-guard.sh` checks ZFS `used`, `available`, `usedbysnapshots`, and snapshot count before and after backup writes; violations fail the backup and trigger the existing failure alert path. | `scripts/check-nas-growth-guard.sh --stage verify`; `scripts/verify-backup.sh`. |
 
@@ -173,10 +174,10 @@ ssh root@10.99.98.221 'zfs list -t snapshot -r v1/ws1/wf'
 
 Snapshot prefixes:
 
-- `wf-h-*` — hourly, retained for 1 day
-- `wf-d-*` — daily, retained for 1 week
-- `wf-w-*` — latest 8 weekly snapshots retained by NAS cron
-- `wf-m-*` — latest 12 monthly snapshots retained by NAS cron
+- `wf-h-*` — hourly, retained for 2 days
+- `wf-d-*` — daily, retained for 2 weeks
+- `wf-w-*` — weekly, retained for 8 weeks
+- `wf-m-*` — monthly, retained for 1 year
 
 ### Restore a missing repo file
 
@@ -214,6 +215,6 @@ The SMB share has shadow-copy support enabled, so Windows Previous Versions may 
 
 - This is not a substitute for the existing full WSL distro export / Windows profile dump. It is the high-frequency workflow safety net.
 - The NAS dataset contains secrets and credentials. Treat NAS root and SMB access accordingly.
-- Local corruption that exists for more than 1 week ages out of daily rollback; weekly/monthly rollback coverage is bounded by the configured retained counts.
+- Local corruption that exists for more than 2 weeks ages out of daily rollback; weekly/monthly rollback coverage is bounded by the configured TrueNAS lifetimes.
 - Hourly snapshots mean the protected historical restore point can be up to one hour behind current local state. The current mirror usually trails by ≤1 hour but is not delete-proof by itself.
 - A growth-guard failure means the dataset needs manual review before more payload writes; do not disable the guard just to silence the alert.

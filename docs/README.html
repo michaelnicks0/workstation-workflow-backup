@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Executive Brief — workstation-workflow-backup</title>
+<title>Readme — workstation-workflow-backup</title>
 <style>
 :root{--bg:#060d18;--bg2:#0a1426;--panel:#0e1a30;--card:#111f38;--line:#21324f;--line2:#2c4060;--text:#eaf2ff;--muted:#9fb1cc;--dim:#6f82a0;--blue:#5aa6ff;--blue2:#3b82f6;--cyan:#52d4ff;--green:#5be19c;--amber:#ffb454;--rose:#ff6f9c;--violet:#b79bff;--ink:#04122a}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
@@ -121,222 +121,123 @@ table.cmdtable code{font:11.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
 <div class="wrap">
   <div class="docbar">
     <a class="home" href="../workstation-workflow-backup-high-level-doc.html">⌂ workstation-workflow-backup overview</a>
-    <span class="crumb">/ <b>docs/EXECUTIVE_BRIEF.md</b></span>
+    <span class="crumb">/ <b>docs/README.md</b></span>
   </div>
   <article class="md-body">
-<h1 id="executive-brief-workstation1-workflow-backup">Executive Brief — WORKSTATION1 Workflow Backup</h1>
+<h1 id="workstation1-workflow-backup-docs-index">WORKSTATION1 Workflow Backup Docs Index</h1>
 <blockquote>
-<p><strong>Audience:</strong> decision-makers and reviewers who want the what/why in two minutes — no code required.
-<strong>Bottom line:</strong> a silent hourly workflow-state backup that lands WORKSTATION1 WSL, Hermes, and selected Windows artifacts on a guarded TrueNAS/ZFS restore path.
-<strong>Go deeper:</strong> hands-on operation in <a href="USER_GUIDE.html"><code>USER_GUIDE.md</code></a> · restore steps in <a href="restore-runbook.html"><code>restore-runbook.md</code></a> · architecture in <a href="architecture/README.html"><code>architecture/README.md</code></a>.</p>
+<p><strong>Repo:</strong> <code>workstation-workflow-backup</code>
+<strong>Role:</strong> high-frequency WORKSTATION1 → TrueNAS workflow-state backup
+<strong>Runtime:</strong> WSL systemd user timer, restricted NAS SSH identity, Windows SMB/robocopy helper
+<strong>Sensitivity:</strong> backup payloads and NAS state are private; this repo stores code/docs only
+<strong>HTML policy:</strong> Markdown is canonical; generated HTML companions are rendered with <code>scripts/render_docs.py</code> and drift-checked.</p>
 </blockquote>
 <hr />
+<h2 id="reading-path">Reading Path</h2>
+<pre class="mmd-fallback">flowchart TD
+    Start([Need to work on workstation-workflow-backup]) --&gt; Goal{Goal}
+
+    Goal --&gt;|See the whole system quickly| FrontDoor[High-level doc&lt;br/&gt;visual overview]
+    Goal --&gt;|Why it matters| Brief[EXECUTIVE_BRIEF.md&lt;br/&gt;risk posture &amp; maturity]
+    Goal --&gt;|Operate or restore| UserGuide[USER_GUIDE.md&lt;br/&gt;first-run &amp; task routing]
+    Goal --&gt;|Restore a file or DB| Restore[restore-runbook.md&lt;br/&gt;snapshot-based procedures]
+    Goal --&gt;|Understand architecture| Arch[architecture/README.md&lt;br/&gt;C4 + ADR overview]
+    Arch --&gt; C4[architecture/c4-diagrams.md&lt;br/&gt;10 generated C4 views]
+    Arch --&gt; ADR[architecture/adr/README.md&lt;br/&gt;decision history]
+    Goal --&gt;|Verify drift or tests| Tests[TESTS.md&lt;br/&gt;generated static-test inventory]</pre>
+<hr />
+<h2 id="documentation-ownership-matrix">Documentation Ownership Matrix</h2>
 <table>
 <thead>
 <tr>
-<th>Field</th>
-<th>Value</th>
+<th>File</th>
+<th>Purpose</th>
+<th>Update when</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>System</td>
-<td><code>workstation-workflow-backup</code></td>
+<td><a href="../README.html"><code>../README.md</code></a></td>
+<td>Primary repo landing page: mission, operating concept, configuration, snapshot schedule, restore quick reference.</td>
+<td>Backup scope, timer/snapshot schedule, install/operate flow, or restore reference changes.</td>
 </tr>
 <tr>
-<td>Owner</td>
-<td>Michael</td>
+<td><a href="../AGENTS.html"><code>../AGENTS.md</code></a></td>
+<td>Agent guardrails and safety constraints for the backup repo.</td>
+<td>Safety boundaries, forbidden live operations, or required verification commands change.</td>
 </tr>
 <tr>
-<td>Status</td>
-<td>Active / Production</td>
+<td><a href="../workstation-workflow-backup-high-level-doc.html"><code>../workstation-workflow-backup-high-level-doc.html</code></a></td>
+<td>Generated visual front door from <code>scripts/showcase.spec.json</code>: what it does, how it works, command groups, audience routing.</td>
+<td>High-level capabilities, metrics, audience links, or safety-boundary wording changes.</td>
 </tr>
 <tr>
-<td>Recovery Point Objective</td>
-<td>≤ 1 hour (last 2 days); up to 1 year bounded rollback</td>
+<td><a href="EXECUTIVE_BRIEF.html"><code>EXECUTIVE_BRIEF.md</code></a></td>
+<td>Two-minute, code-free summary of value, risk posture, retention, and maturity.</td>
+<td>Risk framing, retention posture, maturity claims, or executive-facing summary changes.</td>
 </tr>
 <tr>
-<td>Last updated</td>
-<td>2026-06-28</td>
+<td><a href="USER_GUIDE.html"><code>USER_GUIDE.md</code></a></td>
+<td>Task-first operating guide: first run, “I want to…” routing, failure alert response, and one safety rule.</td>
+<td>Operator workflow, first-run steps, failure response, or task routing changes.</td>
+</tr>
+<tr>
+<td><a href="restore-runbook.html"><code>restore-runbook.md</code></a></td>
+<td>Ground-level restore procedures for repo files, Hermes DBs, Windows artifacts, and staged restore verification.</td>
+<td>Restore commands, snapshot paths, integrity checks, or admin/runtime identity rules change.</td>
+</tr>
+<tr>
+<td><a href="architecture/README.html"><code>architecture/README.md</code></a></td>
+<td>Architecture atlas entry point: scope, views, model source, validation, and ADR map.</td>
+<td>C4 model, architecture scope, validation command, or ADR inventory changes.</td>
+</tr>
+<tr>
+<td><a href="architecture/c4-diagrams.html"><code>architecture/c4-diagrams.md</code></a></td>
+<td>Generated C4/Structurizr diagram atlas for system context, containers, components, deployment, and runtime flows.</td>
+<td><code>docs/architecture/workspace.dsl</code> changes or diagram renders are regenerated.</td>
+</tr>
+<tr>
+<td><a href="architecture/adr/README.html"><code>architecture/adr/README.md</code></a></td>
+<td>Decision-record index for snapshot retention, timer/alerting, SQLite snapshots, growth guard, SMB, and NAS runtime hardening.</td>
+<td>A decision is added, superseded, or materially revised.</td>
+</tr>
+<tr>
+<td><a href="TESTS.html"><code>TESTS.md</code></a></td>
+<td>Generated static-test inventory and coverage map.</td>
+<td>Tests are added/removed/renamed or static coverage expectations change.</td>
+</tr>
+<tr>
+<td><a href="notes/"><code>notes/</code></a></td>
+<td>Time-specific implementation notes and incident/context receipts.</td>
+<td>A durable operational note needs preservation but does not belong in the main runbook.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="what-it-is">What it is</h2>
-<p>An automated, ZFS-backed high-frequency backup for WORKSTATION1 WSL and
-Windows workflow state — repos, Hermes AI session data, SSH keys, browser
-metadata, dev tool configs, and critical Windows desktop artifacts — to a
-configured TrueNAS dataset.</p>
-<p>This is the <strong>workflow safety net</strong>, not a bare-metal image. It protects
-against accidental deletion, local corruption, or disk failure with a
-recovery point of at most one hour for any artifact within the last 48
-hours, and progressively sparser rollback coverage out to one year.</p>
-<h2 id="why-it-matters">Why it matters</h2>
-<p>Hermes agent state, code repos, local AI configs, lifelog databases, and
-browser-memory data are high-entropy artifacts that cannot be easily
-reconstructed. Loss of <code>~/.hermes/</code> or <code>~/repos/</code> during a WSL disk event
-or accidental delete would cost hours to days of irreversible work. A
-silent, fail-closed, hourly backup with a ZFS snapshot ladder gives those
-artifacts a bounded restore path instead of relying on best-effort local
-reconstruction.</p>
-<h2 id="how-it-works-one-sentence">How it works (one sentence)</h2>
-<p>Every hour at :45, a WSL <code>systemd</code> user timer rsyncs selected local paths
-to a restricted NAS identity over pinned-host-key SSH, takes consistent
-SQLite snapshots, mirrors Windows artifacts over SMB via robocopy, checks
-dataset growth budgets before and after writes, writes a run ledger and
-integrity manifest to the NAS, and sends a Telegram alert only if the run
-fails.</p>
-<h2 id="risk-posture">Risk posture</h2>
-<table>
-<thead>
-<tr>
-<th>Risk</th>
-<th>Mitigation</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Silent runaway dataset growth</td>
-<td>Fail-closed growth guard (non-destructive) + ZFS <code>refquota</code> hard cap</td>
-<td>Active</td>
-</tr>
-<tr>
-<td>Accidental delete replicated to NAS</td>
-<td>ZFS snapshot ladder; hourly, daily, weekly, monthly retention</td>
-<td>Active</td>
-</tr>
-<tr>
-<td>NAS root access during hourly path</td>
-<td>Dedicated restricted runtime user <code>ws1backup</code>; forced-command SSH dispatch</td>
-<td>Active</td>
-</tr>
-<tr>
-<td>Wrong host connect / MITM</td>
-<td>Pinned host key, <code>StrictHostKeyChecking=yes</code>, <code>HostKeyAlias</code></td>
-<td>Active</td>
-</tr>
-<tr>
-<td>Restore artifact corruption</td>
-<td>Per-run SHA-256 integrity manifest for critical restore artifacts</td>
-<td>Active</td>
-</tr>
-<tr>
-<td>Live SQLite file inconsistency</td>
-<td>SQLite backup API snapshots before mirror phase</td>
-<td>Active</td>
-</tr>
-<tr>
-<td>Secrets committed to this repo</td>
-<td>Gitignore enforces exclusion; static tests assert the exclusion patterns</td>
-<td>Active</td>
-</tr>
-<tr>
-<td>Silent backup failure</td>
-<td><code>OnFailure</code> Telegram notifier on every nonzero systemd service exit</td>
-<td>Active</td>
-</tr>
-</tbody>
-</table>
-<h2 id="retention-schedule">Retention schedule</h2>
-<table>
-<thead>
-<tr>
-<th>Layer</th>
-<th>Retention</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Hourly ZFS snapshots (<code>wf-h-*</code>)</td>
-<td>2 days</td>
-</tr>
-<tr>
-<td>Daily ZFS snapshots (<code>wf-d-*</code>)</td>
-<td>2 weeks</td>
-</tr>
-<tr>
-<td>Weekly ZFS snapshots (<code>wf-w-*</code>)</td>
-<td>8 weeks</td>
-</tr>
-<tr>
-<td>Monthly ZFS snapshots (<code>wf-m-*</code>)</td>
-<td>1 year</td>
-</tr>
-</tbody>
-</table>
-<p>Snapshots are managed exclusively by TrueNAS periodic snapshot tasks. No
-repo-owned <code>zfs destroy</code> helper is used; the failure path stops writes, it
-does not delete history.</p>
-<h2 id="maturity">Maturity</h2>
-<table>
-<thead>
-<tr>
-<th>Dimension</th>
-<th>State</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Tests</td>
-<td>14 static contract tests; all passing</td>
-</tr>
-<tr>
-<td>Architecture</td>
-<td>C4 model, 10 views, 6 ADRs</td>
-</tr>
-<tr>
-<td>Security decisions</td>
-<td>ADR-0006: restricted runtime identity, pinned keys, restore checksums</td>
-</tr>
-<tr>
-<td>Growth guard</td>
-<td>Fail-closed; budgets: 2 TiB used / 1 TiB snapshots / 2 TiB free / 5 000 snapshots</td>
-</tr>
-<tr>
-<td>Restore path</td>
-<td>Documented runbook with staged restore, integrity-manifest checksum verification</td>
-</tr>
-</tbody>
-</table>
-<h2 id="key-personnel">Key personnel</h2>
-<p>Michael is the sole operator. All automated functions (backup, guard checks,
-Telegram alerts) execute without human interaction. Michael controls
-provisioning, restore operations, stop authority, and retention policy
-changes.</p>
-<h2 id="reading-path">Reading path</h2>
-<table>
-<thead>
-<tr>
-<th>Audience</th>
-<th>Start here</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Understand the system architecture</td>
-<td><a href="architecture/README.html">Architecture README</a> · <a href="architecture/c4-diagrams.html">C4 Diagrams</a></td>
-</tr>
-<tr>
-<td>Operate / restore</td>
-<td><a href="../README.html">README</a> · <a href="restore-runbook.html">Restore Runbook</a></td>
-</tr>
-<tr>
-<td>Decision history</td>
-<td><a href="architecture/adr/README.html">ADR Index</a></td>
-</tr>
-<tr>
-<td>Test coverage</td>
-<td><a href="TESTS.html">Test Inventory</a></td>
-</tr>
-<tr>
-<td>User on-ramp</td>
-<td><a href="USER_GUIDE.html">User Guide</a></td>
-</tr>
-</tbody>
-</table>
+<hr />
+<h2 id="validation">Validation</h2>
+<p>Docs-only change gate:</p>
+<div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code>python3<span style="color: #F8F8F2"> </span>scripts/generate_test_inventory.py<span style="color: #F8F8F2"> </span>--check
+python3<span style="color: #F8F8F2"> </span>scripts/generate_showcase.py<span style="color: #F8F8F2"> </span>--spec<span style="color: #F8F8F2"> </span>scripts/showcase.spec.json<span style="color: #F8F8F2"> </span>--check
+python3<span style="color: #F8F8F2"> </span>scripts/render_docs.py<span style="color: #F8F8F2"> </span>--repo<span style="color: #F8F8F2"> </span>.<span style="color: #F8F8F2"> </span>--slug<span style="color: #F8F8F2"> </span>workstation-workflow-backup<span style="color: #F8F8F2"> </span>--check
+./scripts/run-tests.sh
+git<span style="color: #F8F8F2"> </span>diff<span style="color: #F8F8F2"> </span>--check
+git<span style="color: #F8F8F2"> </span>diff<span style="color: #F8F8F2"> </span>--cached<span style="color: #F8F8F2"> </span>--check
+</code></pre></div>
+
+<p>For live backup health, use <code>./scripts/verify-backup.sh</code>; do not run live NAS/provisioning commands for a docs-only review.</p>
+<hr />
+<h2 id="update-triggers">Update Triggers</h2>
+<p>Update this index when:</p>
+<ul>
+<li>a durable Markdown or generated HTML doc is added, moved, or retired;</li>
+<li>backup cadence, snapshot retention, restore paths, or safety boundaries change;</li>
+<li>the C4/Structurizr model or ADR inventory changes;</li>
+<li>validation commands or generated-doc pipeline commands change;</li>
+<li>future agents would otherwise have to rediscover the documentation layout.</li>
+</ul>
   </article>
   <div class="md-footer">
-    Rendered from <code>docs/EXECUTIVE_BRIEF.md</code> — the Markdown file is the canonical,
+    Rendered from <code>docs/README.md</code> — the Markdown file is the canonical,
     version-controlled source. This HTML is generated (regenerate with
     <code>scripts/render_docs.py</code>); do not hand-edit.
   </div>

@@ -135,9 +135,12 @@ def boundary_svg(b: dict) -> str:
         x = x0 + i * (w + 16)
         tone = node.get("tone", "local")
         a, _b, c, ink = TONES.get(tone, TONES["local"])
-        fill = f"url(#g_{tone})" if i == 0 else "#12243f"
-        txt = ink if i == 0 else a
-        sub = "#06402a" if i == 0 else "#9fb1cc"
+        # Keep all inside nodes on the dark card surface. The old first-node
+        # gradient used dark ink/subtitle colors that passed geometry checks but
+        # rendered low-contrast in rsvg/browser QA on some palettes.
+        fill = "#12243f"
+        txt = a
+        sub = "#9fb1cc"
         parts.append(f'<g filter="url(#sh)"><rect x="{x}" y="{y}" width="{w}" height="{h}" rx="14" fill="{fill}" stroke="{_b}" stroke-opacity="0.5"/></g>')
         parts.append(f'<text x="{x+w/2:.0f}" y="{y+46}" text-anchor="middle" font-size="{_fit_font(node["title"], w, 15):.1f}" font-weight="800" fill="{txt}">{esc(node["title"])}</text>')
         for j, line in enumerate(node.get("sub", "").split("\n")[:2]):

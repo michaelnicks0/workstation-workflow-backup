@@ -1,5 +1,11 @@
 # Executive Brief — WORKSTATION1 Workflow Backup
 
+> **Audience:** decision-makers and reviewers who want the what/why in two minutes — no code required.
+> **Bottom line:** a silent hourly workflow-state backup that lands WORKSTATION1 WSL, Hermes, and selected Windows artifacts on a guarded TrueNAS/ZFS restore path.
+> **Go deeper:** hands-on operation in [`USER_GUIDE.md`](USER_GUIDE.md) · restore steps in [`restore-runbook.md`](restore-runbook.md) · architecture in [`architecture/README.md`](architecture/README.md).
+
+---
+
 | Field | Value |
 |---|---|
 | System | `workstation-workflow-backup` |
@@ -12,7 +18,7 @@
 
 An automated, ZFS-backed high-frequency backup for WORKSTATION1 WSL and
 Windows workflow state — repos, Hermes AI session data, SSH keys, browser
-profiles, dev tool configs, and critical Windows desktop artifacts — to a
+metadata, dev tool configs, and critical Windows desktop artifacts — to a
 configured TrueNAS dataset.
 
 This is the **workflow safety net**, not a bare-metal image. It protects
@@ -23,11 +29,12 @@ hours, and progressively sparser rollback coverage out to one year.
 ## Why it matters
 
 Hermes agent state, code repos, local AI configs, lifelog databases, and
-browser session data are high-entropy artifacts that cannot be easily
+browser-memory data are high-entropy artifacts that cannot be easily
 reconstructed. Loss of `~/.hermes/` or `~/repos/` during a WSL disk event
 or accidental delete would cost hours to days of irreversible work. A
-silent, fail-closed, hourly backup with a ZFS snapshot ladder eliminates
-that risk for less than five minutes of daily I/O overhead.
+silent, fail-closed, hourly backup with a ZFS snapshot ladder gives those
+artifacts a bounded restore path instead of relying on best-effort local
+reconstruction.
 
 ## How it works (one sentence)
 

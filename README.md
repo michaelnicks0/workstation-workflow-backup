@@ -76,6 +76,7 @@ Manual snapshots, such as `post-cleanup-*`, are outside configured pruning and m
 | Doc | Purpose |
 |---|---|
 | **[High-level doc](workstation-workflow-backup-high-level-doc.html)** | Front door: what it does, how it works, commands, mental model, safety boundary |
+| [Docs Index](docs/README.md) | Reading path, ownership matrix, validation gate, update triggers |
 | [User Guide](docs/USER_GUIDE.md) | First-run journey, I want to… routing table, failure alert response, safety rules |
 | [Executive Brief](docs/EXECUTIVE_BRIEF.md) | Risk posture, retention schedule, maturity summary |
 | [Restore Runbook](docs/restore-runbook.md) | Step-by-step restore for files, DBs, Windows artifacts |

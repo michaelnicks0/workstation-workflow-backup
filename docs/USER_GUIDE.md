@@ -1,9 +1,15 @@
 # User Guide — WORKSTATION1 Workflow Backup
 
+> **Audience:** the operator using or restoring the workflow backup system.
+> **Altitude:** task-first. Start here when you want to configure, verify, respond to a failure alert, or restore.
+> **Companion docs:** risk posture in [`EXECUTIVE_BRIEF.md`](EXECUTIVE_BRIEF.md) · exact restore procedures in [`restore-runbook.md`](restore-runbook.md) · design rationale in [`architecture/README.md`](architecture/README.md).
+
+---
+
 ## Mental model in one sentence
 
 Every hour, this system **silently rsyncs your workflow state to TrueNAS,
-snaps a ZFS timeline, and shouts only if something breaks.**
+lands it on a ZFS-snapshotted dataset, and shouts only if something breaks.**
 
 ```
 WORKSTATION1 (:45 each hour)

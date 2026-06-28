@@ -125,9 +125,15 @@ table.cmdtable code{font:11.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
   </div>
   <article class="md-body">
 <h1 id="user-guide-workstation1-workflow-backup">User Guide — WORKSTATION1 Workflow Backup</h1>
+<blockquote>
+<p><strong>Audience:</strong> the operator using or restoring the workflow backup system.
+<strong>Altitude:</strong> task-first. Start here when you want to configure, verify, respond to a failure alert, or restore.
+<strong>Companion docs:</strong> risk posture in <a href="EXECUTIVE_BRIEF.html"><code>EXECUTIVE_BRIEF.md</code></a> · exact restore procedures in <a href="restore-runbook.html"><code>restore-runbook.md</code></a> · design rationale in <a href="architecture/README.html"><code>architecture/README.md</code></a>.</p>
+</blockquote>
+<hr />
 <h2 id="mental-model-in-one-sentence">Mental model in one sentence</h2>
 <p>Every hour, this system <strong>silently rsyncs your workflow state to TrueNAS,
-snaps a ZFS timeline, and shouts only if something breaks.</strong></p>
+lands it on a ZFS-snapshotted dataset, and shouts only if something breaks.</strong></p>
 <div class="codehilite" style="background: #272822"><pre style="line-height: 125%;"><span></span><code>WORKSTATION1 (:45 each hour)
   │
   ├─ pre-flight: growth guard (fail-closed)

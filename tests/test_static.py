@@ -68,6 +68,7 @@ class StaticBackupRepoTests(unittest.TestCase):
         self.assertIn("check-nas-growth-guard.sh", verify)
         self.assertIn("usedbysnapshots", guard)
         self.assertIn("snapshot count", guard)
+        self.assertIn("NAS_DATASET_MAX_SNAPSHOT_COUNT=5000", config)
 
     def test_smb_share_disables_name_mangling(self) -> None:
         provision = (ROOT / "scripts/nas-provision.sh").read_text()

@@ -1,0 +1,300 @@
+{
+  "slug": "workstation-workflow-backup",
+  "title": "WORKSTATION1 Workflow Backup",
+  "version": "production",
+  "tagline_plain": "Hourly. Silent. Fail-closed.",
+  "tagline_grad": "Your workflow state, safely on ZFS.",
+  "lead": "A WSL systemd user timer that rsyncs repos, Hermes AI state, SSH keys, and Windows workflow artifacts to a restricted TrueNAS identity every hour — with a five-layer safety design and silent success.",
+  "sub": "Fail-closed growth guard, pinned-host-key SSH, consistent SQLite snapshots, SHA-256 integrity manifest, and a ZFS snapshot ladder retaining up to one year of rollback history. Telegram alert fires only on failure.",
+  "pills": [
+    {
+      "label": "Bash / Python",
+      "color": "blue"
+    },
+    {
+      "label": "systemd user timer",
+      "color": "green"
+    },
+    {
+      "label": "ZFS / TrueNAS",
+      "color": "purple"
+    },
+    {
+      "label": "<b>14</b> tests",
+      "color": "gray"
+    }
+  ],
+  "metrics": [
+    {
+      "n": "≤1h",
+      "l": "RPO (last 2 days)"
+    },
+    {
+      "n": "1yr",
+      "l": "max rollback"
+    },
+    {
+      "n": "4",
+      "l": "snapshot layers"
+    },
+    {
+      "n": "14",
+      "l": "test functions"
+    }
+  ],
+  "features_intro": "Eight capabilities across hourly automation, security hardening, and structured restore — all fail-closed and silent on success.",
+  "features": [
+    {
+      "icon": "⏱",
+      "title": "Hourly silent sync",
+      "body": "systemd user timer fires at :45 every hour. rsync mirrors WSL paths; robocopy mirrors Windows artifacts over SMB. Successful runs emit nothing."
+    },
+    {
+      "icon": "🗄",
+      "title": "Consistent SQLite snapshots",
+      "body": "SQLite backup API snapshots Hermes state.db, kanban.db, lifelog, and browser-memory DBs before the rsync phase — never copies a live, write-in-progress database."
+    },
+    {
+      "icon": "🛡",
+      "title": "Fail-closed growth guard",
+      "body": "Checks dataset used (≤2 TiB), snapshot-held blocks (≤1 TiB), free space (≥2 TiB), and snapshot count (≤5 000) before and after writes. Stops backup; never deletes."
+    },
+    {
+      "icon": "🔐",
+      "title": "Restricted runtime identity",
+      "body": "Hourly path uses dedicated user ws1backup with pinned host key (StrictHostKeyChecking=yes, HostKeyAlias) and a forced-command SSH dispatcher that rejects arbitrary shell, PTY, and rsync sender mode."
+    },
+    {
+      "icon": "📋",
+      "title": "Run ledger + integrity manifest",
+      "body": "Every run appends to a SQLite event ledger. On success, SHA-256 checksums for critical restore artifacts are written to NAS under current/_manifests/integrity-manifest.json."
+    },
+    {
+      "icon": "🔔",
+      "title": "Failure-only Telegram alert",
+      "body": "systemd OnFailure unit sends a Telegram message via the Hermes bot on every nonzero service exit. Zero noise on success; immediate signal on failure."
+    },
+    {
+      "icon": "📸",
+      "title": "ZFS snapshot ladder",
+      "body": "TrueNAS periodic snapshot tasks retain: hourly 2 days, daily 2 weeks, weekly 8 weeks, monthly 1 year. No repo-owned zfs destroy helper."
+    },
+    {
+      "icon": "🗺",
+      "title": "Structured restore path",
+      "body": "Restore runbook covers missing repo files, Hermes state.db, Windows artifacts, and staged restore with integrity-manifest checksum verification before replacing live state."
+    }
+  ],
+  "flow_intro": "The same guarded path runs every hour — pre-flight, data movement, post-flight, publication.",
+  "flow": [
+    {
+      "title": "Timer fires at :45",
+      "body": "workstation-workflow-backup.timer triggers the service via systemd user session"
+    },
+    {
+      "title": "Pre-flight growth guard",
+      "body": "check-nas-growth-guard.sh --stage pre: fails closed if dataset used, snapshot blocks, free space, or snapshot count exceeds budget"
+    },
+    {
+      "title": "Consistent SQLite snapshots",
+      "body": "snapshot-sqlite-dbs.py uses the SQLite backup API before any rsync — ensures consistent copies of live Hermes, lifelog, and browser-memory DBs"
+    },
+    {
+      "title": "WSL rsync to NAS",
+      "body": "rsync over restricted runtime SSH (ws1backup, pinned host key, forced-command) writes ~/repos, ~/.hermes, ~/.ssh, and other paths to NAS current/wsl/"
+    },
+    {
+      "title": "Windows robocopy over SMB",
+      "body": "sync-windows-critical.ps1 via PowerShell rsyncs Desktop, Documents, .ssh, Terminal, VS Code, Chrome metadata to NAS current/windows/"
+    },
+    {
+      "title": "Post-flight growth guard",
+      "body": "check-nas-growth-guard.sh --stage post: re-checks all budgets after writes; fails closed if exceeded"
+    },
+    {
+      "title": "Ledger completion + manifest",
+      "body": "record-run-ledger.py records completed event; nas-integrity-manifest-helper.py writes SHA-256 checksums for critical restore artifacts to NAS"
+    }
+  ],
+  "commands_intro": "Four functional groups. Read-only ops first; provisioning and restore require admin identity.",
+  "commands_col3": "Scope / side effects",
+  "commands": [
+    {
+      "group": "Daily ops",
+      "touches": "local state only",
+      "cmds": "<code>record-run-ledger.py status</code> · <code>check-nas-growth-guard.sh --stage manual</code>"
+    },
+    {
+      "group": "Install / provision",
+      "touches": "NAS + systemd",
+      "cmds": "<code>nas-provision.sh</code> · <code>install-nas-runtime-hardening.sh</code> · <code>install-systemd-user.sh</code>"
+    },
+    {
+      "group": "Verify",
+      "touches": "live NAS read + local tests",
+      "cmds": "<code>verify-backup.sh</code> · <code>run-tests.sh</code>"
+    },
+    {
+      "group": "Restore",
+      "touches": "admin SSH + NAS snapshots",
+      "cmds": "<code>zfs list -t snapshot</code> · rsync from <code>.zfs/snapshot/&lt;snap&gt;/current/</code>"
+    }
+  ],
+  "model_intro": "Everything flows through one restricted path on a ZFS snapshot ladder with a fail-closed guard.",
+  "hub": {
+    "label": "Workflow Backup",
+    "sub": "WORKSTATION1",
+    "tone": "blue"
+  },
+  "spokes": [
+    {
+      "label": "Hourly mirrors",
+      "sub": "WSL rsync + Windows robocopy",
+      "tone": "live"
+    },
+    {
+      "label": "SQLite snapshots",
+      "sub": "Hermes, lifelog, browser-memory DBs",
+      "tone": "live"
+    },
+    {
+      "label": "Growth guard",
+      "sub": "2TiB/1TiB/2TiB/5000 budgets",
+      "tone": "priv"
+    },
+    {
+      "label": "ZFS snapshot ladder",
+      "sub": "h2d · d2w · w8w · m1y",
+      "tone": "violet"
+    },
+    {
+      "label": "Ledger + alerts",
+      "sub": "run events + SHA-256 manifest + Telegram",
+      "tone": "cyan"
+    }
+  ],
+  "model_cap": "Restricted runtime identity (ws1backup). Admin SSH required only for provisioning, restore, and snapshot inspection.",
+  "audiences_intro": "Three doors in, by what you need right now.",
+  "audiences": [
+    {
+      "cls": "exec",
+      "icon": "📊",
+      "tag": "Risk / maturity",
+      "title": "Executive Brief",
+      "body": "Risk posture, retention schedule, and maturity summary — no code required.",
+      "href": "docs/EXECUTIVE_BRIEF.html",
+      "go": "Read the brief"
+    },
+    {
+      "cls": "user",
+      "icon": "⌨",
+      "tag": "Operators",
+      "title": "User Guide",
+      "body": "First-run journey, I want to… routing table, failure alert response, and the one safety rule.",
+      "href": "docs/USER_GUIDE.html",
+      "go": "Start here"
+    },
+    {
+      "cls": "maint",
+      "icon": "🏗",
+      "tag": "Maintainers",
+      "title": "Architecture & ADRs",
+      "body": "C4 model, 10 views, 6 ADRs, runtime hardening decisions, and design rationale.",
+      "href": "docs/architecture/README.html",
+      "go": "Go deep"
+    }
+  ],
+  "boundary_title": "Safety boundary",
+  "boundary_intro": "The hourly runtime path enforces a hard boundary: restricted identity, no root, pinned host key, fail-closed guards.",
+  "boundary": {
+    "inside_title": "🔒 OWNED AUTOMATION",
+    "inside": [
+      {
+        "title": "workflow-backup.sh",
+        "sub": "orchestrator\n+ growth guard",
+        "tone": "local"
+      },
+      {
+        "title": "run ledger",
+        "sub": "SQLite events\n+ JSON export",
+        "tone": "local"
+      },
+      {
+        "title": "integrity manifest",
+        "sub": "SHA-256 checksums\non NAS",
+        "tone": "blue"
+      }
+    ],
+    "blocked": [
+      {
+        "title": "⛔ WSL distro export",
+        "sub": "freenas-windows-backup"
+      },
+      {
+        "title": "⛔ Encryption key custody",
+        "sub": "cold unlock drill"
+      }
+    ]
+  },
+  "boundary_cap": "The runtime SSH path is forced-command only: no interactive shell, no PTY, no rsync sender mode, no port forwarding.",
+  "boundary_note": "Root/admin SSH is required only for explicit provisioning, snapshot inspection, and restore. See <a href=\"docs/architecture/adr/0006-use-restricted-nas-runtime-identity-with-pinned-host-keys-and-restore-checksums.html\">ADR-0006</a>.",
+  "docmap_intro": "Docs are maintained in Markdown (source of truth) with generated HTML companions. The front door links to styled HTML; GitHub renders the Markdown natively.",
+  "docmap": [
+    {
+      "doc": "User Guide",
+      "href": "docs/USER_GUIDE.html",
+      "owns": "First-run, restore, safety rules",
+      "altitude": "10,000 ft"
+    },
+    {
+      "doc": "Docs Index",
+      "href": "docs/README.html",
+      "owns": "Reading path, ownership matrix, validation gate",
+      "altitude": "Map"
+    },
+    {
+      "doc": "Executive Brief",
+      "href": "docs/EXECUTIVE_BRIEF.html",
+      "owns": "Risk posture, retention, maturity",
+      "altitude": "30,000 ft"
+    },
+    {
+      "doc": "Restore Runbook",
+      "href": "docs/restore-runbook.html",
+      "owns": "Step-by-step restore procedures",
+      "altitude": "Ground"
+    },
+    {
+      "doc": "Architecture README",
+      "href": "docs/architecture/README.html",
+      "owns": "C4 views, ADR overview, sources",
+      "altitude": "Design"
+    },
+    {
+      "doc": "C4 Diagrams",
+      "href": "docs/architecture/c4-diagrams.html",
+      "owns": "Generated 10-view diagram atlas",
+      "altitude": "Design"
+    },
+    {
+      "doc": "ADR Index",
+      "href": "docs/architecture/adr/README.html",
+      "owns": "6 decisions with rationale",
+      "altitude": "Decision"
+    },
+    {
+      "doc": "Test Inventory",
+      "href": "docs/TESTS.html",
+      "owns": "14 static contract tests",
+      "altitude": "QA"
+    },
+    {
+      "doc": "README",
+      "href": "README.md",
+      "owns": "Full config reference + snapshot schedule",
+      "altitude": "Reference"
+    }
+  ],
+  "footer_provenance": "Generated from workstation-workflow-backup — 14 test functions across 1 test file.",
+  "out": "workstation-workflow-backup-high-level-doc.html"
+}

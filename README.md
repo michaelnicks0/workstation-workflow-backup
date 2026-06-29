@@ -71,6 +71,20 @@ The workflow backup dataset lives under encrypted pool root `v1` on the live WOR
 
 Manual snapshots, such as `post-cleanup-*`, are outside configured pruning and must be reviewed/deleted explicitly.
 
+## Documentation
+
+| Doc | Purpose |
+|---|---|
+| **[High-level doc](workstation-workflow-backup-high-level-doc.html)** | Front door: what it does, how it works, commands, mental model, safety boundary |
+| [Docs Index](docs/README.md) | Reading path, ownership matrix, validation gate, update triggers |
+| [User Guide](docs/USER_GUIDE.md) | First-run journey, I want to… routing table, failure alert response, safety rules |
+| [Executive Brief](docs/EXECUTIVE_BRIEF.md) | Risk posture, retention schedule, maturity summary |
+| [Restore Runbook](docs/restore-runbook.md) | Step-by-step restore for files, DBs, Windows artifacts |
+| [Architecture README](docs/architecture/README.md) | C4 views, ADR overview, architecture sources |
+| [C4 Diagrams](docs/architecture/c4-diagrams.md) | Generated 10-view diagram atlas |
+| [ADR Index](docs/architecture/adr/README.md) | 6 decisions with rationale |
+| [Test Inventory](docs/TESTS.md) | 14 static contract tests, coverage map |
+
 ## Architecture / ADRs
 
 - C4 model source: [`docs/architecture/workspace.dsl`](docs/architecture/workspace.dsl)
